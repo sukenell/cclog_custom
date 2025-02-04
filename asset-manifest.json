@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/nell-cclog/static/css/main.e6c13ad2.css",
-    "main.js": "/nell-cclog/static/js/main.0c10eaae.js",
+    "main.js": "/nell-cclog/static/js/main.d959d0a6.js",
     "static/js/488.4ca699bc.chunk.js": "/nell-cclog/static/js/488.4ca699bc.chunk.js",
     "index.html": "/nell-cclog/index.html",
     "main.e6c13ad2.css.map": "/nell-cclog/static/css/main.e6c13ad2.css.map",
-    "main.0c10eaae.js.map": "/nell-cclog/static/js/main.0c10eaae.js.map",
+    "main.d959d0a6.js.map": "/nell-cclog/static/js/main.d959d0a6.js.map",
     "488.4ca699bc.chunk.js.map": "/nell-cclog/static/js/488.4ca699bc.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.0c10eaae.js"
+    "static/js/main.d959d0a6.js"
   ]
 }
