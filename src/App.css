@@ -37,3 +37,252 @@
   }
 }
 
+:root {
+  --background-color: rgba(44, 44, 44, 0.87);
+  --text-color: white;
+  --border-color: rgba(255, 255, 255, 0.08);
+}
+
+h2{
+  margin: auto;
+}
+
+h4{
+  margin-bottom: 0;
+}
+
+h4 b{
+  font-size: 13px;
+    font-weight: 400;
+    font-style: oblique;
+
+}
+
+a {
+  color: white;
+}
+
+.desc, .dice{
+  padding-left: 0;
+  width: 100%;
+  color: rgb(221, 221, 221);
+  font-style: italic !important;
+  font-weight: bold !important;
+  text-align: center !important;
+}
+
+span {
+  word-break : break-all;
+  overflow-wrap : anywhere;
+}
+
+.fix-layout{
+  display: flex;
+  height: 95vh;
+}
+
+.file_upload{
+  margin: 20px;
+}
+
+.setting_container{
+  width: 40%;
+  padding: 20px;
+  color: white;
+  background: #222;
+}
+
+.title_input, .end_input, .system_input{
+  color: white;
+  margin-top: 5px;
+  padding: 5px;
+  width: 90%;
+  text-align: center;
+  border-radius: 5px;
+  border: 1px solid gray;
+  background-color: #414141;
+}
+
+.color_div{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  /* border: 2px solid white; */
+  padding: 10px;
+  text-align: center;
+  border-radius: 10px; 
+  max-height : 250px;
+  overflow : auto;
+}
+
+.color_picker{
+  /* display: flex; */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border: 1px solid white;
+  border-radius: 5px;
+}
+
+.color_link {
+    height: 30px;
+    cursor: pointer;
+    border: 1px solid gray;
+    background-color: #414141;
+    text-align: center;
+    margin: 10px;
+}
+
+.download_pannel{
+  position: fixed;
+  display: flex;
+  justify-content: space-around;
+  width: 50%;
+}
+
+.down_btn {
+  bottom: 10px;
+  width: 90%;
+  padding: 10px 20px;
+  background: #323232;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+ }
+
+ .head_img_input{
+  margin-top: 5px;
+  padding: 5px;
+  width: 100%;
+  text-align: center;
+  border-radius: 5px;
+  border: 1px solid gray;
+ }
+
+ .preview_panel{
+  flex: 1;
+  color:  white;
+  position: relative;
+  overflow: hidden;
+  padding: 30px;
+ }
+
+ .preview_panel > div {
+  overflow : auto;
+  max-height: calc(75vh - 60px);
+  padding: 10px;
+ }
+
+
+.skinTypeCheck input {
+  display: none;
+}
+
+
+.skinTypeCheck ul {
+  font-size: 15px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 15px;
+  font-weight: 500;
+  line-height: 100%;
+  font-style: normal;
+  list-style: none;
+}
+
+.skinTypeCheck label {
+  display: flex;
+  padding: 16px 20px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  border: 1px solid #DBDBDB;
+  background: #FFF;
+  cursor: pointer;
+  color: #727272;
+}
+
+.skinTypeCheck input[type="checkbox"]:checked + label {
+  color: white;
+  border: 1px solid #989898;
+  background: #878b8c;
+}
+
+
+::-webkit-scrollbar {
+  width: 2px;
+}
+
+::-webkit-scrollbar-track {
+  background: #3c3c3c;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  border: 3px solid #717171; /* 외곽 테두리 */
+}
+
+.light-mode {
+  --background-color: white;
+  --text-color: black;
+  --border-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode {
+  --background-color: rgba(44, 44, 44, 0.87);
+  --text-color: white;
+  --border-color: rgba(255, 255, 255, 0.08);
+}
+
+button {
+  margin: 10px;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+
+/* styles.css */
+.message-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 0 20px;
+}
+
+.message-container.main {
+  background-color: #313131;
+  color: white;
+}
+
+.message-container.info {
+  background-color: #454545;
+  color: #9d9d9d;
+}
+
+.message-container.other {
+  background-color: gray;
+  color: lightgray;
+}
+
+.message-container.desc, .message-container.dice{
+  padding-left: 0;
+  width: 100%;
+  color: rgb(221, 221, 221);
+  font-style: italic;
+  font-weight: bold;
+  text-align: center;
+}
+
+.message-divider {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+

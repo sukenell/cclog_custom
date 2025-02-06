@@ -1,0 +1,23 @@
+body {
+    background-color: #f5f5f5;
+    color: black;
+  }
+  
+  .sidebar {
+    background: #ddd;
+    color: black;
+  }
+  
+  .preview-panel {
+    color: black;
+  }
+  
+  hr {
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+  
+  .download-button {
+    background: #bbbbbb;
+    color: black;
+  }
+  
