@@ -4,7 +4,7 @@ const PreviewPanel = ({ fileContent, linecount, parseHtml, charColors, charHeads
   return (
     <div className="preview_panel">
       <h3>미리보기</h3>
-      <p>*각 탭의 {linecount}줄의 내용을 아래와 같이 출력합니다.</p>
+      {/* <p>*각 탭의 {linecount}줄의 내용을 아래와 같이 출력합니다.</p> */}
       <div dangerouslySetInnerHTML={{ __html: parseHtml(fileContent, charColors, charHeads, titleImages, selectedCategories) }} />
 
       <div className="download_pannel">

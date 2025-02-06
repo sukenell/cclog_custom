@@ -213,7 +213,7 @@ span {
 
 
 ::-webkit-scrollbar {
-  width: 2px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
