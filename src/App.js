@@ -4,7 +4,6 @@ import SettingsPanel from "./component//SettingsPanel";
 import PreviewPanel from "./component//PreviewPanel";
 import { handleDownload } from "./utils/FileDownload";
 import { createImageSection, processMessageTag } from "./utils/utils";
-import { successTypes } from './component/dice'
 import "./App.css";
 import "./styles/base.css";
 
@@ -22,6 +21,7 @@ function App() {
   const [selectedCategories, setSelectedCategories] = useState({ main: true, info: false, other: false });
 
 
+
   const onDownloadClick = (type) => {
     handleDownload(() => parseHtml(false), fileName, type, darkMode);
   };
@@ -31,7 +31,15 @@ function App() {
   };
   
   const handleCategoryChange = (category) => {
-    setSelectedCategories((prev) => ({ ...prev, [category]: !prev[category] }));
+    setSelectedCategories((prev) => {
+      const newCategories = { ...prev };
+      if (category === 'etc') {
+        newCategories[category] = !newCategories[category];
+      } else {
+        newCategories[category] = !newCategories[category];
+      }
+      return newCategories;
+    });
   };
   
   const handleHeadChange = (charName, url) => {
@@ -54,12 +62,11 @@ function App() {
     const inputText = event.target.value;
     setInputTexts(inputText.split(",").map(text => text.trim()));
   };
+  
 
   const titleImagesHtml = createImageSection(titleImages);
   const endImagesHtml = createImageSection(endImages);
   
-  const diceRollRegex = /^(?:s?\d{1,10}D\d{1,10}\s+\(\d{1,10}D\d{1,10}\)\s*＞\s*\d+|CC(?:\([+-]\d+\))?<=\d+)/i;
-
   const parseHtml = (limitLines = true) => {
     if (!fileContent) return "파일을 업로드하세요.";
     const parser = new DOMParser();
@@ -71,10 +78,19 @@ function App() {
 
     parsedDivs.push(titleImagesHtml);
 
-    Array.from(doc.querySelectorAll("p, div")).forEach((p) => {
-      processMessageTag(p, charHeads, charColors, selectedCategories, limitLines, linecount, count, parsedDivs, lastCharName, lastCategory, inputTexts);
-      
+    //일반 ccfolia_log 로 뽑았을시.
+    Array.from(doc.querySelectorAll("p")).forEach((p) => {
+      processMessageTag(p, charHeads, charColors, selectedCategories, limitLines, linecount, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories);
     });
+    
+    //ccfolia_log_getter 로 뽑았을시. 변환후 재동작
+    Array.from(doc.querySelectorAll("#__tab__all div")).forEach((div) => {
+      const p = document.createElement("p");
+      p.innerHTML = div.innerHTML;
+      div.parentNode.replaceChild(p, div);
+      processMessageTag(p, charHeads, charColors, selectedCategories, limitLines, linecount, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories);
+    });
+
 
     parsedDivs.push(endImagesHtml);
     
@@ -156,7 +172,7 @@ function App() {
         <input type="text" placeholder="세션 엔딩 이미지 URL 입력란" className="end_input" 
           onChange={handleEndImageChange} />
 
-        <h4>05. 시스템 스타일링 적용 캐릭터 이름 <b>(*입력한 캐릭터에게 적용 됩니다. 롤20 desc 같은)</b></h4>
+        <h4>05. 시스템 스타일링 적용 캐릭터 이름 <b>(*main탭 한정, 입력한 캐릭터에게 적용(롤20 desc))</b></h4>
         <input type="text" placeholder="스타일링 적용 캐릭터 이름 입력란" className="system_input" 
           onChange={DescChange}/>
 
