@@ -23,27 +23,7 @@ function App() {
 
 
   const onDownloadClick = (type) => {
-    handleDownload(() => parseHtml(false), fileName, type, darkMode);
-  };
-
-  const handleColorChange = (charName, color) => {
-    setCharColors((prev) => ({ ...prev, [charName]: color }));
-  };
-  
-  const handleCategoryChange = (category) => {
-    setSelectedCategories((prev) => {
-      const newCategories = { ...prev };
-      if (category === 'etc') {
-        newCategories[category] = !newCategories[category];
-      } else {
-        newCategories[category] = !newCategories[category];
-      }
-      return newCategories;
-    });
-  };
-  
-  const handleHeadChange = (charName, url) => {
-    setCharHeads((prev) => ({ ...prev, [charName]: url }));
+    handleDownload(() => parseContent(false), fileName, type, darkMode);
   };
 
   const handleTitleImageChange = (event) => {
@@ -67,6 +47,12 @@ function App() {
   const titleImagesHtml = createImageSection(titleImages);
   const endImagesHtml = createImageSection(endImages);
   
+  const parseContent = (limitLines = true) => {
+    if (!fileContent) return "파일을 업로드하세요.";
+    return typeof fileContent === "string" ? parseHtml(limitLines) : parseJson(limitLines);
+  };
+  
+
   const parseHtml = (limitLines = true) => {
     if (!fileContent) return "파일을 업로드하세요.";
     const parser = new DOMParser();
@@ -80,7 +66,7 @@ function App() {
 
     //일반 ccfolia_log 로 뽑았을시.
     Array.from(doc.querySelectorAll("p")).forEach((p) => {
-      processMessageTag(p, charHeads, charColors, selectedCategories, limitLines, linecount, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories);
+      processMessageTag(p, "html", charHeads, charColors, selectedCategories, limitLines, linecount, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories);
     });
     
     //ccfolia_log_getter 로 뽑았을시. 변환후 재동작
@@ -88,15 +74,53 @@ function App() {
       const p = document.createElement("p");
       p.innerHTML = div.innerHTML;
       div.parentNode.replaceChild(p, div);
-      processMessageTag(p, charHeads, charColors, selectedCategories, limitLines, linecount, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories);
+      processMessageTag(p, "html", charHeads, charColors, selectedCategories, limitLines, linecount, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories);
     });
-
 
     parsedDivs.push(endImagesHtml);
     
-
     return parsedDivs.length > 0 ? parsedDivs.join("") : "출력할 데이터가 없습니다.";;
   };
+
+  const parseJson = (limitLines = true) => {
+    if (!fileContent) return "파일을 업로드하세요.";
+    if (!Array.isArray(fileContent)) return "올바른 JSON 형식이 아닙니다.";
+  
+    const parsedDivs = [];
+    let count = { main: 0, info: 0, other: 0 };
+    let lastCharName = null;
+    let lastCategory = null;
+
+    // const newCharHeads = { ...charHeads }; 
+  
+    parsedDivs.push(titleImagesHtml);
+
+    fileContent.forEach((log) => {
+      const fields = log.fields;
+      if (!fields) return;
+      const category = fields.channelName?.stringValue || "other";
+      const charName = fields.name?.stringValue || "";
+      const charColors = fields.color?.stringValue || "#000000";
+      const text = fields.text?.stringValue || "";
+      const dice_text = fields.extend?.mapValue?.fields?.roll?.mapValue?.fields?.result?.stringValue || ""
+      const charHeads = fields.iconUrl?.stringValue || "";
+      const p = document.createElement("p");
+
+      // console.log(category);
+
+      p.innerHTML = `
+        <span>[${category}]</span> <span>${charName}</span> : <span> ${text+dice_text}</span>
+      `;
+  
+      processMessageTag(p, "json", charHeads, charColors, selectedCategories, limitLines, linecount, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories);
+    });
+  
+    parsedDivs.push(endImagesHtml);
+
+  
+    return parsedDivs.length > 0 ? parsedDivs.join("") : "출력할 데이터가 없습니다.";
+  };
+  
 
   useEffect(() => {
     
@@ -134,7 +158,7 @@ function App() {
     <div className="fix-layout">
       <div className="setting_container">
         <UploadSection setFileContent={setFileContent} setFileName={setFileName} />
-        {/* <SettingsPanel 
+        <SettingsPanel 
         charColors={charColors}
         setCharColors={setCharColors}
         charHeads={charHeads}
@@ -144,68 +168,27 @@ function App() {
         setTitleImages={setTitleImages}
         selectedCategories={selectedCategories}
         setSelectedCategories={setSelectedCategories}
-      /> */}
-        <div className="skinTypeCheck">
-          <h4>02. 출력 탭 선택<b>(*중복 선택 가능)</b></h4>
-          <ul>
-              {Object.keys(selectedCategories).map((category) => (
-                <li key={category}>
-                  <input
-                    type="checkbox"
-                    id={category}
-                    name="skinType"
-                    value={category}
-                    checked={selectedCategories[category]}
-                    onChange={() => handleCategoryChange(category)}
-                  />
-                  <label htmlFor={category}>{category}</label>
-                </li>
-              ))}
-          </ul>
-        </div>
-
-        <h4>03. 세션 제목 이미지 셋팅 <b>(*이미지 링크 사용. 쉼표 사용시 개행, 확장자까지 적어주세요.)</b></h4>
+      />
+      
+        <h4>04. 세션 제목 이미지 셋팅 <b>(*이미지 링크 사용. 쉼표 사용시 개행, 확장자까지 적어주세요.)</b></h4>
         <input type="text" placeholder="세션 제목 이미지 URL 입력란" className="title_input" 
           onChange={handleTitleImageChange} />
 
-        <h4>04. 세션 엔딩 이미지 셋팅 <b>(*이미지 링크 사용. 쉼표 사용시 개행, 확장자까지 적어주세요.)</b></h4>
+        <h4>05. 세션 엔딩 이미지 셋팅 <b>(*이미지 링크 사용. 쉼표 사용시 개행, 확장자까지 적어주세요.)</b></h4>
         <input type="text" placeholder="세션 엔딩 이미지 URL 입력란" className="end_input" 
           onChange={handleEndImageChange} />
 
-        <h4>05. 시스템 스타일링 적용 캐릭터 이름 <b>(*main탭 한정, 입력한 캐릭터에게 적용(롤20 desc))</b></h4>
+        <h4>06. 시스템 스타일링 적용 캐릭터 이름 <b>(*main탭 한정, 입력한 캐릭터에게 적용(롤20 desc))</b></h4>
         <input type="text" placeholder="스타일링 적용 캐릭터 이름 입력란" className="system_input" 
           onChange={DescChange}/>
 
-        <h4>06. 캐릭터 네임태그 색 설정<b>(*마지막 선택 컬러 기준. 수정시 일괄 수정됩니다)</b></h4>
-          <div className="color_div">
-          {Object.keys(charColors).map((charName) => (
-            <div key={charName} className="color_picker">
-              <span>{charName} : {""}</span>
-              <input
-                type="color"
-                className="color_link"
-                value={charColors[charName] || "#000000"}
-                onChange={(e) => handleColorChange(charName, e.target.value)}
-              />
-              <input
-                  type="text"
-                  placeholder="두상 URL"
-                  value={charHeads[charName] || ""}
-                  onChange={(e) => handleHeadChange(charName, e.target.value)}
-                  style={{
-                    
-                  }}
-                />
-            </div>
-          ))}
-          </div>
       </div>
 
       {/* 오른쪽 미리보기 패널 */}
       <PreviewPanel
         fileContent={fileContent}
         linecount={linecount}
-        parseHtml={parseHtml}
+        parseHtml={parseContent}
         charColors={charColors}
         charHeads={charHeads}
         titleImages={titleImages}

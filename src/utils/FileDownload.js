@@ -105,6 +105,7 @@ export function handleDownload(parseHtml, fileName, type, darkMode) {
       </body>
     </html>`;
 
-    downloadFile(modifiedHtml, "custom_" + fileName);
+    const cleanFileName = fileName.replace(/\.[^/.]+$/, ""); 
+    downloadFile(modifiedHtml, "custom_" + cleanFileName + ".html");
   }
 }

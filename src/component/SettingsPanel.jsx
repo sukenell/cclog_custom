@@ -7,10 +7,9 @@ const SettingsPanel = ({ charColors, setCharColors, charHeads, setCharHeads, sel
     setSelectedCategories((prev) => ({ ...prev, [category]: !prev[category] }));
   };
 
-
-  const handleTitleImageChange = (event) => {
-    setTitleImages(event.target.value);
-  };
+  // const handleTitleImageChange = (event) => {
+  //   setTitleImages(event.target.value);
+  // };
 
   return (
     <div>
@@ -32,16 +31,7 @@ const SettingsPanel = ({ charColors, setCharColors, charHeads, setCharHeads, sel
       </ul>
     </div>
 
-    <h4>03. 세션 제목 이미지</h4>
-      <input 
-        type="text"
-        className="title_input"
-        placeholder="세션 제목 이미지 URL (쉼표로 구분)" 
-        value={titleImages} 
-        onChange={handleTitleImageChange} 
-      />
-
-      <h4>06. 캐릭터 네임태그 색 설정</h4>
+      <h4>03. 캐릭터 네임태그 색 설정<b>(*json 입력시 출력되지 않습니다)</b></h4>
       <div className="color_div">
         {Object.keys(charColors).map((charName) => (
           <div key={charName} className="color_picker">

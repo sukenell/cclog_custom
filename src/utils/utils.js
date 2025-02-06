@@ -6,6 +6,7 @@ const COCdice = /^(?:s?\d{1,10}D\d{1,10}\s+\(\d{1,10}D\d{1,10}\)\s*＞\s*\d+|CC(
 const DXDdice = /^(?:\(\d+\+\d+\)dx\s+\(\d{1,10}DX\d{1,10}\))$/i;
 const InSanedice = /^\d{1,10}D\d{1,10}>=\d+$/i;
 
+//타이틀, 엔딩 이미지
 export const createImageSection = (images) => {
     if (!Array.isArray(images)) return "";
     return `
@@ -21,9 +22,11 @@ export const createImageSection = (images) => {
       </div>
     `;
   };
-  export const processMessageTag = (p, charHeads, charColors, selectedCategories, limitLines, linecount, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories) => {
+
+  //본문
+  export const processMessageTag = (p, type, charHeads, charColors, selectedCategories, limitLines, linecount, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories) => {
     const spans = p.getElementsByTagName("span");
-    if (spans.length < 2) return; // 유효하지 않은 메시지는 처리하지 않음
+    if (spans.length < 2) return;
 
     const category = spans[0].textContent.trim().replace(/\[|\]/g, "").toLowerCase();
     const charName = spans[1].textContent.trim();
@@ -38,13 +41,15 @@ export const createImageSection = (images) => {
     let imgTag = "";
     let backgroundColor = "";
     let displayType = "flex";
-    const imgUrl = charHeads[charName] || "";
+    const imgUrl = (type == "json")? charHeads || "" : charHeads[charName] || "";
+
+    // console.log(charColors);
 
     // 스타일 및 UI 설정 함수
     const applyCategoryStyles = () => {
         p.style.color = category === "other" ? "gray" : category === "info" ? "#9d9d9d" : "#dddddd";
-        if (category !== "other" && charColors[charName]) {
-            spans[1].style.color = charColors[charName];
+        if (category !== "other" && charColors) {
+            spans[1].style.color = (type == "json") ? charColors : charColors[charName];
         }
     };
 
@@ -62,17 +67,23 @@ export const createImageSection = (images) => {
         }
     };
 
-    const cleanUpText = () => {
+    const cleanUpText_first = () => {
         const firstTrim = spans[0].nextSibling?.textContent.trim();
         if (firstTrim === ":") {
             spans[0].nextSibling.textContent = "";
         }
-        
     };
+
+    const cleanUpText_second = () => {
+      const firstTrim = spans[1].nextSibling?.textContent.trim();
+      if (firstTrim === ":") {
+          spans[1].nextSibling.textContent = "";
+      }
+  };
 
     applyCategoryStyles();
     handleConsecutiveMessages();
-    cleanUpText();
+    cleanUpText_first();
 
     // 카테고리별 UI 처리
     switch (category) {
@@ -87,6 +98,7 @@ export const createImageSection = (images) => {
                       </div>`;
             backgroundColor = "#464646";
             spans[1].innerHTML = "";
+            cleanUpText_second();
             break;
         case "main":
             //desc
@@ -97,12 +109,9 @@ export const createImageSection = (images) => {
                 p.style.textAlign = "center";
                 spans[1].innerHTML = "";
                 displayType = "flow-root";
-                const nextText = spans[1].nextSibling.textContent.trim();
-                if (nextText === ":") {
-                  spans[1].nextSibling.textContent = "";
-                }
+                cleanUpText_second();
             } else if (COCdice.test(spans[2].textContent.trim())){
-const dice_text = ` <span style=" background: black; color: white; display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold;text-align: center;bletter-spacing: -1px;">
+            const dice_text = ` <span style=" background: black; color: white; display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold;text-align: center;bletter-spacing: -1px;">
             ${spans[1].innerText} - 판정 </span>`;
             p.style.paddingLeft = "0";
             spans[1].innerHTML = "";
@@ -111,10 +120,7 @@ const dice_text = ` <span style=" background: black; color: white; display: inli
             p.style.fontStyle = "italic";
             p.style.fontWeight = "bold";
             p.style.textAlign = "center";
-            const nextText = spans[1].nextSibling.textContent.trim();
-            if (nextText === ":") {
-              spans[1].nextSibling.textContent = "";
-            }
+            cleanUpText_second();
             const text = spans[2].textContent.trim();
 
             //COC
@@ -136,6 +142,10 @@ const dice_text = ` <span style=" background: black; color: white; display: inli
             if (spans.length >= 3 && category !== "other" && category !== "info") {
                 backgroundColor = "#525569";
                 if (COCdice.test(spans[2].textContent.trim())) {
+                    const nextText = spans[1].nextSibling.textContent.trim();
+                    if (nextText === ":") {
+                      spans[1].nextSibling.textContent = "";
+                    }
                     const diceText = `<span style="background: black; color: white; display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold;text-align: center;">
                                       ${spans[1].innerText} - 판정 </span>`;
                     p.style.paddingLeft = "0";
@@ -165,8 +175,6 @@ const dice_text = ` <span style=" background: black; color: white; display: inli
             }
             break;
     }
-
-    // HTML 생성
     const messageHtml = `
     <div style="display: ${displayType}; align-items: center; gap: 15px; padding: 0 20px; background-color: ${backgroundColor};">
         ${imgTag ? `<div style="width: 40px; height: 40px; background: rgba(0, 0, 0, 0.2); border-radius: 5px; display: flex; align-items: center; justify-content: center;">${imgTag}</div>` : ""}
