@@ -23,16 +23,32 @@ export const createImageSection = (images) => {
     `;
   };
 
+
+  const translateCategory = (category) => {
+    const categoryMap = {
+        "메인": "main",
+        "정보": "info",
+        "잡담": "other",
+        "メイン": "main",
+        "情報": "info",
+        "雑談":"other",
+      };
+    return categoryMap[category] ?? category;
+  };
+
   //본문
   export const processMessageTag = (p, type, charHeads, charColors, selectedCategories, limitLines, linecount, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories) => {
     const spans = p.getElementsByTagName("span");
+
     if (spans.length < 2) return;
 
-    const category = spans[0].textContent.trim().replace(/\[|\]/g, "").toLowerCase();
+    const category = translateCategory(spans[0].textContent.trim().replace(/\[|\]/g, "").toLowerCase());
+
+    console.log(translateCategory(spans[0].textContent));
+
     const charName = spans[1].textContent.trim();
     spans[0].textContent = "";
 
-    // 선택된 카테고리에 추가
     if (!(category in selectedCategories)) {
         setSelectedCategories(prev => ({ ...prev, [category]: true }));
         count[category] = 0;
@@ -81,18 +97,21 @@ export const createImageSection = (images) => {
       }
   };
 
+
     applyCategoryStyles();
     handleConsecutiveMessages();
     cleanUpText_first();
 
+
+
     // 카테고리별 UI 처리
-    switch (category) {
-        case "other":
+    switch (true) {
+        case category === "other":
             imgTag = "";
             backgroundColor = "#4c4c4c";
             p.style.paddingLeft = "55px";
             break;
-        case "info":
+        case category === "info":
             imgTag = `<div style="width: 40px; height: 40px; background: #4d4d4d; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
                         <span style="color: #8d8d8d; font-size: 14px;"> 정보 </span>
                       </div>`;
@@ -100,7 +119,7 @@ export const createImageSection = (images) => {
             spans[1].innerHTML = "";
             cleanUpText_second();
             break;
-        case "main":
+        case category === "main":
             //desc
             if (inputTexts.includes(spans[1].textContent)) {
                 p.style.display = "flow-root";
@@ -137,6 +156,13 @@ export const createImageSection = (images) => {
           ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">`
           : `<img style="width: 40px; border-radius: 5px;">`;
             }
+            break;
+        case /^비밀\(.+\)$/.test(category):
+            const secret_txt = `
+            <span style="background: #464646; color: white; display: inline-block; padding: 10px 9px; border-radius: 5px; font-size: 14px; text-align: center;"> 비밀 </span>`;
+            spans[0].insertAdjacentHTML("beforebegin", secret_txt+'&nbsp');
+            // spans[1].insertAdjacentHTML("beforebegin", " ");
+            backgroundColor = "#525569";
             break;
         default:
             if (spans.length >= 3 && category !== "other" && category !== "info") {
