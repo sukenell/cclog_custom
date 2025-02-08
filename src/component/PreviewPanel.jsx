@@ -13,7 +13,7 @@ const PreviewPanel = ({ fileContent, linecount, parseHtml, charColors, charHeads
             <button onClick={() => onDownloadClick("html")} className="down_btn">
               다운로드(HTML)
             </button>
-            {/* <button onClick={() => alert("PDF 기능은 개발 중입니다")} className="down_btn">
+            {/* <button onClick={() => onDownloadClick("pdf")} className="down_btn">
               다운로드(PDF)
             </button> */}
           </>

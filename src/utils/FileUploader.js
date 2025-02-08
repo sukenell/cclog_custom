@@ -4,6 +4,7 @@ import React from "react";
 function FileUploader({ setFileContent, setFileName }) {
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
+    
     if (file) {
       setFileName(file.name);
       const reader = new FileReader();
@@ -25,8 +26,11 @@ function FileUploader({ setFileContent, setFileName }) {
   };
 
   return (
+    <div>
     <div className="file_upload">
       <input type="file" accept=".html,.json" onChange={handleFileUpload} />
+      {/* <label>룸 번호: <input type="text"/> <button>ㅅㄷ</button></label> */}
+    </div>
     </div>
   );
 }

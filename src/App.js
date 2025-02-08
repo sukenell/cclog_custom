@@ -4,6 +4,7 @@ import SettingsPanel from "./component//SettingsPanel";
 import PreviewPanel from "./component//PreviewPanel";
 import { handleDownload } from "./utils/FileDownload";
 import { createImageSection, processMessageTag } from "./utils/utils";
+// import "locales/i18n";
 import "./App.css";
 import "./styles/base.css";
 
@@ -19,7 +20,6 @@ function App() {
   const [darkMode, setDarkMode] = useState(true); 
   const [inputTexts, setInputTexts] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState({ main: true, info: false, other: false });
-
 
 
   const onDownloadClick = (type) => {
@@ -52,6 +52,7 @@ function App() {
     return typeof fileContent === "string" ? parseHtml(limitLines) : parseJson(limitLines);
   };
   
+
 
   const parseHtml = (limitLines = true) => {
     if (!fileContent) return "파일을 업로드하세요.";

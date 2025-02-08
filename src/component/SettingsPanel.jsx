@@ -1,35 +1,46 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "../App.css";
 import "../styles/base.css";
 
 const SettingsPanel = ({ charColors, setCharColors, charHeads, setCharHeads, selectedCategories, setSelectedCategories, titleImages, setTitleImages }) => {
+  
+  const categoryLabels = {
+    main: "메인",
+    info: "정보",
+    other: "잡담"
+  };
+
+  useEffect(() => {
+    const resetCategories = Object.keys(categoryLabels).reduce((acc, key) => {
+      acc[key] = selectedCategories[key] || false;
+      return acc;
+    }, {});
+    setSelectedCategories(resetCategories);
+  }, [Object.keys(categoryLabels).join(",")]); // 카테고리가 변경될 때만 실행
+
   const handleCategoryChange = (category) => {
     setSelectedCategories((prev) => ({ ...prev, [category]: !prev[category] }));
   };
 
-  // const handleTitleImageChange = (event) => {
-  //   setTitleImages(event.target.value);
-  // };
-
   return (
     <div>
-    <div className="skinTypeCheck">
-      <h4>02. 출력 탭 선택<b>(*중복 선택 가능)</b></h4>
-      <ul>
-        {Object.keys(selectedCategories).map((category) => (
-          <li key={category}>
-            <input
-              type="checkbox"
-              id={category}
-              value={category}
-              checked={selectedCategories[category]}
-              onChange={() => handleCategoryChange(category)}
-            />
-            <label htmlFor={category}>{category}</label>
-          </li>
-        ))}
-      </ul>
-    </div>
+      <div className="skinTypeCheck">
+        <h4>02. 출력 탭 선택<b>(*중복 선택 가능)</b></h4>
+        <ul>
+          {Object.keys(selectedCategories).map((category) => (
+            <li key={category}>
+              <input
+                type="checkbox"
+                id={category}
+                value={category}
+                checked={selectedCategories[category]}
+                onChange={() => handleCategoryChange(category)}
+              />
+              <label htmlFor={category}>{categoryLabels[category] || category}</label>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <h4>03. 캐릭터 네임태그 색 설정<b>(*json 입력시 출력되지 않습니다)</b></h4>
       <div className="color_div">
