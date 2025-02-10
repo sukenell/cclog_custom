@@ -100,6 +100,9 @@ export function handleDownload(parseHtml, fileName, type, darkMode) {
       <head>
         <style>
           ${style}
+            span:before {
+            display: none !important ;
+          }
         </style>
       </head>
       <body>

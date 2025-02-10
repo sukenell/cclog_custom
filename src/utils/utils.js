@@ -20,9 +20,12 @@ export const createImageSection = (images) => {
         "메인": "main",
         "정보": "info",
         "잡담": "other",
-        "メイン": "main",
+        "メイン" : "main",
         "情報": "info",
-        "雑談":"other",
+        "雑談": "other",
+        "主要" : "main",
+        "信息": "info",
+        "闲聊": "other",
       };
     return categoryMap[category] ?? category;
   };
@@ -89,7 +92,8 @@ export const createImageSection = (images) => {
     handleConsecutiveMessages();
     cleanUpText_first();
 
-    // 카테고리별 UI 처리
+    const secretPattern = new RegExp(`^${t('preview.secret')}\\(.+\\)$`);
+
     switch (true) {
         case category === "other":
             imgTag = "";
@@ -142,11 +146,10 @@ export const createImageSection = (images) => {
           : `<img style="width: 40px; border-radius: 5px;">`;
             }
             break;
-        case /^비밀\(.+\)$/.test(category):
+        case secretPattern.test(category):
             const secret_txt = `
             <span style="background: #464646; color: white; display: inline-block; padding: 10px 9px; border-radius: 5px; font-size: 14px; text-align: center;"> ${t('preview.secret')}  </span>`;
             spans[0].insertAdjacentHTML("beforebegin", secret_txt+'&nbsp');
-            // spans[1].insertAdjacentHTML("beforebegin", " ");
             backgroundColor = "#525569";
             break;
         default:
