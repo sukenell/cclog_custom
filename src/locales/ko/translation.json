@@ -1,29 +1,53 @@
-// {
-//     "setting": {
-//       "language": "한국어(기본)",
-//       "title": "채팅 로그 커스텀",
-//       "warning_txt": "*커스텀 하지 않은 코코포리아 로그 외에는 인식하지 않습니다",
-//       "Howtouse": "(사용법)",
-//       "file_upload": "파일 업로드",
-//       "help": "(*현재는 html/json만 지원합니다)"
-//       "" : "파일 선택",
-//       "" : "출력탭 선택(*중복 선택 가능)",
-//       "main" : "메인",
-//       "info" : "정보",
-//       "other" : "잡담",
-//       "" : "세션 제목 이미지 셋팅",
-//       "" : "세션 제목 이미지 URL 입력란",
-//       "" : "세션 엔딩 이미지 셋팅",
-//       "" : "세션 엔딩 이미지 URL 입력란",
-//       "" : "이미지 링크 사용, 쉼표 사용시 개행. 확장자까지 적어주세요.",
-//       "" : "시스템 스타일링 적용 캐릭터(*main 탭 한정, 입력한 캐릭터에게 적용(롤20 desc같은))",
-//       "" : "스타일링 적용 캐릭터 이름 입력란",
-//       "" : "",
-//     },
-//     "preview": {
-//       "dashboard": "미리보기",
-//       "shopping-mall": "파일을 업로드하세요.",
-//       "download_html": "다운로드(HTML)",
-//       "download_pdf": "다운로드(PDF)"
-//     }
-//   }
+{
+    "setting": {
+      "select_lang" : "언어 선택",
+      "language": "한국어",
+      "title": "채팅 로그 커스텀",
+      "warning_txt": "커스텀 하지 않은 코코포리아 로그 외에는 인식하지 않습니다",
+      "Howtouse": "사용법",
+      "file_upload": "파일 업로드",
+      "help": "(*html만 지원)",
+      "room_log_1" : "룸 로그 불러오기",
+      "room_log_2" : "(*룸 주소를 입력하세요)",
+      "file" : "파일 선택",
+      "none_file" : "선택된 파일이 없습니다",
+      "room_input" : "룸 정보 입력",
+      "ok" : "확인",
+      "tab_select" : "출력 탭 선택",
+      "multiple" : "중복 선택 가능",
+      "main" : "메인",
+      "info" : "정보",
+      "other" : "잡담",
+      "cha_color" : "캐릭터 네임태그 색 설정",
+      "warning_txt2" : "룸 정보로 가져올 경우, 나타나지 않습니다.",
+      "title_img" : "세션 제목 이미지 셋팅",
+      "end_img" : "세션 엔딩 이미지 셋팅",
+      "warning_txt3" : "쉼표시 개행, 확장자까지 주소를 모두 적어주세요.",
+      "system_cha" : "시스템 스타일링 적용 캐릭터 이름",
+      "limit_txt" : "main탭 한정",
+      "loading" : "로딩 중...",
+      "file_type" : "올바른 파일 형식이 아닙니다",
+      "input_plz" : "로그를 가져올, 코코포리아 룸 주소를 입력하세요.",
+      "none_log" : "해당 로그를 찾을 수 없습니다.",
+      "err_txt" : "데이터를 가져오는 중 오류 발생:",
+      "console_errer" : "데이터를 불러오는 중 오류가 발생했습니다."
+    },
+    "preview": {
+      "preview": "미리보기",
+      "secret" : "비밀",
+      "judgment" : "판정",
+      "file_upload": "파일을 업로드하세요.",
+      "download_html": "다운로드(HTML)",
+      "download_pdf": "다운로드(PDF)"
+    },
+    "dice_result": {
+        "critical": "대성공",
+        "extreme": "극단적 성공",
+        "amazing" : "대단한 성공",
+        "hard": "어려운 성공",
+        "regular": "보통 성공",
+        "fumble": "대실패",
+        "failure": "실패"
+      }
+    
+  }

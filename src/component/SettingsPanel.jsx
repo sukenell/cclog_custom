@@ -2,12 +2,12 @@ import React, { useEffect } from "react";
 import "../App.css";
 import "../styles/base.css";
 
-const SettingsPanel = ({ charColors, setCharColors, charHeads, setCharHeads, selectedCategories, setSelectedCategories, titleImages, setTitleImages }) => {
+const SettingsPanel = ({ t, charColors, setCharColors, charHeads, setCharHeads, selectedCategories, setSelectedCategories, titleImages, setTitleImages }) => {
   
   const categoryLabels = {
-    main: "메인",
-    info: "정보",
-    other: "잡담"
+    main: t("setting.main"),
+    info: t("setting.info"),
+    other: t("setting.other"),
   };
 
   useEffect(() => {
@@ -16,7 +16,7 @@ const SettingsPanel = ({ charColors, setCharColors, charHeads, setCharHeads, sel
       return acc;
     }, {});
     setSelectedCategories(resetCategories);
-  }, [Object.keys(categoryLabels).join(",")]); // 카테고리가 변경될 때만 실행
+  }, [Object.keys(categoryLabels).join(",")]);
 
   const handleCategoryChange = (category) => {
     setSelectedCategories((prev) => ({ ...prev, [category]: !prev[category] }));
@@ -25,7 +25,7 @@ const SettingsPanel = ({ charColors, setCharColors, charHeads, setCharHeads, sel
   return (
     <div>
       <div className="skinTypeCheck">
-        <h4>02. 출력 탭 선택<b>(*중복 선택 가능)</b></h4>
+        <h4>02. {t("setting.tab_select")}<b>(*{t("setting.multiple")})</b></h4>
         <ul>
           {Object.keys(selectedCategories).map((category) => (
             <li key={category}>
@@ -42,7 +42,7 @@ const SettingsPanel = ({ charColors, setCharColors, charHeads, setCharHeads, sel
         </ul>
       </div>
 
-      <h4>03. 캐릭터 네임태그 색 설정<b>(*json 입력시 출력되지 않습니다)</b></h4>
+      <h4>03. {t("setting.cha_color")}<b>(*{t("setting.warning_txt2")})</b></h4>
       <div className="color_div">
         {Object.keys(charColors).map((charName) => (
           <div key={charName} className="color_picker">
@@ -54,7 +54,7 @@ const SettingsPanel = ({ charColors, setCharColors, charHeads, setCharHeads, sel
             />
             <input
               type="text"
-              placeholder="두상 URL"
+              placeholder="URL"
               value={charHeads[charName] || ""}
               onChange={(e) => setCharHeads((prev) => ({ ...prev, [charName]: e.target.value }))}
             />

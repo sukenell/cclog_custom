@@ -1,0 +1,52 @@
+{
+  "setting": {
+    "select_lang" : "语言",
+    "language": "中文(默认)",
+    "title": "聊天日志自定义",
+    "warning_txt": "*仅支持未自定义的Cocofolia日志",
+    "Howtouse": "使用方法",
+    "file_upload": "文件上传",
+    "help": "(*仅支持HTML)",
+    "room_log_1": "加载房间日志",
+    "room_log_2": "(*请输入房间URL)",
+    "file": "选择文件",
+    "none_file": "未选择文件",
+    "room_input": "输入房间信息",
+    "ok": "确认",
+    "tab_select": "选择输出标签",
+    "multiple": "可多选",
+    "main" : "主要",
+    "info" : "信息",
+    "other" : "闲聊",
+    "cha_color": "角色姓名标签颜色设置",
+    "warning_txt2": "从房间信息获取时不会显示。",
+    "title_img": "设置会话标题图片",
+    "end_img": "设置会话结束图片",
+    "warning_txt3": "逗号表示换行，填写完整的URL包括扩展名。",
+    "system_cha": "应用系统样式的角色名称",
+    "limit_txt": "仅限Main标签",
+    "loading": "加载中...",
+    "file_type": "无效的文件格式。",
+    "input_plz": "请输入 CCFolia 房间 URL 以获取日志。",
+    "none_log": "未找到日志。",
+    "err_txt": "获取数据时发生错误：",
+    "console_error": "加载数据时发生错误。"
+  },
+  "preview": {
+    "preview": "预览",
+    "secret" : "秘密",
+    "judgment" : "判定",
+    "file_upload": "请上传文件。",
+    "download_html": "下载(HTML)",
+    "download_pdf": "下载(PDF)"
+  },
+  "dice_result": {
+  "critical": "决定性成功",
+  "amazing": "惊人成功",
+  "extreme": "极限成功",
+  "hard": "困难成功",
+  "regular": "普通成功",
+  "fumble": "大失败",
+  "failure": "失败"
+}
+}

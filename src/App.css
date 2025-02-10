@@ -240,13 +240,20 @@ span {
 
 button {
   margin: 10px;
-  padding: 10px;
+  /* padding: 10px; */
   border: none;
   cursor: pointer;
 }
 
+input {
+  margin: 10px;
+}
 
-/* styles.css */
+.room_number {
+  padding: 10px;
+}
+
+
 .message-container {
   display: flex;
   align-items: center;

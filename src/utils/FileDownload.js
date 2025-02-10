@@ -1,7 +1,4 @@
 import jsPDF from "jspdf";
-// import html2canvas from "html2canvas";
-// import font from "./NotoSansCJK-Regular-normal.js";
-
 
 export function downloadFile(content, fileName) {
   const blob = new Blob([content], { type: "text/html" });
@@ -13,56 +10,66 @@ export function downloadFile(content, fileName) {
   document.body.removeChild(link);
 }
 
+export function downloadPDF(parseHtml, fileName, darkMode, chunkSize = 1000) {
 
-export function downloadPDF(parseHtml, fileName, darkMode) {
-  const tempDiv = document.createElement("div");
-  tempDiv.style.position = "absolute";
+  const content = parseHtml(darkMode);
+  const chunks = splitContent(content, chunkSize);
+  chunks.forEach((chunk, index) => {
+    const tempDiv = document.createElement("div");
+    tempDiv.style.position = "absolute";
+    tempDiv.style.width = "800px";
+    tempDiv.style.padding = "20px";
+    tempDiv.style.backgroundColor = darkMode ? "#2c2c2cde" : "white"
+    tempDiv.style.color = darkMode ? "gray" : "black";
+    tempDiv.style.fontFamily = "'Noto Sans KR', sans-serif";
+    
+    tempDiv.innerHTML = `
+      <html>
+        <head>
+          <style>
+          </style>
+        </head>
+        <body>
+          ${chunk}
+        </body>
+      </html>
+    `;
 
-  tempDiv.style.width = "800px";
-  tempDiv.style.padding = "20px";
-  // tempDiv.style.backgroundColor = darkMode ? "#2c2c2cde" : "white";
-  tempDiv.style.color = darkMode ? "gray" : "black";
-  tempDiv.style.fontFamily = "'Noto Sans KR', sans-serif";
+    document.body.appendChild(tempDiv);
 
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+      compress: true
+    });
 
-  tempDiv.innerHTML = `
-    <html>
-      <head>
-        <style>
-        
-        </style>
-      </head>
-      <body>
-        ${parseHtml(darkMode)}
-      </body>
-    </html>
-  `;
+    pdf.setFont("helvetica");
 
-  document.body.appendChild(tempDiv);
+    const cleanFileName = fileName.replace(/\.[^/.]+$/, ""); 
 
-  const pdf = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a4",
-    compress: true
-  });
-
-   pdf.setFont("helvetica");
-
-  const cleanFileName = fileName.replace(/\.[^/.]+$/, ""); 
-
-  pdf.html(tempDiv, {
-    callback: function (doc) {
-      doc.save("custom_" + cleanFileName + ".pdf");
-      document.body.removeChild(tempDiv);
-    },
-    x: 10,
-    y: 10,
-    width: 190,
-    windowWidth: tempDiv.scrollWidth
+    pdf.html(tempDiv, {
+      callback: function (doc) {
+        doc.save(`${cleanFileName}_part${index + 1}.pdf`);
+        document.body.removeChild(tempDiv);
+      },
+      x: 10,
+      y: 10,
+      width: 190,
+      windowWidth: tempDiv.scrollWidth
+    });
   });
 }
 
+function splitContent(content, chunkSize) {
+  const chunks = [];
+  let currentIndex = 0;
+  while (currentIndex < content.length) {
+    chunks.push(content.slice(currentIndex, currentIndex + chunkSize));
+    currentIndex += chunkSize;
+  }
+  return chunks;
+}
 
 export function handleDownload(parseHtml, fileName, type, darkMode) {
   if (type === "pdf") {

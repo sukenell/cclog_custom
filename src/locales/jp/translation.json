@@ -1,0 +1,52 @@
+{
+  "setting": {
+    "select_lang" : "言語",
+    "language": "日本語(デフォルト)",
+    "title": "チャットログ カスタム",
+    "warning_txt": "ccfolia - log, 以外は認識しません",
+    "Howtouse": "使い方",
+    "file_upload": "ファイルアップロード",
+    "help": "(*HTMLのみ対応)",
+    "room_log_1": "ルームログを読み込む",
+    "room_log_2": "(*ルームのURLを入力してください)",
+    "file": "ファイルを選択",
+    "none_file": "選択されたファイルがありません",
+    "room_input": "ルーム情報を入力",
+    "ok": "確認",
+    "tab_select": "出力タブを選択",
+    "multiple": "複数選択可能",
+    "main" : "メイン",
+    "info" : "情報",
+    "other" : "雑談",
+    "cha_color": "キャラクター名タグの色設定",
+    "warning_txt2": "ルーム情報から取得する場合は適用されません。",
+    "title_img": "セッションタイトル画像設定",
+    "end_img": "セッションエンディング画像設定",
+    "warning_txt3": "カンマで改行、拡張子まで含むURLを記入してください。",
+    "system_cha": "システムスタイリングを適用するキャラクター名",
+    "limit_txt": "メインタブのみ適用",
+    "loading": "読み込み中...",
+    "file_type": "無効なファイル形式です。",
+    "input_plz": "ログを取得するために、ココフォリアのルームURLを入力してください。",
+    "none_log": "該当するログが見つかりません。",
+    "err_txt": "データの取得中にエラーが発生しました:",
+    "console_error": "データの読み込み中にエラーが発生しました。"
+  },
+  "preview": {
+    "preview": "プレビュー",
+    "secret" : "秘匿",
+    "judgment" : "判定",
+    "file_upload": "「ファイルをアップロードしてください。」",
+    "download_html": "ダウンロード(HTML)",
+    "download_pdf": "ダウンロード(PDF)"
+  },
+  "dice_result": {
+      "critical": "スペシャル",
+      "amazing": "決定的成功/スペシャル",
+      "extreme": "決定的成功",
+      "hard": "困難な成功",
+      "regular": "成功",
+      "fumble": "致命的失",
+      "failure": "失敗"
+    }
+}

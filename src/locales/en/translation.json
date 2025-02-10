@@ -1,29 +1,53 @@
-// {
-//     "setting": {
-//       "language": "Languages",
-//       "title": "채팅 로그 커스텀",
-//       "warning_txt": "*커스텀 하지 않은 코코포리아 로그 외에는 인식하지 않습니다",
-//       "Howtouse": "(사용법)",
-//       "file_upload": "파일 업로드",
-//       "help": "(*현재는 html/json만 지원합니다)"
-//       "" : "파일 선택",
-//       "" : "출력탭 선택(*중복 선택 가능)",
-//       "main" : "메인",
-//       "info" : "정보",
-//       "other" : "잡담",
-//       "" : "세션 제목 이미지 셋팅",
-//       "" : "세션 제목 이미지 URL 입력란",
-//       "" : "세션 엔딩 이미지 셋팅",
-//       "" : "세션 엔딩 이미지 URL 입력란",
-//       "" : "이미지 링크 사용, 쉼표 사용시 개행. 확장자까지 적어주세요.",
-//       "" : "시스템 스타일링 적용 캐릭터(*main 탭 한정, 입력한 캐릭터에게 적용(롤20 desc같은))",
-//       "" : "스타일링 적용 캐릭터 이름 입력란",
-//       "" : "",
-//     },
-//     "preview": {
-//       "dashboard": "미리보기",
-//       "shopping-mall": "파일을 업로드하세요.",
-//       "download_html": "다운로드(HTML)",
-//       "download_pdf": "다운로드(PDF)"
-//     }
-//   }
+  {
+    "setting": {
+      "select_lang" : "Languages",
+      "language": "English",
+      "title": "Custom chat log",
+      "warning_txt": "I don't recognize anything but ccfolia logs without customization",
+      "Howtouse": "How to use",
+      "file_upload": "upload file",
+      "help": "(*Only HTML supported)",
+      "room_log_1": "Load Room Log",
+      "room_log_2": "(*Enter room URL)",
+      "file": "Select File",
+      "none_file": "No file selected",
+      "room_input": "Enter Room Info",
+      "ok": "OK",
+      "tab_select": "Select Output Tab",
+      "multiple": "Multiple Selection Available",
+      "main" : "main",
+      "info" : "info",
+      "other" : "other",
+      "cha_color": "Character Name Tag Color",
+      "warning_txt2": "Not applicable when loading from room info.",
+      "title_img": "Set Session Title Image",
+      "end_img": "Set Session Ending Image",
+      "warning_txt3": "Use commas for line breaks, include full URL with extension.",
+      "system_cha": "Character Name for System Styling",
+      "limit_txt": "Only for Main tab",
+      "loading": "Loading...",
+      "file_type": "Invalid file format.",
+      "input_plz": "Please enter the CCFolia room URL to retrieve logs.",
+      "none_log": "No logs found.",
+      "err_txt": "An error occurred while fetching data:",
+      "console_error": "An error occurred while loading data."
+
+    },
+    "preview": {
+      "preview": "preview",
+      "secret" : "secret",
+      "judgment" : "Judgment",
+      "file_upload": "upload the file",
+      "download_html": "Download (HTML)",
+      "download_pdf": "download (PDF)"
+    },
+    "dice_result": {
+        "critical": "Critical Success",
+        "amazing" : "Amazing amazing",
+        "extreme": "Extreme Success",
+        "hard": "Hard Success",
+        "regular": "Regular Success",
+        "fumble": "Fumble",
+        "failure": "Failure"
+      }
+  }

@@ -1,16 +1,38 @@
-import React from "react";
-import FileUploader from "../utils/FileUploader.js"
+import React, { useState } from "react";
+import FileUploader from "../utils/FileUploader.js";
+import i18n from "../locales/i18n.ts";
 
-const UploadSection = ({ setFileContent, setFileName }) => {
+const UploadSection = ({ setFileContent, setFileName, t }) => {
+  const [language, setLanguage] = useState(i18n.language || "ko");
+
+
+  const handleLanguageChange = (event) => {
+    const selectedLanguage = event.target.value;
+    setLanguage(selectedLanguage);
+    i18n.changeLanguage(selectedLanguage);
+  };
+
+
   return (
     <div>
-      <h2>CCFolia 채팅 로그 커스텀</h2>
+      <h2>CCFolia {t("setting.title")}</h2>
       <p>
-        *커스텀 하지 않은 코코포리아 로그 외에는 인식하지 않습니다{" "}
-        <a href="https://www.postype.com/@nell-dev/post/18656933">(사용법)</a>
+        *{t("setting.warning_txt")}{" "}
+        <a href="https://www.postype.com/@nell-dev/post/18656933">({t("setting.Howtouse")})</a>
       </p>
-      <h4>01. 파일 업로드 <b>(*현재는 html/json만 지원합니다)</b></h4>
-      <FileUploader setFileContent={setFileContent} setFileName={setFileName} />
+      <div>
+      <label htmlFor="language-select">{t("setting.select_lang")}: </label>
+        <select id="language-select"  onChange={handleLanguageChange}>
+          <option value="ko" >한국어</option>
+          <option value="en" >English</option>
+          <option value="jp">日本語</option>
+          <option value="zh">中文</option>
+        </select>
+      </div>
+
+      <h4>01.{t("setting.file_upload")} <b>{t("setting.help")}</b> | or | {t("setting.room_log_1")} <b>{t("setting.room_log_2")}</b></h4>
+      <FileUploader t={t} setFileContent={setFileContent} setFileName={setFileName} />
+
     </div>
   );
 };

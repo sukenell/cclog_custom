@@ -1,12 +1,5 @@
-import { successTypes } from '../component/dice'
+import { COCdice, getDiceTypes } from '../component/dice'
 
-
-//C=
-const COCdice = /^(?:s?\d{1,10}D\d{1,10}\s+\(\d{1,10}D\d{1,10}\)\s*＞\s*\d+|CC(?:\([+-]\d+\))?<=\d+)/i;
-const DXDdice = /^(?:\(\d+\+\d+\)dx\s+\(\d{1,10}DX\d{1,10}\))$/i;
-const InSanedice = /^\d{1,10}D\d{1,10}>=\d+$/i;
-
-//타이틀, 엔딩 이미지
 export const createImageSection = (images) => {
     if (!Array.isArray(images)) return "";
     return `
@@ -22,8 +15,6 @@ export const createImageSection = (images) => {
       </div>
     `;
   };
-
-
   const translateCategory = (category) => {
     const categoryMap = {
         "메인": "main",
@@ -35,16 +26,15 @@ export const createImageSection = (images) => {
       };
     return categoryMap[category] ?? category;
   };
-
-  //본문
-  export const processMessageTag = (p, type, charHeads, charColors, selectedCategories, limitLines, linecount, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories) => {
+  
+  export const processMessageTag = (p, type, t, charHeads, charColors, selectedCategories, limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories) => {    
+    
+    const successTypes = getDiceTypes(t);
     const spans = p.getElementsByTagName("span");
 
     if (spans.length < 2) return;
 
     const category = translateCategory(spans[0].textContent.trim().replace(/\[|\]/g, "").toLowerCase());
-
-    console.log(translateCategory(spans[0].textContent));
 
     const charName = spans[1].textContent.trim();
     spans[0].textContent = "";
@@ -58,8 +48,6 @@ export const createImageSection = (images) => {
     let backgroundColor = "";
     let displayType = "flex";
     const imgUrl = (type == "json")? charHeads || "" : charHeads[charName] || "";
-
-    // console.log(charColors);
 
     // 스타일 및 UI 설정 함수
     const applyCategoryStyles = () => {
@@ -97,12 +85,9 @@ export const createImageSection = (images) => {
       }
   };
 
-
     applyCategoryStyles();
     handleConsecutiveMessages();
     cleanUpText_first();
-
-
 
     // 카테고리별 UI 처리
     switch (true) {
@@ -113,7 +98,7 @@ export const createImageSection = (images) => {
             break;
         case category === "info":
             imgTag = `<div style="width: 40px; height: 40px; background: #4d4d4d; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
-                        <span style="color: #8d8d8d; font-size: 14px;"> 정보 </span>
+                        <span style="color: #8d8d8d; font-size: 14px;"> ${t('setting.info')} </span>
                       </div>`;
             backgroundColor = "#464646";
             spans[1].innerHTML = "";
@@ -131,7 +116,7 @@ export const createImageSection = (images) => {
                 cleanUpText_second();
             } else if (COCdice.test(spans[2].textContent.trim())){
             const dice_text = ` <span style=" background: black; color: white; display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold;text-align: center;bletter-spacing: -1px;">
-            ${spans[1].innerText} - 판정 </span>`;
+            ${spans[1].innerText} - ${t('preview.judgment')} </span>`;
             p.style.paddingLeft = "0";
             spans[1].innerHTML = "";
             displayType = "flow-root"
@@ -159,7 +144,7 @@ export const createImageSection = (images) => {
             break;
         case /^비밀\(.+\)$/.test(category):
             const secret_txt = `
-            <span style="background: #464646; color: white; display: inline-block; padding: 10px 9px; border-radius: 5px; font-size: 14px; text-align: center;"> 비밀 </span>`;
+            <span style="background: #464646; color: white; display: inline-block; padding: 10px 9px; border-radius: 5px; font-size: 14px; text-align: center;"> ${t('preview.secret')}  </span>`;
             spans[0].insertAdjacentHTML("beforebegin", secret_txt+'&nbsp');
             // spans[1].insertAdjacentHTML("beforebegin", " ");
             backgroundColor = "#525569";
@@ -173,7 +158,7 @@ export const createImageSection = (images) => {
                       spans[1].nextSibling.textContent = "";
                     }
                     const diceText = `<span style="background: black; color: white; display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold;text-align: center;">
-                                      ${spans[1].innerText} - 판정 </span>`;
+                                      ${spans[1].innerText} - ${t('preview.judgment')} </span>`;
                     p.style.paddingLeft = "0";
                     spans[1].innerHTML = "";
                     displayType = "flow-root";
@@ -209,7 +194,6 @@ export const createImageSection = (images) => {
     <hr style="margin: 0; padding: 0; border: 0; flex-shrink: 0; border-top: 1px solid rgba(255, 255, 255, 0.08);">
     `;
 
-    //&& count[category] < linecount
     if ((!limitLines && selectedCategories[category]) || (limitLines && selectedCategories[category])) {
         parsedDivs.push(messageHtml);
         count[category]++;
