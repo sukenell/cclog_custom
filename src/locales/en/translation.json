@@ -39,7 +39,8 @@
       "judgment" : "Judgment",
       "file_upload": "upload the file",
       "download_html": "Download (HTML)",
-      "download_pdf": "download (PDF)"
+      "download_Tstory": "Download (Tstory log)",
+      "download_pdf": "Download (PDF)"
     },
     "dice_result": {
         "critical": "Critical Success",

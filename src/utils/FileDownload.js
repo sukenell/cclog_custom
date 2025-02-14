@@ -10,6 +10,52 @@ export function downloadFile(content, fileName) {
   document.body.removeChild(link);
 }
 
+export const main_style = `
+
+.ccfolia_wrap {
+  position: relative;
+  padding: 10px !important;
+  background-color: #2c2c2cde;
+  color: #fefefe;
+}
+.msg_container {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.msg_container img {
+width: 40px;
+}
+
+span:before {
+  display: none !important ;
+}
+`;
+
+const gap_style =`
+.gap{
+align-items: center;
+gap: 15px;
+padding: 0 20px;
+}
+`;
+
+const T_gap_style =`
+.gap{
+align-items: center;
+gap: 15px;
+padding: 8px 20px;
+}
+`;
+
+
 export function downloadPDF(parseHtml, fileName, darkMode, chunkSize = 1000) {
 
   const content = parseHtml(darkMode);
@@ -27,6 +73,7 @@ export function downloadPDF(parseHtml, fileName, darkMode, chunkSize = 1000) {
       <html>
         <head>
           <style>
+              ${main_style}
           </style>
         </head>
         <body>
@@ -75,38 +122,18 @@ export function handleDownload(parseHtml, fileName, type, darkMode) {
   if (type === "pdf") {
     downloadPDF(parseHtml, fileName, darkMode);
   } else {
-    const style = darkMode ? `
-      :root {
-        --background-color: rgba(44, 44, 44, 0.87);
-        --text-color: white;
-      }
-      body {
-        background-color: var(--background-color);
-        color: var(--text-color);
-      }
-    ` : `
-      :root {
-        --background-color: white;
-        --text-color: black;
-      }
-      body {
-        background-color: var(--background-color);
-        color: var(--text-color);
-      }
-    `;
-
     const modifiedHtml = `
     <html>
       <head>
         <style>
-          ${style}
-            span:before {
-            display: none !important ;
-          }
+          ${main_style}
+          ${type === "Tstory" ? T_gap_style : gap_style}
         </style>
       </head>
       <body>
-        ${parseHtml(darkMode)}
+        <div class="ccfolia_wrap">
+          ${parseHtml(darkMode)}
+        </div>
       </body>
     </html>`;
 

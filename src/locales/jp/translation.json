@@ -38,6 +38,7 @@
     "judgment" : "判定",
     "file_upload": "「ファイルをアップロードしてください。」",
     "download_html": "ダウンロード(HTML)",
+    "download_Tstory": "ダウンロード (Tstory log)",
     "download_pdf": "ダウンロード(PDF)"
   },
   "dice_result": {

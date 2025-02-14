@@ -48,7 +48,7 @@ export const createImageSection = (images) => {
     }
 
     let imgTag = "";
-    let backgroundColor = "";
+    let backgroundColor = "transparent";
     let displayType = "flex";
     const imgUrl = (type == "json")? charHeads || "" : charHeads[charName] || "";
 
@@ -190,8 +190,8 @@ export const createImageSection = (images) => {
             break;
     }
     const messageHtml = `
-    <div style="display: ${displayType}; align-items: center; gap: 15px; padding: 0 20px; background-color: ${backgroundColor};">
-        ${imgTag ? `<div style="width: 40px; height: 40px; background: rgba(0, 0, 0, 0.2); border-radius: 5px; display: flex; align-items: center; justify-content: center;">${imgTag}</div>` : ""}
+    <div class="gap" style="display: ${displayType}; background-color: ${backgroundColor};">
+        ${imgTag ? `<div class="msg_container">${imgTag}</div>` : ""}
         ${p.outerHTML}
     </div>
     <hr style="margin: 0; padding: 0; border: 0; flex-shrink: 0; border-top: 1px solid rgba(255, 255, 255, 0.08);">

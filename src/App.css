@@ -81,6 +81,38 @@ span {
   height: 95vh;
 }
 
+.ccfolia_wrap {
+  position: relative;
+  padding: 10px !important;
+  background-color: #2c2c2cde;
+  color: #fefefe;
+}
+.msg_container {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.msg_container img {
+width: 40px;
+/* 추가 */
+image-rendering: -webkit-optimize-contrast; 
+transform: translateZ(0);
+backface-visibility: hidden;
+}
+
+.gap{
+align-items: center;
+gap: 15px;
+padding: 0 20px;
+}
+
 .file_upload{
   margin: 20px;
 }

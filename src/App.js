@@ -8,6 +8,7 @@ import i18n from "./locales/i18n.ts";
 import { useTranslation } from 'react-i18next';
 import "./App.css";
 import "./styles/base.css";
+import { main_style } from "./utils/FileDownload.js"; 
 
 
 function App() {
@@ -120,6 +121,10 @@ function App() {
 
   useEffect(() => {
     
+    const styleTag = document.createElement("style");
+    styleTag.innerHTML = main_style;
+    document.head.appendChild(styleTag);
+
     document.body.style.backgroundColor = "rgba(44, 44, 44, 0.87)";
     if (fileContent) {
       const parser = new DOMParser();
@@ -151,6 +156,7 @@ function App() {
     };
 
   return (
+    
     <div className="fix-layout">
       <div className="setting_container">
         <UploadSection setFileContent={setFileContent} setFileName={setFileName} t={t} />

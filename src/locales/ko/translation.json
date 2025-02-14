@@ -38,6 +38,7 @@
       "judgment" : "판정",
       "file_upload": "파일을 업로드하세요.",
       "download_html": "다운로드(HTML)",
+      "download_Tstory": "다운로드(Tstory 백업용)",
       "download_pdf": "다운로드(PDF)"
     },
     "dice_result": {
