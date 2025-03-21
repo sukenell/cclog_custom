@@ -12,6 +12,16 @@ export function downloadFile(content, fileName) {
 
 export const main_style = `
 
+p{
+  margin: 0;
+}
+
+b{
+  color: gray;
+    font-size: 9pt;
+    font-weight: 200;
+}
+
 .ccfolia_wrap {
   position: relative;
   padding: 10px !important;
@@ -41,17 +51,35 @@ span:before {
 
 const gap_style =`
 .gap{
-align-items: center;
 gap: 15px;
-padding: 0 20px;
+display: flex;
+-webkit-box-pack: start;
+justify-content: flex-start;
+align-items: flex-start;
+position: relative;
+text-decoration: none;
+width: 100%;
+box-sizing: border-box;
+text-align: left;
+padding: 16px 16px;
 }
 `;
 
+
+
 const T_gap_style =`
 .gap{
-align-items: center;
 gap: 15px;
-padding: 8px 20px;
+display: flex;
+-webkit-box-pack: start;
+justify-content: flex-start;
+align-items: flex-start;
+position: relative;
+text-decoration: none;
+width: 100%;
+box-sizing: border-box;
+text-align: left;
+padding: 16px 16px;
 }
 `;
 

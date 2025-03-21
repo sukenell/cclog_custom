@@ -107,10 +107,32 @@ transform: translateZ(0);
 backface-visibility: hidden;
 }
 
+p{
+  margin: 0;
+}
+
 .gap{
-align-items: center;
+/* align-items: center;
 gap: 15px;
-padding: 0 20px;
+padding: 0 20px; */
+
+gap: 15px;
+display: flex;
+-webkit-box-pack: start;
+justify-content: flex-start;
+align-items: flex-start;
+position: relative;
+text-decoration: none;
+width: 100%;
+box-sizing: border-box;
+text-align: left;
+padding: 16px 16px;
+}
+
+b{
+  color: gray;
+    font-size: 9pt;
+    font-weight: 200;
 }
 
 .file_upload{

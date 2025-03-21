@@ -4,7 +4,6 @@ import SettingsPanel from "./component//SettingsPanel";
 import PreviewPanel from "./component//PreviewPanel";
 import { handleDownload } from "./utils/FileDownload";
 import { createImageSection, processMessageTag } from "./utils/utils";
-import i18n from "./locales/i18n.ts";
 import { useTranslation } from 'react-i18next';
 import "./App.css";
 import "./styles/base.css";
@@ -20,13 +19,15 @@ function App() {
   const [charHeads, setCharHeads] = useState({});
   const [titleImages, setTitleImages] = useState([]);
   const [endImages, setEndImages] = useState([]);
-  const [darkMode, setDarkMode] = useState(true); 
+  // const [darkMode, setDarkMode] = useState(true); 
   const [inputTexts, setInputTexts] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState({ main: true, info: false, other: false });
+  const [diceEnabled, setDiceEnabled] = useState(true);
+  const [secretEnabled, setSecretEnabled] = useState(false);
 
 
   const onDownloadClick = (type) => {
-    handleDownload(() => parseContent(false), fileName, type, darkMode);
+    handleDownload(() => parseContent(false), fileName, type);
   };
 
   const handleTitleImageChange = (event) => {
@@ -43,9 +44,8 @@ function App() {
 
   const DescChange = (event) => {
     const inputText = event.target.value;
-    setInputTexts(inputText.split(",").map(text => text.trim()));
+    setInputTexts(inputText.split(",").map(text => text)); // trim() 제거로 공백도 인식 가능하게 수정.
   };
-  
 
   const titleImagesHtml = createImageSection(titleImages);
   const endImagesHtml = createImageSection(endImages);
@@ -67,15 +67,17 @@ function App() {
 
     //일반 ccfolia_log 로 뽑았을시.
     Array.from(doc.querySelectorAll("p")).forEach((p) => {
-      processMessageTag(p, "html", t, charHeads, charColors, selectedCategories, limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories);
+      processMessageTag(p, "html", t, charHeads, charColors, diceEnabled, setDiceEnabled, secretEnabled, setSecretEnabled,
+        limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, selectedCategories, setSelectedCategories);
     });
     
-    //양식이 다른 경우에도 변환 후 재동작
+    //파이어 베이스에서 메세지 가져 왔을시, 변환 후 재동작
     Array.from(doc.querySelectorAll("#__tab__all div")).forEach((div) => {
       const p = document.createElement("p");
       p.innerHTML = div.innerHTML;
       div.parentNode.replaceChild(p, div);
-      processMessageTag(p, "html", t, charHeads, charColors, selectedCategories, limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories);
+      processMessageTag(p, "html", t, charHeads, charColors, diceEnabled, setDiceEnabled, secretEnabled, setSecretEnabled,
+        limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, selectedCategories, setSelectedCategories);
     });
 
     parsedDivs.push(endImagesHtml);
@@ -98,23 +100,31 @@ function App() {
       const fields = log.fields;
       if (!fields) return;
       const category = fields.channelName?.stringValue || "other";
-      const charName = fields.name?.stringValue || "";
+      const charName = fields.name?.stringValue === "" ? "NONAME" : fields.name?.stringValue || "";
       const charColors = fields.color?.stringValue || "#000000";
-      const text = fields.text?.stringValue || "";
+      const text = fields.text?.stringValue?.replace(/\n/g, "<br>") || "";
       const dice_text = fields.extend?.mapValue?.fields?.roll?.mapValue?.fields?.result?.stringValue || ""
       const charHeads = fields.iconUrl?.stringValue || "";
       const p = document.createElement("p");
+      let createdAt = "";
+
+      if (fields.createdAt?.timestampValue) {
+          const datePart = fields.createdAt.timestampValue.split("T")[0];
+          const [year, month, day] = datePart.split("-");
+          createdAt = ` - ${year}/${month}/${day}`;
+      }
 
       p.innerHTML = `
-        <span>[${category}]</span> <span>${charName}</span> : <span> ${text+dice_text}</span>
+        <span>[${category}]</span> <span>${charName}</span><b>${createdAt}</b> : <span> ${text+dice_text}</span>
       `;
   
-      processMessageTag(p, "json", t, charHeads, charColors, selectedCategories, limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories);
+
+
+      processMessageTag(p, "json", t, charHeads, charColors, diceEnabled, setDiceEnabled, secretEnabled, setSecretEnabled,
+        limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, selectedCategories, setSelectedCategories);
     });
   
     parsedDivs.push(endImagesHtml);
-
-  
     return parsedDivs.length > 0 ? parsedDivs.join("") : "출력할 데이터가 없습니다.";
   };
   
@@ -171,17 +181,21 @@ function App() {
         setTitleImages={setTitleImages}
         selectedCategories={selectedCategories}
         setSelectedCategories={setSelectedCategories}
+        diceEnabled={diceEnabled}
+        setDiceEnabled={setDiceEnabled}
+        secretEnabled={secretEnabled}
+        setSecretEnabled={setSecretEnabled}
       />
       
-        <h4>04. {t("setting.title_img")} <b>(*{t("setting.warning_txt3")})</b></h4>
+        <h4>05. {t("setting.title_img")} <b>(*{t("setting.warning_txt3")})</b></h4>
         <input type="text" placeholder="URL" className="title_input" 
           onChange={handleTitleImageChange} />
 
-        <h4>05. {t("setting.end_img")} <b>(*{t("setting.warning_txt3")})</b></h4>
+        <h4>06. {t("setting.end_img")} <b>(*{t("setting.warning_txt3")})</b></h4>
         <input type="text" placeholder="URL" className="end_input" 
           onChange={handleEndImageChange} />
 
-        <h4>06. {t("setting.system_cha")} <b>(*{t("setting.limit_txt")})</b></h4>
+        <h4>07. {t("setting.system_cha")} <b>(*{t("setting.limit_txt")})</b></h4>
         <input type="text" placeholder="Name Input" className="system_input" 
           onChange={DescChange}/>
 
@@ -195,6 +209,8 @@ function App() {
         charHeads={charHeads}
         titleImages={titleImages}
         selectedCategories={selectedCategories}
+        diceEnabled={diceEnabled}
+        secretEnabled={secretEnabled}
         onDownloadClick={onDownloadClick}
       />
       </div>

@@ -30,7 +30,8 @@ export const createImageSection = (images) => {
     return categoryMap[category] ?? category;
   };
   
-  export const processMessageTag = (p, type, t, charHeads, charColors, selectedCategories, limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, setSelectedCategories) => {    
+  export const processMessageTag = (p, type, t, charHeads, charColors, diceEnabled, setDiceEnabled, secretEnabled, setSecretEnabled,
+     limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, selectedCategories, setSelectedCategories) => {    
     
     const successTypes = getDiceTypes(t);
     const spans = p.getElementsByTagName("span");
@@ -50,13 +51,13 @@ export const createImageSection = (images) => {
     let imgTag = "";
     let backgroundColor = "transparent";
     let displayType = "flex";
-    const imgUrl = (type == "json")? charHeads || "" : charHeads[charName] || "";
+    const imgUrl = (type === "json")? charHeads || "" : charHeads[charName] || "";
 
     // 스타일 및 UI 설정 함수
     const applyCategoryStyles = () => {
         p.style.color = category === "other" ? "gray" : category === "info" ? "#9d9d9d" : "#dddddd";
         if (category !== "other" && charColors) {
-            spans[1].style.color = (type == "json") ? charColors : charColors[charName];
+            spans[1].style.color = (type === "json") ? charColors : charColors[charName];
         }
     };
 
@@ -82,15 +83,39 @@ export const createImageSection = (images) => {
     };
 
     const cleanUpText_second = () => {
-      const firstTrim = spans[1].nextSibling?.textContent.trim();
-      if (firstTrim === ":") {
-          spans[1].nextSibling.textContent = "";
-      }
-  };
+        if (spans[1]) {
+            const bTag = spans[1].parentNode.querySelector("b");
+            if (bTag) {
+                bTag.remove();
+            }
+            const firstTrim = spans[1].nextSibling?.textContent.trim();
+            if (firstTrim === ":") {
+                spans[1].nextSibling.textContent = "";
+            }
+        }
+    };
+    
+
+    const cleanUpText_third = () => {
+        let nextNode = spans[1]?.nextSibling;
+        if (nextNode?.nodeType === Node.ELEMENT_NODE && nextNode.tagName === "B") {
+            nextNode = nextNode.nextSibling;
+        }
+        if (nextNode && nextNode.nodeType === Node.TEXT_NODE) {
+            const updatedText = nextNode.textContent.replace(/:/g, "<br>");
+            const newSpan = document.createElement("span");
+            newSpan.innerHTML = updatedText;
+            nextNode.replaceWith(newSpan);
+        }
+    };
+    
+
+
 
     applyCategoryStyles();
     handleConsecutiveMessages();
     cleanUpText_first();
+    
 
     const secretPattern = new RegExp(`^${t('preview.secret')}\\(.+\\)$`);
 
@@ -98,7 +123,15 @@ export const createImageSection = (images) => {
         case category === "other":
             imgTag = "";
             backgroundColor = "#4c4c4c";
-            p.style.paddingLeft = "55px";
+            p.style.paddingLeft = "48px";
+            p.style.margin = "8px";
+
+            if (spans[1]) {
+                const bTag = spans[1].parentNode.querySelector("b");
+                if (bTag) {
+                    bTag.remove();
+                }
+            }
             break;
         case category === "info":
             imgTag = `<div style="width: 40px; height: 40px; background: #4d4d4d; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
@@ -115,10 +148,11 @@ export const createImageSection = (images) => {
                 p.style.fontStyle = "italic";
                 p.style.fontWeight = "bold";
                 p.style.textAlign = "center";
+                p.style.margin = "8px";
                 spans[1].innerHTML = "";
                 displayType = "flow-root";
                 cleanUpText_second();
-            } else if (COCdice.test(spans[2].textContent.trim())){
+            } else if (diceEnabled && COCdice.test(spans[2].textContent.trim())){
             const dice_text = ` <span style=" background: black; color: white; display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold;text-align: center;bletter-spacing: -1px;">
             ${spans[1].innerText} - ${t('preview.judgment')} </span>`;
             p.style.paddingLeft = "0";
@@ -128,6 +162,7 @@ export const createImageSection = (images) => {
             p.style.fontStyle = "italic";
             p.style.fontWeight = "bold";
             p.style.textAlign = "center";
+            p.style.margin = "8px";
             cleanUpText_second();
             const text = spans[2].textContent.trim();
 
@@ -145,12 +180,21 @@ export const createImageSection = (images) => {
           ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">`
           : `<img style="width: 40px; border-radius: 5px;">`;
             }
+            cleanUpText_third();
             break;
+        //비밀탭
         case secretPattern.test(category):
             const secret_txt = `
-            <span style="background: #464646; color: white; display: inline-block; padding: 10px 9px; border-radius: 5px; font-size: 14px; text-align: center;"> ${t('preview.secret')}  </span>`;
-            spans[0].insertAdjacentHTML("beforebegin", secret_txt+'&nbsp');
+            <span style="background: #464646; color: white; display: inline-block; padding: 10px 9px; border-radius: 5px; font-size: 14px; text-align: center;">
+            ${t('preview.secret')}  </span>`;
+            if(secretEnabled){
+                imgTag = imgUrl
+                ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">`
+                : `<img style="width: 40px; border-radius: 5px;">`;} else {
+                spans[0].insertAdjacentHTML("beforebegin", secret_txt+'&nbsp');
+            }
             backgroundColor = "#525569";
+            cleanUpText_third();
             break;
         default:
             if (spans.length >= 3 && category !== "other" && category !== "info") {
@@ -179,7 +223,11 @@ export const createImageSection = (images) => {
                             break;
                         }
                     }
-                }
+                } else if(secretEnabled){
+                    imgTag = imgUrl
+                    ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">`
+                    : `<img style="width: 40px; border-radius: 5px;">`;}
+                
             } else {
                 spans[1].style.fontWeight = "bold";
                 backgroundColor = "#3b3b3b";
@@ -187,6 +235,7 @@ export const createImageSection = (images) => {
                     ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">`
                     : `<img style="width: 40px; border-radius: 5px;">`;
             }
+            cleanUpText_third();
             break;
     }
     const messageHtml = `
