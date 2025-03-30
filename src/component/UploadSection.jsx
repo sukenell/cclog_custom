@@ -18,7 +18,7 @@ const UploadSection = ({ setFileContent, setFileName, t }) => {
       <h2>CCFolia {t("setting.title")}</h2>
       <p>
         *{t("setting.warning_txt")}{" "}
-        <a href="https://www.postype.com/@nell-dev/post/18656933">({t("setting.Howtouse")})</a>
+        <a href="https://www.postype.com/@reha-dev/post/18656933">({t("setting.Howtouse")})</a>
       </p>
       <div>
       <label htmlFor="language-select">{t("setting.select_lang")}: </label>

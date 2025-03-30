@@ -4,4 +4,4 @@
 ##### 사이트
 https://sukenell.github.io/cclog_custom/
 ##### 사용법
-https://www.postype.com/@nell-dev/post/18656933
+https://www.postype.com/@reha-dev/post/18656933
