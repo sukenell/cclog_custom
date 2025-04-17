@@ -22,6 +22,16 @@ b{
     font-weight: 200;
 }
 
+  span, b {
+    font-size: 16px;
+    font-family: 'Arial', sans-serif;
+    line-height: 1.5;
+  }
+
+  b {
+    font-weight: bold;
+  }
+
 .ccfolia_wrap {
   position: relative;
   padding: 10px !important;
@@ -100,6 +110,7 @@ export function downloadPDF(parseHtml, fileName, darkMode, chunkSize = 1000) {
     tempDiv.innerHTML = `
       <html>
         <head>
+        <meta charset="UTF-8">
           <style>
               ${main_style}
           </style>
@@ -153,6 +164,7 @@ export function handleDownload(parseHtml, fileName, type, darkMode) {
     const modifiedHtml = `
     <html>
       <head>
+      <meta charset="UTF-8">
         <style>
           ${main_style}
           ${type === "Tstory" ? T_gap_style : gap_style}
