@@ -111,6 +111,8 @@ export function downloadPDF(parseHtml, fileName, darkMode, chunkSize = 1000) {
       <html>
         <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
           <style>
               ${main_style}
           </style>
