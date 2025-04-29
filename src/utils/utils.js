@@ -177,7 +177,7 @@ export const createImageSection = (images) => {
             } else {
               spans[1].style.fontWeight = "bold";
               imgTag = imgUrl
-          ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">`
+          ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; object-position: top center; border-radius: 5px;">`
           : `<img style="width: 40px; border-radius: 5px;">`;
             }
             cleanUpText_third();
@@ -189,7 +189,7 @@ export const createImageSection = (images) => {
             ${t('preview.secret')}  </span>`;
             if(secretEnabled){
                 imgTag = imgUrl
-                ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">`
+                ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; object-position: top center; border-radius: 5px;">`
                 : `<img style="width: 40px; border-radius: 5px;">`;} else {
                 spans[0].insertAdjacentHTML("beforebegin", secret_txt+'&nbsp');
             }
@@ -225,14 +225,14 @@ export const createImageSection = (images) => {
                     }
                 } else if(secretEnabled){
                     imgTag = imgUrl
-                    ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">`
+                    ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; object-position: top center; border-radius: 5px;">`
                     : `<img style="width: 40px; border-radius: 5px;">`;}
                 
             } else {
                 spans[1].style.fontWeight = "bold";
                 backgroundColor = "#3b3b3b";
                 imgTag = imgUrl
-                    ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">`
+                    ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; object-position: top center; border-radius: 5px;">`
                     : `<img style="width: 40px; border-radius: 5px;">`;
             }
             cleanUpText_third();
