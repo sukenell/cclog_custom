@@ -9,7 +9,6 @@ import "./App.css";
 import "./styles/base.css";
 import { main_style } from "./utils/FileDownload.js"; 
 
-
 function App() {
 
   const { t } = useTranslation();
@@ -26,27 +25,24 @@ function App() {
   const [secretEnabled, setSecretEnabled] = useState(false);
 
 
+  //함수 모음
   const onDownloadClick = (type) => {
     handleDownload(() => parseContent(false), fileName, type);
   };
-
   const handleTitleImageChange = (event) => {
     const inputText = event.target.value;
     const urls = inputText.split(",").map(url => url.trim()).filter(url => url);
     setTitleImages(urls);
   };
-
   const handleEndImageChange = (event) => {
     const inputText = event.target.value;
     const urls = inputText.split(",").map(url => url.trim()).filter(url => url);
     setEndImages(urls);
   };
-
   const DescChange = (event) => {
     const inputText = event.target.value;
     setInputTexts(inputText.split(",").map(text => text)); // trim() 제거로 공백도 인식 가능하게 수정.
   };
-
   const titleImagesHtml = createImageSection(titleImages);
   const endImagesHtml = createImageSection(endImages);
   
@@ -118,8 +114,6 @@ function App() {
         <span>[${category}]</span> <span>${charName}</span><b>${createdAt}</b> : <span> ${text+dice_text}</span>
       `;
   
-
-
       processMessageTag(p, "json", t, charHeads, charColors, diceEnabled, setDiceEnabled, secretEnabled, setSecretEnabled,
         limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, selectedCategories, setSelectedCategories);
     });
