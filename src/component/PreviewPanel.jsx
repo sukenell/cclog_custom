@@ -1,10 +1,15 @@
 import React from "react";
 
-const PreviewPanel = ({ t, fileContent, parseHtml, charColors, charHeads, titleImages, selectedCategories, onDownloadClick, diceEnabled, secretEnabled }) => {
+const PreviewPanel = ({ t, fileContent, parseHtml, charColors, charHeads, titleImages,
+  selectedCategories, onDownloadClick,
+  diceEnabled, secretEnabled,
+  tabColorEnabled, setTabColorEnabled, setTabColor,  tabColors}) => {
+
+    
   return (
     <div className="preview_panel">
       <h3>{t("preview.preview")}</h3>
-      <div dangerouslySetInnerHTML={{ __html: parseHtml(fileContent, charColors, charHeads, titleImages, selectedCategories) }} />
+      <div dangerouslySetInnerHTML={{ __html: parseHtml(fileContent, charColors, tabColors, charHeads, titleImages, selectedCategories) }} />
       <div className="download_pannel">
         {fileContent && (
           <>

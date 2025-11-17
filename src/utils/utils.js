@@ -30,8 +30,12 @@ export const createImageSection = (images) => {
     return categoryMap[category] ?? category;
   };
   
-  export const processMessageTag = (p, type, t, charHeads, charColors, diceEnabled, setDiceEnabled, secretEnabled, setSecretEnabled,
-     limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, selectedCategories, setSelectedCategories) => {    
+  export const processMessageTag = (p, type, t, charHeads, charColors,
+        diceEnabled, setDiceEnabled,
+        secretEnabled, setSecretEnabled,
+        tabColorEnabled, setTabColorEnabled,
+        tabColors, setTabColor,
+        limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, selectedCategories, setSelectedCategories) => {    
     
     const successTypes = getDiceTypes(t);
     const spans = p.getElementsByTagName("span");
@@ -193,12 +197,12 @@ export const createImageSection = (images) => {
                 : `<img style="width: 40px; border-radius: 5px;">`;} else {
                 spans[0].insertAdjacentHTML("beforebegin", secret_txt+'&nbsp');
             }
-            backgroundColor = "#525569";
+            backgroundColor = tabColors?.[category] || "#525569";
             cleanUpText_third();
             break;
         default:
             if (spans.length >= 3 && category !== "other" && category !== "info") {
-                backgroundColor = "#525569";
+                backgroundColor = tabColors?.[category] || "#525569";
                 if (COCdice.test(spans[2].textContent.trim())) {
                     const nextText = spans[1].nextSibling.textContent.trim();
                     if (nextText === ":") {
@@ -230,7 +234,7 @@ export const createImageSection = (images) => {
                 
             } else {
                 spans[1].style.fontWeight = "bold";
-                backgroundColor = "#3b3b3b";
+                backgroundColor = tabColors?.[category] || "#3b3b3b";
                 imgTag = imgUrl
                     ? `<img src="${imgUrl}" alt="${charName}" style="width: 40px; height: 40px; object-fit: cover; object-position: top center; border-radius: 5px;">`
                     : `<img style="width: 40px; border-radius: 5px;">`;

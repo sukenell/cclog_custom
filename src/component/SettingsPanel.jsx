@@ -2,8 +2,12 @@ import React, {useEffect, useMemo } from "react";
 import "../App.css";
 import "../styles/base.css";
 
-const SettingsPanel = ({ t, charColors, setCharColors, charHeads, setCharHeads, selectedCategories, setSelectedCategories,
-  diceEnabled, setDiceEnabled, secretEnabled, setSecretEnabled, titleImages, setTitleImages }) => {
+const SettingsPanel = ({ t, charColors, setCharColors, tabColors, charHeads, setCharHeads,
+  selectedCategories, setSelectedCategories,
+  diceEnabled, setDiceEnabled,
+  secretEnabled, setSecretEnabled,
+  tabColorEnabled, setTabColorEnabled, setTabColor,
+  titleImages, setTitleImages }) => {
   
     const categoryLabels = useMemo(() => ({
       main: t("setting.main"),
@@ -11,20 +15,10 @@ const SettingsPanel = ({ t, charColors, setCharColors, charHeads, setCharHeads, 
       other: t("setting.other"),
     }), [t]);
 
+    const excludeColorInput = ["main", "info", "other"];
+
     useEffect(() => {
-    }, [diceEnabled, secretEnabled]);
-
-  // useEffect(() => {
-  
-  //   const resetCategories = Object.keys(categoryLabels).reduce((acc, key) => {
-  //     acc[key] = selectedCategories[key] || false;
-  //     return acc;
-  //   }, {});
-
-  //   if (JSON.stringify(selectedCategories) !== JSON.stringify(resetCategories)) {
-  //     setSelectedCategories(resetCategories);
-  //   }
-  // }, [JSON.stringify(categoryLabels), diceEnabled, secretEnabled]);
+    }, [diceEnabled, secretEnabled, tabColorEnabled]);
 
   const handleCategoryChange = (category) => {
     setSelectedCategories((prev) => ({ ...prev,
@@ -34,7 +28,10 @@ const SettingsPanel = ({ t, charColors, setCharColors, charHeads, setCharHeads, 
   const toggles = [
     { id: "diceToggle", state: diceEnabled, setState: setDiceEnabled, label: "Dice 스타일링 적용" },
     { id: "secretToggle", state: secretEnabled, setState: setSecretEnabled, label: "기타 탭 스탠딩 적용" },
+    { id: "tabColorToggle", state: tabColorEnabled, setState: setTabColorEnabled, label: "탭 별 컬러 지정 설정" },
   ];
+
+
 
   return (
     <div>
@@ -42,6 +39,7 @@ const SettingsPanel = ({ t, charColors, setCharColors, charHeads, setCharHeads, 
         <h4>02. {t("setting.tab_select")}<b>(*{t("setting.multiple")})</b></h4>
         <ul>
           {Object.keys(selectedCategories).map((category) => (
+
             <li key={category}>
               <input
                 type="checkbox"
@@ -51,6 +49,21 @@ const SettingsPanel = ({ t, charColors, setCharColors, charHeads, setCharHeads, 
                 onChange={() => handleCategoryChange(category)}
               />
               <label htmlFor={category}>{categoryLabels[category] || category}</label>
+              {!excludeColorInput.includes(category) && tabColorEnabled && (
+              <input
+              type="color"
+              style={{
+              display: "block",
+              width: "50%",
+              height: "15px",
+              padding: 0,
+              border: "none",
+              cursor: "pointer",
+        }}
+              value={tabColors?.[category] || "#525569"}
+              onChange={(e) => setTabColor((prev) => ({ ...prev, [category]: e.target.value }))}
+            />
+            )}
             </li>
           ))}
         </ul>

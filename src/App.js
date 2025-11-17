@@ -23,7 +23,8 @@ function App() {
   const [selectedCategories, setSelectedCategories] = useState({ main: true, info: false, other: false });
   const [diceEnabled, setDiceEnabled] = useState(true);
   const [secretEnabled, setSecretEnabled] = useState(false);
-
+  const [tabColorEnabled, setTabColorEnabled] = useState(false);
+  const [TabColor, setTabColor] = useState({});
 
   //함수 모음
   const onDownloadClick = (type) => {
@@ -63,7 +64,11 @@ function App() {
 
     //일반 ccfolia_log 로 뽑았을시.
     Array.from(doc.querySelectorAll("p")).forEach((p) => {
-      processMessageTag(p, "html", t, charHeads, charColors, diceEnabled, setDiceEnabled, secretEnabled, setSecretEnabled,
+      processMessageTag(p, "html", t, charHeads, charColors,
+        diceEnabled, setDiceEnabled,
+        secretEnabled, setSecretEnabled,
+        tabColorEnabled, setTabColorEnabled,
+        TabColor, setTabColor,
         limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, selectedCategories, setSelectedCategories);
     });
     
@@ -72,7 +77,11 @@ function App() {
       const p = document.createElement("p");
       p.innerHTML = div.innerHTML;
       div.parentNode.replaceChild(p, div);
-      processMessageTag(p, "html", t, charHeads, charColors, diceEnabled, setDiceEnabled, secretEnabled, setSecretEnabled,
+      processMessageTag(p, "html", t, charHeads, charColors,
+        diceEnabled, setDiceEnabled,
+        secretEnabled, setSecretEnabled,
+        tabColorEnabled, setTabColorEnabled,
+        TabColor, setTabColor,
         limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, selectedCategories, setSelectedCategories);
     });
 
@@ -101,6 +110,7 @@ function App() {
       const text = fields.text?.stringValue?.replace(/\n/g, "<br>") || "";
       const dice_text = fields.extend?.mapValue?.fields?.roll?.mapValue?.fields?.result?.stringValue || ""
       const charHeads = fields.iconUrl?.stringValue || "";
+      // const tabColors = "#525569";
       const p = document.createElement("p");
       let createdAt = "";
 
@@ -114,9 +124,13 @@ function App() {
         <span>[${category}]</span> <span>${charName}</span><b>${createdAt}</b> : <span> ${text+dice_text}</span>
       `;
   
-      processMessageTag(p, "json", t, charHeads, charColors, diceEnabled, setDiceEnabled, secretEnabled, setSecretEnabled,
+      processMessageTag(p, "json", t, charHeads, charColors,
+        diceEnabled, setDiceEnabled,
+        secretEnabled, setSecretEnabled,
+        tabColorEnabled, setTabColorEnabled,
+        TabColor, setTabColor,
         limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, selectedCategories, setSelectedCategories);
-    });
+    }); 
   
     parsedDivs.push(endImagesHtml);
     return parsedDivs.length > 0 ? parsedDivs.join("") : "출력할 데이터가 없습니다.";
@@ -179,6 +193,10 @@ function App() {
         setDiceEnabled={setDiceEnabled}
         secretEnabled={secretEnabled}
         setSecretEnabled={setSecretEnabled}
+        tabColorEnabled={tabColorEnabled}
+        setTabColorEnabled={setTabColorEnabled}
+        tabColors={TabColor}
+        setTabColor={setTabColor}
       />
       
         <h4>05. {t("setting.title_img")} <b>(*{t("setting.warning_txt3")})</b></h4>
@@ -206,6 +224,10 @@ function App() {
         diceEnabled={diceEnabled}
         secretEnabled={secretEnabled}
         onDownloadClick={onDownloadClick}
+        tabColorEnabled={tabColorEnabled}
+        setTabColorEnabled={setTabColorEnabled}
+        tabColors={TabColor}
+        setTabColor={setTabColor}
       />
       </div>
   );
