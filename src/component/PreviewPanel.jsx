@@ -1,29 +1,15 @@
-import React from "react";
+import EditItem from "./EditItem";
 
-const PreviewPanel = ({ t, fileContent, parseHtml, charColors, charHeads, titleImages,
-  selectedCategories, onDownloadClick,
-  diceEnabled, secretEnabled,
-  tabColorEnabled, setTabColorEnabled, setTabColor,  tabColors}) => {
-
-    
+export default function PreviewPanel({ messages, updateMessage }) {
   return (
-    <div className="preview_panel">
-      <h3>{t("preview.preview")}</h3>
-      <div dangerouslySetInnerHTML={{ __html: parseHtml(fileContent, charColors, tabColors, charHeads, titleImages, selectedCategories) }} />
-      <div className="download_pannel">
-        {fileContent && (
-          <>
-            <button onClick={() => onDownloadClick("html")} className="down_btn">
-            {t("preview.download_html")}
-            </button>
-            <button onClick={() => onDownloadClick("Tstory")} className="down_btn">
-              다운로드(Tstory 백업용)
-            </button>
-          </>
-        )}
-      </div>
+    <div className="preview-container">
+{messages.map((msg) => (
+  <EditItem
+    key={msg.id}
+    item={msg}
+    onUpdate={(id, newValue) => updateMessage(id, { name: newValue })}
+  />
+))}
     </div>
   );
-};
-
-export default PreviewPanel;
+}

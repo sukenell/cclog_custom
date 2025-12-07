@@ -96,26 +96,6 @@ const SettingsPanel = ({ t, charColors, setCharColors, tabColors, charHeads, set
       </ul>
 
     </div>
-
-      <h4>04. {t("setting.cha_color")}<b>(*{t("setting.warning_txt2")})</b></h4>
-      <div className="color_div">
-        {Object.keys(charColors).map((charName) => (
-          <div key={charName} className="color_picker">
-            <span>{charName} : </span>
-            <input
-              type="color"
-              value={charColors[charName] || "#000000"}
-              onChange={(e) => setCharColors((prev) => ({ ...prev, [charName]: e.target.value }))}
-            />
-            <input
-              type="text"
-              placeholder="URL"
-              value={charHeads[charName] || ""}
-              onChange={(e) => setCharHeads((prev) => ({ ...prev, [charName]: e.target.value }))}
-            />
-          </div>
-        ))}
-      </div>
     </div>
   );
 };
