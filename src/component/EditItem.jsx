@@ -1,9 +1,10 @@
+// src/component/EditItem.js
 import { useState } from "react";
 import { Pencil, Check } from "lucide-react";
 
 export default function EditItem({ item, onUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(item.name);
+  const [value, setValue] = useState(item.text);
 
   const handleSave = () => {
     onUpdate(item.id, value);
@@ -20,7 +21,7 @@ export default function EditItem({ item, onUpdate }) {
           autoFocus
         />
       ) : (
-        <span className="flex-1">{item.name}</span>
+        <span className="flex-1">{item.text}</span>
       )}
 
       <button

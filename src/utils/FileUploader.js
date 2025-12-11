@@ -1,3 +1,4 @@
+// src/utils/FileUploader.js
 import React, { useState } from "react";
 import { FIREBASE_BASE_URL, MESSAGES_QUERY } from "../config.js";
 
@@ -23,7 +24,9 @@ function FileUploader({ t, setFileContent, setFileName }) {
       let nextPageToken = "";
 
       do {
-        const response = await fetch(url + (nextPageToken ? `&pageToken=${nextPageToken}` : ""));
+        const response = await fetch(
+          url + (nextPageToken ? `&pageToken=${nextPageToken}` : "")
+        );
         const data = await response.json();
 
         if (data.documents) {
@@ -40,8 +43,11 @@ function FileUploader({ t, setFileContent, setFileName }) {
         (a, b) => new Date(a.createTime) - new Date(b.createTime)
       );
 
+      // 🔥 여기서부터가 App으로 들어가는 데이터 (documents 배열)
       setFileContent(sortedMessages);        // App에서 parseFirebaseMessages로 처리
-      setFileName(roomId + ".html");         // prop 이름 확인 필수
+      if (typeof setFileName === "function") {
+        setFileName(roomId + ".html");
+      }
     } catch (error) {
       console.error(t("setting.err_txt"), error);
       alert(t("setting.console_errer"));
