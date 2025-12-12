@@ -8,8 +8,8 @@ const SettingsPanel = ({
   setSelectedCategories,
   diceEnabled,
   setDiceEnabled,
-  secretEnabled,
-  setSecretEnabled,
+  // secretEnabled,
+  // setSecretEnabled,
   tabColorEnabled,
   setTabColorEnabled,
   tabColors,
@@ -28,9 +28,8 @@ const SettingsPanel = ({
 
   const excludeColorInput = ["main", "info", "other"];
 
-  // 🔥 메시지 기반 category 자동 수집
   const detectedCategories = useMemo(() => {
-    const set = new Set(Object.keys(selectedCategories)); // 기존것 유지
+    const set = new Set(Object.keys(selectedCategories));
 
     messages?.forEach((msg) => {
       if (msg?.category) {
@@ -41,7 +40,6 @@ const SettingsPanel = ({
     return Array.from(set);
   }, [messages, selectedCategories]);
 
-  // 🔥 selectedCategories에 자동 추가 (ON으로)
   useEffect(() => {
     setSelectedCategories((prev) => {
       const updated = { ...prev };
@@ -63,7 +61,7 @@ const SettingsPanel = ({
 
   const toggles = [
     { id: "diceToggle", state: diceEnabled, setState: setDiceEnabled, label: "Dice 스타일링 적용" },
-    { id: "secretToggle", state: secretEnabled, setState: setSecretEnabled, label: "비밀 메시지 활성화" },
+    // { id: "secretToggle", state: secretEnabled, setState: setSecretEnabled, label: "비밀 메시지 활성화" },
     { id: "tabColorToggle", state: tabColorEnabled, setState: setTabColorEnabled, label: "탭 별 컬러 지정 설정" }
   ];
 

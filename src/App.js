@@ -1,5 +1,6 @@
 // src/App.js
 import React, { useState, useEffect } from "react";
+import { useMemo } from "react";
 import UploadSection from "./component/UploadSection.jsx";
 import SettingsPanel from "./component/SettingsPanel";
 import PreviewPanel from "./component/PreviewPanel";
@@ -12,11 +13,11 @@ import { main_style } from "./utils/FileDownload.js";
 function App() {
   const { t } = useTranslation();
 
-  const [fileContent, setFileContent] = useState([]); // 🔥 배열로 시작
+  const [fileContent, setFileContent] = useState([]);
   const [fileName, setFileName] = useState("log.html");
 
-  const [charColors, setCharColors] = useState({});
-  const [charHeads, setCharHeads] = useState({});
+  const [charColors,] = useState({});
+  const [charHeads] = useState({});
   const [titleImages, setTitleImages] = useState([]);
   const [endImages, setEndImages] = useState([]);
   const [inputTexts, setInputTexts] = useState([]);
@@ -26,7 +27,7 @@ function App() {
     other: false,
   });
   const [diceEnabled, setDiceEnabled] = useState(true);
-  const [secretEnabled, setSecretEnabled] = useState(false);
+  // const [secretEnabled, setSecretEnabled] = useState(false);
   const [tabColorEnabled, setTabColorEnabled] = useState(false);
   const [TabColor, setTabColor] = useState({});
   const [messages, setMessages] = useState([]);
@@ -47,9 +48,15 @@ function App() {
     setEndImages(urls);
   };
 
-  const DescChange = (event) => {
-    setInputTexts(event.target.value.split(","));
-  };
+
+const DescChange = (e) => {
+  setInputTexts(
+    e.target.value
+      .split(",")
+      .map(v => v === " " ? " " : v.trim())
+      .filter(v => v !== "")
+  );
+};
 
   const updateMessage = (id, newValue) => {
     setMessages((prev) =>
@@ -57,7 +64,55 @@ function App() {
     );
   };
 
-  // main_style 주입
+
+  const handleExportHTML = () => {
+  const preview = document.getElementById("preview-scroll-box");
+  if (!preview) return;
+
+  const cloned = preview.cloneNode(true);
+  cloned.querySelectorAll("button").forEach(btn => btn.remove());
+  cloned.querySelectorAll("[data-dice='true']").forEach(el => {
+    el.style.textAlign = "center";
+    el.style.display = "block";
+    el.style.margin = "8px 0";
+  });
+  const styles = Array.from(document.querySelectorAll("style"))
+    .map(s => s.innerHTML)
+    .join("\n");
+
+  const html = `<!DOCTYPE html>
+        <html lang="ko">
+        <head>
+        <meta charset="UTF-8" />
+        <title>CCLog Export</title>
+        <style>
+        ${styles}
+        .message-container {
+          background: transparent !important;
+        }
+
+        </style>
+        </head>
+        <body class="dark-mode">
+        <div class="ccfolia_wrap">
+        ${cloned.innerHTML}
+        </div>
+        </body>
+        </html>`;
+
+          const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "cclog_export.html";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        };
+
+          
   useEffect(() => {
     const styleTag = document.createElement("style");
     styleTag.innerHTML = main_style;
@@ -65,19 +120,48 @@ function App() {
   }, []);
 
 useEffect(() => {
-  if (!fileContent || !fileContent.length || messages.length > 0) return;
+  if (!fileContent || !fileContent.length) return;
 
-  // 최초 1회만 실행
-  const parsed = parseFirebaseMessages(fileContent);
-  setMessages(parsed);
-}, [fileContent]);
+  const parsed = parseFirebaseMessages(fileContent, {
+    inputTexts,
+    charColors,
+    charHeads,
+    tabColors: TabColor,
+    diceEnabled,
+    // secretEnabled,
+    t,
+  });
+
+    const topImages = titleImages.map((url, idx) => ({
+    id: `title-img-${idx}`,
+    category: "image",
+    position: "top",
+    imgUrl: url,
+  }));
+
+  const bottomImages = endImages.map((url, idx) => ({
+    id: `end-img-${idx}`,
+    category: "image",
+    position: "bottom",
+    imgUrl: url,
+  }));
+
+    setMessages([
+    ...topImages,
+    ...parsed,
+    ...bottomImages,
+  ]);
+
+  // setMessages(parsed);
+}, [fileContent, inputTexts, charColors, charHeads, TabColor, diceEnabled]);
+
 
   return (
     <div className="fix-layout">
       <div className="setting_container">
         <UploadSection
           setFileContent={setFileContent}
-          setFileName={setFileName} // 🔥 FileUploader 쪽 setFileName 에러 해결
+          setFileName={setFileName}
           t={t}
         />
 <SettingsPanel
@@ -86,13 +170,13 @@ useEffect(() => {
   setSelectedCategories={setSelectedCategories}
   diceEnabled={diceEnabled}
   setDiceEnabled={setDiceEnabled}
-  secretEnabled={secretEnabled}
-  setSecretEnabled={setSecretEnabled}
+  // secretEnabled={secretEnabled}
+  // setSecretEnabled={setSecretEnabled}
   tabColorEnabled={tabColorEnabled}
   setTabColorEnabled={setTabColorEnabled}
   tabColors={TabColor}
   setTabColor={setTabColor}
-  messages={messages}   // 🔥 반드시 추가해야 함
+  messages={messages}
 />
 
         <h4>
@@ -129,17 +213,18 @@ useEffect(() => {
         />
       </div>
 
-<PreviewPanel
-  messages={messages}
-  updateMessage={updateMessage}
-  selectedCategories={selectedCategories}
-  tabColors={TabColor}
-  charColors={charColors}
-  charHeads={charHeads}
-  diceEnabled={diceEnabled}
-  secretEnabled={secretEnabled}
-  inputTexts={inputTexts}
-/>
+    <PreviewPanel
+      messages={messages}
+      updateMessage={updateMessage}
+      selectedCategories={selectedCategories}
+      tabColors={TabColor}
+      charColors={charColors}
+      charHeads={charHeads}
+      diceEnabled={diceEnabled}
+      inputTexts={inputTexts} 
+      onExportHTML={handleExportHTML}
+      tabColorEnabled={tabColorEnabled}
+    />
 
 </div>
   );

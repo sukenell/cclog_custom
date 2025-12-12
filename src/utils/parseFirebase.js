@@ -1,17 +1,18 @@
-import { COCdice, getDiceTypes } from "../component/dice";
 
+import { COCdice, getDiceTypes } from "../component/dice";
 export function parseFirebaseMessages(fileContent, options = {}) {
   if (!fileContent || !Array.isArray(fileContent)) return [];
 
   const {
+    t = (s) => s,
     charHeads = {},
     charColors = {},
     tabColors = {},
     diceEnabled = true,
-    secretEnabled = false,
+    // secretEnabled = false,
   } = options;
 
-  const successTypes = getDiceTypes();
+  const successTypes = getDiceTypes(t);
   const messages = [];
   let idx = 0;
 
@@ -19,19 +20,31 @@ export function parseFirebaseMessages(fileContent, options = {}) {
     const f = log.fields;
     if (!f) continue;
 
-    const category = (f.channelName?.stringValue || "other").toLowerCase();
+    const rawCategory = f.channelName?.stringValue || "other";
+    const category = String(rawCategory).toLowerCase();
+
     const charName =
       f.name?.stringValue === "" ? "NONAME" : f.name?.stringValue || "";
+
+    const color =
+      f.color?.stringValue ||
+      charColors[charName] ||
+      "#dddddd";
 
     const text = f.text?.stringValue || "";
     const dice_text =
       f.extend?.mapValue?.fields?.roll?.mapValue?.fields?.result?.stringValue ||
       "";
 
-    let imgUrl =
-      f.iconUrl?.stringValue || charHeads[charName] || "https://ccfolia.com/blank.gif";
+    const fullText = `${text}${dice_text ? " " + dice_text : ""}`.trim();
 
-    // timestamp
+    // 아이콘 URL (없으면 blank)
+    const imgUrl =
+      f.iconUrl?.stringValue ||
+      charHeads[charName] ||
+      "https://ccfolia.com/blank.gif";
+
+    // timestamp (가능한 값 중 하나 사용)
     const timestamp =
       f.createdAt?.timestampValue || log.createTime || log.updateTime || null;
 
@@ -39,20 +52,15 @@ export function parseFirebaseMessages(fileContent, options = {}) {
     let backgroundColor =
       tabColors[category] ||
       (category === "info"
-        ? "#464646"
+        ? "#454545"
         : category === "other"
-        ? "#4c4c4c"
-        : "#3b3b3b");
+        ? "gray"
+        : "#313131"); // main 기본
 
-    const fullText = `${text}${dice_text ? " " + dice_text : ""}`.trim();
-
-    const isDice = diceEnabled && COCdice.test(fullText);
-    const isSecret =
-      category === "secret" ||
-      /^secret\(.+\)$/.test(category) ||
-      (secretEnabled && category === "secret");
-
+    // dice 여부 / 스타일
+    const isDice = COCdice.test(fullText);
     let diceStyle = null;
+
     if (isDice) {
       for (const [key, style] of Object.entries(successTypes)) {
         if (fullText.includes(key)) {
@@ -62,17 +70,22 @@ export function parseFirebaseMessages(fileContent, options = {}) {
       }
     }
 
+    // const isSecret =
+    //   category === "secret" ||
+    //   /^secret\(.+\)$/.test(category) ||
+    //   (secretEnabled && category === "secret");
+
     messages.push({
       id: `msg_${idx++}_${Date.now().toString(36)}`,
       category,
       charName,
       text: fullText,
       imgUrl,
-      color: charColors[charName] || "#dddddd",
+      color,
       backgroundColor,
       isDice,
       diceStyle,
-      isSecret,
+      // isSecret,
       timestamp,
     });
   }
