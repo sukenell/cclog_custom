@@ -75,19 +75,32 @@ export default function PreviewPanel({
           padding: "0 5px",
         }}
       >
-        <button
-  onClick={onExportHTML}
-  style={{
-    flex: 1,
-    marginRight: "10px",
-    padding: "12px",
-    color: "white",
-    background: "#333",
-    borderRadius: "8px",
-  }}
->
-  다운로드(HTML)
-</button>
+        {messages.length > 0 && (
+  <button
+    onClick={onExportHTML}
+    style={{
+      flex: 1,
+      padding: "12px",
+      color: "#eaeaea",
+      background: "transparent",
+      border: "1px solid rgba(255,255,255,0.25)",
+      borderRadius: "999px",          // 🔥 완전 라운딩
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+      e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = "transparent";
+      e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+    }}
+  >
+    다운로드 (HTML)
+  </button>
+)}
+
 
       </div>
 

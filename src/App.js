@@ -27,7 +27,6 @@ function App() {
     other: false,
   });
   const [diceEnabled, setDiceEnabled] = useState(true);
-  // const [secretEnabled, setSecretEnabled] = useState(false);
   const [tabColorEnabled, setTabColorEnabled] = useState(false);
   const [TabColor, setTabColor] = useState({});
   const [messages, setMessages] = useState([]);
@@ -119,7 +118,7 @@ const DescChange = (e) => {
     document.head.appendChild(styleTag);
   }, []);
 
-useEffect(() => {
+  useEffect(() => {
   if (!fileContent || !fileContent.length) return;
 
   const parsed = parseFirebaseMessages(fileContent, {
@@ -128,11 +127,10 @@ useEffect(() => {
     charHeads,
     tabColors: TabColor,
     diceEnabled,
-    // secretEnabled,
     t,
   });
 
-    const topImages = titleImages.map((url, idx) => ({
+  const topImages = titleImages.map((url, idx) => ({
     id: `title-img-${idx}`,
     category: "image",
     position: "top",
@@ -146,14 +144,21 @@ useEffect(() => {
     imgUrl: url,
   }));
 
-    setMessages([
+  setMessages([
     ...topImages,
     ...parsed,
     ...bottomImages,
   ]);
-
-  // setMessages(parsed);
-}, [fileContent, inputTexts, charColors, charHeads, TabColor, diceEnabled]);
+}, [
+  fileContent,
+  titleImages,
+  endImages,
+  inputTexts,
+  charColors,
+  charHeads,
+  TabColor,
+  diceEnabled,
+]);
 
 
   return (

@@ -27,18 +27,22 @@ const SettingsPanel = ({
   );
 
   const excludeColorInput = ["main", "info", "other"];
-
+  
   const detectedCategories = useMemo(() => {
     const set = new Set(Object.keys(selectedCategories));
 
     messages?.forEach((msg) => {
-      if (msg?.category) {
-        set.add(msg.category);
-      }
+      if (!msg?.category) return;
+
+      // ❌ image만 제외
+      if (msg.category === "image") return;
+
+      set.add(msg.category);
     });
 
     return Array.from(set);
   }, [messages, selectedCategories]);
+
 
   useEffect(() => {
     setSelectedCategories((prev) => {

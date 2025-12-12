@@ -8,7 +8,7 @@ export function parseFirebaseMessages(fileContent, options = {}) {
     charHeads = {},
     charColors = {},
     tabColors = {},
-    diceEnabled = true,
+    // diceEnabled = true,
     // secretEnabled = false,
   } = options;
 
@@ -26,11 +26,6 @@ export function parseFirebaseMessages(fileContent, options = {}) {
     const charName =
       f.name?.stringValue === "" ? "NONAME" : f.name?.stringValue || "";
 
-    const color =
-      f.color?.stringValue ||
-      charColors[charName] ||
-      "#dddddd";
-
     const text = f.text?.stringValue || "";
     const dice_text =
       f.extend?.mapValue?.fields?.roll?.mapValue?.fields?.result?.stringValue ||
@@ -38,26 +33,31 @@ export function parseFirebaseMessages(fileContent, options = {}) {
 
     const fullText = `${text}${dice_text ? " " + dice_text : ""}`.trim();
 
-    // 아이콘 URL (없으면 blank)
     const imgUrl =
       f.iconUrl?.stringValue ||
       charHeads[charName] ||
       "https://ccfolia.com/blank.gif";
 
-    // timestamp (가능한 값 중 하나 사용)
     const timestamp =
       f.createdAt?.timestampValue || log.createTime || log.updateTime || null;
 
-    // backgroundColor
-    let backgroundColor =
-      tabColors[category] ||
-      (category === "info"
-        ? "#454545"
-        : category === "other"
-        ? "gray"
-        : "#313131"); // main 기본
+      const KNOWN_CATEGORIES = ["main", "info", "other"];
+      let backgroundColor;
 
-    // dice 여부 / 스타일
+      if (KNOWN_CATEGORIES.includes(category)) {
+        if (category === "info") {
+          backgroundColor = "#464646";
+        } else if (category === "other") {
+          backgroundColor = "#4c4c4c";
+        } else {
+          backgroundColor = "transparent";
+        }
+      } else {
+        backgroundColor ="#525569";
+      }
+
+
+
     const isDice = COCdice.test(fullText);
     let diceStyle = null;
 
@@ -70,22 +70,16 @@ export function parseFirebaseMessages(fileContent, options = {}) {
       }
     }
 
-    // const isSecret =
-    //   category === "secret" ||
-    //   /^secret\(.+\)$/.test(category) ||
-    //   (secretEnabled && category === "secret");
-
     messages.push({
       id: `msg_${idx++}_${Date.now().toString(36)}`,
       category,
       charName,
       text: fullText,
       imgUrl,
-      color,
+      color: charColors[charName] || "#dddddd",
       backgroundColor,
       isDice,
       diceStyle,
-      // isSecret,
       timestamp,
     });
   }
