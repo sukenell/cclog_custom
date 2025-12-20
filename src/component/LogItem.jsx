@@ -105,7 +105,10 @@ export default function LogItem({
             {/* 이름 + 시간 */}
             {!isDice && renderType !== "other" && renderType !== "info" && (
               <div style={{ display: "flex", gap: "6px" }}>
-                <strong>{message.charName}</strong>
+                <strong style={{ color: message.color }}>
+                  {message.charName}
+                </strong>
+
                 <span style={{ fontSize: "10px", color: "#999" }}>
                   {timestamp}
                 </span>
@@ -115,8 +118,19 @@ export default function LogItem({
             {/* ================= DICE ================= */}
             {isDice && diceStyle ? (
               <div data-dice="true" style={{ textAlign: "center" }}>
-                <span>{message.charName} - 판정</span>
-                <span style={diceStyle}>{text}</span>
+                <div
+            style={{
+              display: "inline-block",
+              background: "#000",
+              color: "#fff",
+              padding: "6px 14px",
+              borderRadius: "20px",
+              marginBottom: "6px",
+            }}
+          >
+            {message.charName} - 판정
+          </div>
+                <span style={diceStyle}> {text}</span>
               </div>
             ) : (
               /* ================= 일반 텍스트 (🔥 여기 핵심) ================= */

@@ -63,53 +63,119 @@ const DescChange = (e) => {
     );
   };
 
-
-  const handleExportHTML = () => {
+const handleExportHTML = () => {
   const preview = document.getElementById("preview-scroll-box");
   if (!preview) return;
 
+  // 1. 프리뷰 DOM 복사
   const cloned = preview.cloneNode(true);
-  cloned.querySelectorAll("button").forEach(btn => btn.remove());
-  cloned.querySelectorAll("[data-dice='true']").forEach(el => {
+
+  // 2. 편집용 UI 제거
+  cloned.querySelectorAll("button").forEach((btn) => btn.remove());
+  cloned.querySelectorAll("input").forEach((input) => input.remove());
+
+  // 3. dice 중앙 정렬 강제 (export용)
+  cloned.querySelectorAll("[data-dice='true']").forEach((el) => {
+    el.style.display = "flex";
+    el.style.flexDirection = "column";
+    el.style.alignItems = "center";
     el.style.textAlign = "center";
-    el.style.display = "block";
-    el.style.margin = "8px 0";
+    el.style.margin = "12px 0";
   });
-  const styles = Array.from(document.querySelectorAll("style"))
-    .map(s => s.innerHTML)
-    .join("\n");
 
-  const html = `<!DOCTYPE html>
-        <html lang="ko">
-        <head>
-        <meta charset="UTF-8" />
-        <title>CCLog Export</title>
-        <style>
-        ${styles}
-        .message-container {
-          background: transparent !important;
-        }
+  // 4. 현재 적용된 모든 <style> 수집
+const minimalExportCSS = `
+:root {
+  --background-color: #2c2c2c;
+  --text-color: white;
+}
 
-        </style>
-        </head>
-        <body class="dark-mode">
-        <div class="ccfolia_wrap">
-        ${cloned.innerHTML}
-        </div>
-        </body>
-        </html>`;
+.ccfolia_wrap {
+  padding: 10px;
+  background: #2c2c2c;
+  color: white;
+}
 
-          const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-          const url = URL.createObjectURL(blob);
+/* 메시지 */
+.message-container {
+  display:flex;
+  align-items:center;
+  gap: 15px;
+  padding: 8px 20px;
+}
 
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "cclog_export.html";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-        };
+.message-container.main { color:white; }
+.message-container.info { color:#9d9d9d; }
+.message-container.other { color:lightgray; }
+
+/* 아바타 */
+.msg_container {
+  width:40px;
+  height:40px;
+  overflow:hidden;
+  border-radius:6px;
+}
+
+.msg_container img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:top;
+}
+
+/* Dice / Desc */
+.desc, .dice {
+  text-align:center;
+  font-weight:bold;
+  font-style:italic;
+}
+
+/* Divider */
+.message-divider {
+  border:0;
+  border-top:1px solid rgba(255,255,255,0.08);
+}
+`;
+
+
+// 5. 최종 HTML 생성
+const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>${fileName.replace(".html","")}</title>
+
+<style>
+${minimalExportCSS}
+</style>
+
+</head>
+<body class="dark-mode">
+  <div class="ccfolia_wrap">
+    ${cloned.innerHTML}
+  </div>
+</body>
+</html>`;
+
+
+  // 6. 다운로드
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+
+  const safeName = (fileName || "export")
+  .replace(/\.[^/.]+$/, "")
+  .replace(/[\\/:*?"<>|]+/g, "_");
+
+  a.download = `${safeName}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
 
           
   useEffect(() => {
@@ -169,20 +235,18 @@ const DescChange = (e) => {
           setFileName={setFileName}
           t={t}
         />
-<SettingsPanel
-  t={t}
-  selectedCategories={selectedCategories}
-  setSelectedCategories={setSelectedCategories}
-  diceEnabled={diceEnabled}
-  setDiceEnabled={setDiceEnabled}
-  // secretEnabled={secretEnabled}
-  // setSecretEnabled={setSecretEnabled}
-  tabColorEnabled={tabColorEnabled}
-  setTabColorEnabled={setTabColorEnabled}
-  tabColors={TabColor}
-  setTabColor={setTabColor}
-  messages={messages}
-/>
+      <SettingsPanel
+        t={t}
+        selectedCategories={selectedCategories}
+        setSelectedCategories={setSelectedCategories}
+        diceEnabled={diceEnabled}
+        setDiceEnabled={setDiceEnabled}
+        tabColorEnabled={tabColorEnabled}
+        setTabColorEnabled={setTabColorEnabled}
+        tabColors={TabColor}
+        setTabColor={setTabColor}
+        messages={messages}
+      />
 
         <h4>
           04. {t("setting.title_img")}{" "}
