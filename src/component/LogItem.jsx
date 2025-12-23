@@ -4,6 +4,7 @@ import { COCdice, getDiceTypes } from "../component/dice";
 
 export default function LogItem({
   message,
+  t,
   updateMessage,
   diceEnabled,
   inputTexts = [],
@@ -58,7 +59,7 @@ export default function LogItem({
   }
 
   const timestamp = message.timestamp
-    ? new Date(message.timestamp).toLocaleDateString()
+    ? new Date(message.timestamp).toLocaleDateString('ja-JP')
     : "";
 
   const imgSrc = message.imgUrl || "https://ccfolia.com/blank.gif";
@@ -72,22 +73,33 @@ export default function LogItem({
             ? message.backgroundColor
             : "transparent",
         padding: "12px 0",
-        paddingLeft: renderType === "other" ? "77px" : undefined,
+        paddingLeft: renderType === "other" ? "55px" : undefined,
         alignItems: "flex-start",
       }}
     >
       {/* ================= DESC ================= */}
       {renderType === "desc" ? (
-        <div style={{ width: "100%", textAlign: "center", fontStyle: "italic" }}>
+        <div
+          style={{
+            width: "100%",
+            textAlign: "center",
+            fontStyle: "italic",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "6px",
+          }}
+        >
           {isEditing ? (
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              style={{ width: "90%" }}
+              style={{ width: "60%" }}
             />
           ) : (
             <span>{text}</span>
           )}
+
           <button onClick={toggleEdit}>
             {isEditing ? <Check size={18} /> : <Pencil size={18} />}
           </button>
@@ -109,8 +121,11 @@ export default function LogItem({
                   {message.charName}
                 </strong>
 
-                <span style={{ fontSize: "10px", color: "#999" }}>
+                <span style={{ color: "#999" }}>
                   {timestamp}
+                </span>
+                <span style={{ color: "#6c6c6cff" }}>
+                  - {renderType}
                 </span>
               </div>
             )}
@@ -119,44 +134,99 @@ export default function LogItem({
             {isDice && diceStyle ? (
               <div data-dice="true" style={{ textAlign: "center" }}>
                 <div
-            style={{
-              display: "inline-block",
-              background: "#000",
-              color: "#fff",
-              padding: "6px 14px",
-              borderRadius: "20px",
-              marginBottom: "6px",
-            }}
-          >
-            {message.charName} - 판정
-          </div>
+                  style={{
+                    display: "inline-block",
+                    background: "#000",
+                    color: "#fff",
+                    padding: "6px 14px",
+                    borderRadius: "20px",
+                    marginBottom: "6px",
+                  }}
+                >
+                  {message.charName} - 판정
+                </div>
                 <span style={diceStyle}> {text}</span>
               </div>
             ) : (
-              /* ================= 일반 텍스트 (🔥 여기 핵심) ================= */
               <>
+                {/* ================= 일반 텍스트 ================= */}
                 {isEditing ? (
-                  <input
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    style={{ width: "95%" }}
-                  />
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <input
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      style={{ width: "95%" }}
+                    />
+                    <button onClick={toggleEdit}>
+                      <Check size={18} />
+                    </button>
+                  </div>
                 ) : (
-                  <span>
-                    {renderType === "other"
-                      ? `${message.charName} : ${text}`
-                      : text}
-                  </span>
+                  <>
+                    {renderType === "info" && (
+                      <div className="message-container">
+                        <div
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            background: "#4d4d4d",
+                            borderRadius: "5px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <span style={{ color: "#8d8d8d", fontSize: "14px" }}>
+                            정보
+                          </span>
+                        </div>
+
+                        <div
+                          className="info"
+                          style={{ display: "flex", alignItems: "center", gap: "6px"}}
+                        >
+                          <span style={{ paddingLeft: "16px", whiteSpace: "pre-line", }}>{text}</span>
+                          <button onClick={toggleEdit}>
+                            <Pencil size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {renderType === "other" && (
+                      <div
+                        className="message-container other"
+                        style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                      >
+                        <div className="other">
+                          {message.charName} : {text}
+                        </div>
+
+                        <button onClick={toggleEdit}>
+                          <Pencil size={18} />
+                        </button>
+                      </div>
+                    )}
+
+                    {renderType !== "info" && renderType !== "other" && (
+                      <div
+                        className="msg-normal-text"
+                        style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                      >
+                        <span>{text}</span>
+
+                        <button onClick={toggleEdit}>
+                          <Pencil size={18} />
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}
 
-            {/* 수정 버튼 (dice 제외) */}
-            {!(diceEnabled && isDice && diceStyle) && (
-              <button onClick={toggleEdit} style={{ float: "right" }}>
-                {isEditing ? <Check size={18} /> : <Pencil size={18} />}
-              </button>
-            )}
+            {/* 기존 dice 제외 버튼 제거 (이미 위에서 inline 처리) */}
           </div>
         </>
       )}

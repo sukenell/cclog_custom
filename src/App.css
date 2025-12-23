@@ -92,6 +92,10 @@ text-align: left;
 padding: 16px 16px;
 }
 
+.gap strong {
+  padding: 3px;
+}
+
 b{
   color: gray;
     font-size: 9pt;
@@ -278,8 +282,8 @@ input {
 .message-container {
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 0 20px;
+  /* gap: 15px; */
+  /* padding: 0 20px; */
 }
 
 .message-container.main {
@@ -292,9 +296,14 @@ input {
   color: #9d9d9d;
 }
 
+/* .infotxt{
+  <div style="width: 40px; height: 40px; background: #4d4d4d; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+                        <span style="color: #8d8d8d; font-size: 14px;"> ${t('setting.info')} </span>
+                      </div>
+} */
+
 .message-container.other {
-  /* background-color: gray; */
-  color: lightgray;
+  color: gray;
 }
 
 .message-container.desc, .message-container.dice{
@@ -360,4 +369,46 @@ input {
 
 .download-btn:hover {
   background: #4a4a4a;
+}
+
+/* 🔹 공통 개행 유지 */
+.msg-info-text,
+.msg-other-text,
+.msg-normal-text {
+  white-space: pre-line;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+/* ================= INFO ================= */
+.msg-info-box {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #3d3d3d;
+  color: #bfbfbf;
+}
+
+.msg-info-name {
+  color: #9ad0ff;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+/* ================= OTHER ================= */
+.msg-other-box {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #4b4b4b;
+  color: #d3d3d3;
+}
+
+.msg-other-name {
+  color: #ffcd6b;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+/* ================= NORMAL (기본) ================= */
+.msg-normal-text {
+  color: white;
 }

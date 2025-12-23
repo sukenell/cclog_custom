@@ -106,7 +106,7 @@ const minimalExportCSS = `
 
 .message-container.main { color:white; }
 .message-container.info { color:#9d9d9d; }
-.message-container.other { color:lightgray; }
+.message-container.other { color:gray; }
 
 /* 아바타 */
 .msg_container {
@@ -284,6 +284,7 @@ ${minimalExportCSS}
 
     <PreviewPanel
       messages={messages}
+      t={t}
       updateMessage={updateMessage}
       selectedCategories={selectedCategories}
       tabColors={TabColor}
