@@ -135,6 +135,14 @@ const minimalExportCSS = `
   border:0;
   border-top:1px solid rgba(255,255,255,0.08);
 }
+
+.info,
+.msg-normal-text,
+.other,
+.message-container span {
+  white-space: pre-line;
+}
+
 `;
 
 
