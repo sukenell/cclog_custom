@@ -1,4 +1,4 @@
-import { COCdice, getDiceTypes } from '../component/dice'
+import { COCdice, getDiceTypes } from '../../v2/component/dice'
 
 export const createImageSection = (images) => {
     if (!Array.isArray(images)) return "";

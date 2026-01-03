@@ -1,6 +1,6 @@
 // src/utils/FileUploader.js
 import React, { useState } from "react";
-import { FIREBASE_BASE_URL, MESSAGES_QUERY } from "../config.js";
+import { FIREBASE_BASE_URL, MESSAGES_QUERY } from "../../config.js";
 
 function FileUploader({ t, setFileContent, setFileName }) {
   const [roomNumber, setRoomNumber] = useState("");

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Pencil, Check } from "lucide-react";
-import { COCdice, getDiceTypes } from "../component/dice";
+import { COCdice, getDiceTypes } from "./dice";
 
 export default function LogItem({
   message,

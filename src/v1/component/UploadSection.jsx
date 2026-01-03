@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import FileUploader from "../utils/FileUploader.js";
-import i18n from "../locales/i18n.ts";
+import FileUploader from "../../core/utils/FileUploader.js";
+import i18n from "../../core/locales/i18n.ts";
 
 const UploadSection = ({ setFileContent, setFileName, t }) => {
   const [language, setLanguage] = useState(i18n.language || "ko");
