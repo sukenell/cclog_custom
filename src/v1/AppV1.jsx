@@ -2,12 +2,12 @@ import React, { useState, useEffect } from "react";
 import UploadSection from "./component/UploadSection.jsx";
 import SettingsPanel from "./component//SettingsPanel";
 import PreviewPanel from "./component//PreviewPanel";
-import { handleDownload } from "../core/utils/FileDownload";
-import { createImageSection, processMessageTag } from "../core/utils/utils";
+import { handleDownload } from "../v1/utils/FileDownload.js";
+import { createImageSection, processMessageTag } from "../core/utils/utils.js";
 import { useTranslation } from 'react-i18next';
 import "../App.css";
 import "../core/styles/base.css";
-import { main_style } from "../core/utils/FileDownload.js"; 
+import { main_style } from "../v1/utils/FileDownload.js"; 
 
 function App() {
 
@@ -23,7 +23,6 @@ function App() {
   const [selectedCategories, setSelectedCategories] = useState({ main: true, info: false, other: false });
   const [diceEnabled, setDiceEnabled] = useState(true);
   const [secretEnabled, setSecretEnabled] = useState(false);
-
   const [tabColorEnabled, setTabColorEnabled] = useState(false);
   const [TabColor, setTabColor] = useState({});
 
@@ -78,7 +77,7 @@ function App() {
       const p = document.createElement("p");
       p.innerHTML = div.innerHTML;
       div.parentNode.replaceChild(p, div);
-       processMessageTag(p, "html", t, charHeads, charColors,
+      processMessageTag(p, "html", t, charHeads, charColors,
         diceEnabled, setDiceEnabled,
         secretEnabled, setSecretEnabled,
         tabColorEnabled, setTabColorEnabled,
@@ -131,7 +130,7 @@ function App() {
         tabColorEnabled, setTabColorEnabled,
         TabColor, setTabColor,
         limitLines, count, parsedDivs, lastCharName, lastCategory, inputTexts, selectedCategories, setSelectedCategories);
-    });
+    }); 
   
     parsedDivs.push(endImagesHtml);
     return parsedDivs.length > 0 ? parsedDivs.join("") : "출력할 데이터가 없습니다.";

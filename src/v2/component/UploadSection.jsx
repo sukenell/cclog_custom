@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import FileUploader from "../../core/utils/FileUploader.js";
+import FileUploader from "../../v1/utils/FileUploader.js";
 import i18n from "../../core/locales/i18n.ts";
 
 const UploadSection = ({ setFileContent, setFileName, t }) => {

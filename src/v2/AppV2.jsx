@@ -7,7 +7,7 @@ import { parseFirebaseMessages } from "./utils/parseFirebase.js";
 import { useTranslation } from "react-i18next";
 import "../App.css";
 import "../core/styles/base.css";
-import { main_style } from "../core/utils/FileDownload.js";
+import { main_style } from "../v1/utils/FileDownload.js";
 
 function App() {
   const { t } = useTranslation();

@@ -1,28 +1,10 @@
 import React, { useState } from "react";
-import FileUploader from "../../core/utils/FileUploader.js";
+import FileUploader from "../utils/FileUploader.js";
 import i18n from "../../core/locales/i18n.ts";
 
 const UploadSection = ({ setFileContent, setFileName, t }) => {
   const [language, setLanguage] = useState(i18n.language || "ko");
 
-    const [roomId, setRoomId] = useState("");
-
-  // const fetchMessages = async () => {
-  //   if (!roomId) return alert("Room ID를 입력해주세요");
-  //   const url = `${process.env.REACT_APP_FIREBASE_BASE_URL}${roomId}`;
-  //   try {
-  //     const res = await fetch(url);
-  //     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-  //     const data = await res.json();
-  //     setFileName(roomId); // 파일 이름처럼 저장
-  //     // Firestore의 variables.arrayValue.values를 App으로 전달
-  //     const logs = data.fields?.variables?.arrayValue?.values || [];
-  //     setFileContent(logs); 
-  //   } catch (err) {
-  //     console.error("데이터를 가져오는 중 오류 발생:", err);
-  //     alert("데이터를 가져오는 중 오류 발생: " + err.message);
-  //   }
-  // };
 
   const handleLanguageChange = (event) => {
     const selectedLanguage = event.target.value;
@@ -48,12 +30,8 @@ const UploadSection = ({ setFileContent, setFileName, t }) => {
         </select>
       </div>
 
-      <h4>01. {t("setting.room_log_1")} <b>{t("setting.room_log_2")}</b></h4>
-      <FileUploader
-  setFileContent={setFileContent}
-  setFileName={setFileName}
-  t={t}
-/>
+      <h4>01.{t("setting.file_upload")} <b>{t("setting.help")}</b> | or | {t("setting.room_log_1")} <b>{t("setting.room_log_2")}</b></h4>
+      <FileUploader t={t} setFileContent={setFileContent} setFileName={setFileName} />
 
     </div>
   );
