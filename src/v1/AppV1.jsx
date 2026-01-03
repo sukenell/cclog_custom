@@ -3,7 +3,7 @@ import UploadSection from "./component/UploadSection.jsx";
 import SettingsPanel from "./component//SettingsPanel";
 import PreviewPanel from "./component//PreviewPanel";
 import { handleDownload } from "../v1/utils/FileDownload.js";
-import { createImageSection, processMessageTag } from "../core/utils/utils.js";
+import { createImageSection, processMessageTag } from "./utils/utils.js";
 import { useTranslation } from 'react-i18next';
 import "../App.css";
 import "../core/styles/base.css";
