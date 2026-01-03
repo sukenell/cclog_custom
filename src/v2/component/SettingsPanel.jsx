@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import "../../App.css";
+import "../AppV2.css";
 import "../../core/styles/base.css";
 
 const FIXED_CATEGORIES = ["main", "info", "other"];

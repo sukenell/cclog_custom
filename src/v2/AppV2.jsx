@@ -5,7 +5,7 @@ import SettingsPanel from "./component/SettingsPanel.jsx";
 import PreviewPanel from "./component/PreviewPanel.jsx";
 import { parseFirebaseMessages } from "./utils/parseFirebase.js";
 import { useTranslation } from "react-i18next";
-import "../App.css";
+import "./AppV2.css";
 import "../core/styles/base.css";
 import { main_style } from "../v1/utils/FileDownload.js";
 

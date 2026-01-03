@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo } from "react";
-import "../../App.css";
+import "../AppV1.css";
 import "../../core/styles/base.css";
 
 const SettingsPanel = ({ t, charColors, setCharColors, tabColors, charHeads, setCharHeads,
