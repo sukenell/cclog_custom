@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Pencil, Check } from "lucide-react";
+import { Pencil, Check, Image as ImageIcon } from "lucide-react";
 import { COCdice, getDiceTypes } from "./dice";
 
 export default function LogItem({
@@ -11,27 +11,50 @@ export default function LogItem({
   tabColorEnabled,
 }) {
   const [isEditing, setEditing] = useState(false);
+  const [isImgEditing, setImgEditing] = useState(false);
   const [text, setText] = useState(message.text);
+  const [imgUrl, setImgUrl] = useState(message.imgUrl);
 
   useEffect(() => {
     setText(message.text);
   }, [message.text]);
 
+  useEffect(() => {
+    setImgUrl(message.imgUrl);
+  }, [message.imgUrl]);
+
   const toggleEdit = () => {
+    if (isImgEditing) setImgEditing(false); // 이미지 수정 중이면 종료
+
     if (isEditing) {
       updateMessage(message.id, { text });
     }
     setEditing(!isEditing);
   };
 
+  const toggleImgEdit = () => {
+    if (isEditing) setEditing(false); // 텍스트 수정 중이면 종료
+
+    if (isImgEditing) {
+      updateMessage(message.id, { imgUrl });
+    }
+    setImgEditing(!isImgEditing);
+  };
+
+  const handleImgError = (e) => {
+    e.target.src = "https://ccfolia.com/blank.gif";
+  };
+
   if (message.category === "image") {
     return (
       <div className="message-container image" style={{ padding: "24px 0", textAlign: "center" }}>
         <img
-          src={message.imgUrl}
+          src={imgUrl || "https://ccfolia.com/blank.gif"}
           alt=""
           style={{ maxWidth: "450px", width: "100%", margin: "0 auto" }}
+          onError={handleImgError}
         />
+        {/* 이미지 타입 메시지도 URL 수정 가능하게 할지? 요구사항엔 단락별 매핑이라고 했으니 프로필 이미지를 의미하는 듯. 일단 여기는 패스하거나 필요하면 추가. User said "단락별로 맵핑되어있는", mainly refers to character face. */}
       </div>
     );
   }
@@ -62,18 +85,20 @@ export default function LogItem({
     ? new Date(message.timestamp).toLocaleDateString('ja-JP')
     : "";
 
-  const imgSrc = message.imgUrl || "https://ccfolia.com/blank.gif";
+  const imgSrc = imgUrl || "https://ccfolia.com/blank.gif";
+  const showGalleryAction = !isDice && renderType !== "other" && renderType !== "info" && renderType !== "desc";
 
   return (
     <div
-      className={`gap message-container ${renderType}`}
+      className={`gap message - container ${renderType} `}
       style={{
         backgroundColor:
           tabColorEnabled && message.backgroundColor
             ? message.backgroundColor
             : "transparent",
         padding: "12px 0",
-        paddingLeft: renderType === "other" ? "55px" : undefined,
+        paddingLeft: renderType === "other" ? "48px" : "0",
+        margin: renderType === "other" ? "8px" : "0",
         alignItems: "flex-start",
       }}
     >
@@ -109,7 +134,7 @@ export default function LogItem({
           {/* ================= 이미지 ================= */}
           {renderType !== "other" && renderType !== "info" && !isDice && (
             <div className="msg_container">
-              <img src={imgSrc} alt="" />
+              <img src={imgSrc} alt="" onError={handleImgError} />
             </div>
           )}
 
@@ -149,8 +174,23 @@ export default function LogItem({
               </div>
             ) : (
               <>
-                {/* ================= 일반 텍스트 ================= */}
-                {isEditing ? (
+                {/* ================= 일반 텍스트 (수정 모드 분기) ================= */}
+                {isImgEditing ? (
+                  /* --- 이미지 URL 수정 UI --- */
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "12px", color: "#ccc", whiteSpace: "nowrap" }}>IMG :</span>
+                    <input
+                      value={imgUrl}
+                      onChange={(e) => setImgUrl(e.target.value)}
+                      style={{ width: "95%" }}
+                      placeholder="Image URL..."
+                    />
+                    <button onClick={toggleImgEdit}>
+                      <Check size={18} />
+                    </button>
+                  </div>
+                ) : isEditing ? (
+                  /* --- 텍스트 수정 UI --- */
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <input
                       value={text}
@@ -162,6 +202,7 @@ export default function LogItem({
                     </button>
                   </div>
                 ) : (
+                  /* --- 기본 뷰 --- */
                   <>
                     {renderType === "info" && (
                       <div className="message-container">
@@ -184,9 +225,10 @@ export default function LogItem({
 
                         <div
                           className="info"
-                          style={{ display: "flex", alignItems: "center", gap: "6px"}}
+                          style={{ display: "flex", alignItems: "center", gap: "6px" }}
                         >
                           <span style={{ paddingLeft: "16px", whiteSpace: "pre-line", }}>{text}</span>
+                          {/* Info는 이미지 수정 X */}
                           <button onClick={toggleEdit}>
                             <Pencil size={18} />
                           </button>
@@ -202,7 +244,7 @@ export default function LogItem({
                         <div className="other">
                           {message.charName} : {text}
                         </div>
-
+                        {/* Other는 이미지 수정 X */}
                         <button onClick={toggleEdit}>
                           <Pencil size={18} />
                         </button>
@@ -216,6 +258,11 @@ export default function LogItem({
                       >
                         <span>{text}</span>
 
+                        {showGalleryAction && (
+                          <button onClick={toggleImgEdit} title="Change Image">
+                            <ImageIcon size={18} />
+                          </button>
+                        )}
                         <button onClick={toggleEdit}>
                           <Pencil size={18} />
                         </button>
@@ -226,7 +273,6 @@ export default function LogItem({
               </>
             )}
 
-            {/* 기존 dice 제외 버튼 제거 (이미 위에서 inline 처리) */}
           </div>
         </>
       )}

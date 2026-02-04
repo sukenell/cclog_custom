@@ -1,6 +1,15 @@
 // src/utils/parseFirebaseMessages.js
 import { COCdice, getDiceTypes } from "../component/dice";
 
+const CATEGORY_MAP = {
+  main: "main",
+  메인: "main",
+  info: "info",
+  정보: "info",
+  other: "other",
+  잡담: "other",
+};
+
 const FIXED_CATEGORIES = ["main", "info", "other"];
 
 export function parseFirebaseMessages(fileContent, options = {}) {
@@ -22,7 +31,12 @@ export function parseFirebaseMessages(fileContent, options = {}) {
     if (!f) continue;
 
     const rawCategory = f.channelName?.stringValue || "other";
-    const category = String(rawCategory).toLowerCase();
+    let category = String(rawCategory).toLowerCase();
+
+    // 한글 카테고리 매핑 (메인 -> main, 정보 -> info, 잡담 -> other)
+    if (CATEGORY_MAP[category]) {
+      category = CATEGORY_MAP[category];
+    }
 
     const charName =
       f.name?.stringValue === "" ? "NONAME" : f.name?.stringValue || "";

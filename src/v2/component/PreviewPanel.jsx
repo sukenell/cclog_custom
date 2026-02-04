@@ -12,6 +12,7 @@ export default function PreviewPanel({
   secretEnabled,
   inputTexts,
   onExportHTML,
+  onExportSplitHTML,
   tabColorEnabled,
 }) {
 
@@ -20,6 +21,16 @@ export default function PreviewPanel({
 
   return selectedCategories[msg.category];
 });
+
+const buttonStyle = {
+  flex: 1,
+  padding: "12px",
+  color: "#eaeaea",
+  background: "transparent",
+  border: "1px solid rgba(255,255,255,0.25)",
+  borderRadius: "999px",
+  cursor: "pointer",
+};
 
 
   return (
@@ -75,31 +86,26 @@ export default function PreviewPanel({
           padding: "0 5px",
         }}
       >
-        {messages.length > 0 && (
-  <button
-    onClick={onExportHTML}
-    style={{
-      flex: 1,
-      padding: "12px",
-      color: "#eaeaea",
-      background: "transparent",
-      border: "1px solid rgba(255,255,255,0.25)",
-      borderRadius: "999px",          // 🔥 완전 라운딩
-      cursor: "pointer",
-      transition: "all 0.2s ease",
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.background = "rgba(255,255,255,0.08)";
-      e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.background = "transparent";
-      e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
-    }}
-  >
-    다운로드 (HTML)
-  </button>
+       {messages.length > 0 && (
+  <div style={{ display: "flex", gap: "10px", width: "100%" }}>
+    {/* 기존 */}
+    <button
+      onClick={onExportHTML}
+      style={buttonStyle}
+    >
+      다운로드 (HTML)
+    </button>
+
+    {/* 신규 */}
+    <button
+      onClick={onExportSplitHTML}
+      style={buttonStyle}
+    >
+      다운로드 (분할 HTML)
+    </button>
+  </div>
 )}
+
 
 
       </div>
