@@ -6,16 +6,33 @@ const FIXED_CATEGORIES = ["main", "info", "other"];
 
 const SettingsPanel = ({
   t,
+
+  // category
   selectedCategories,
   setSelectedCategories,
+  messages,
+
+  // toggles
   diceEnabled,
   setDiceEnabled,
+  secretEnabled,
+  setSecretEnabled,
   tabColorEnabled,
   setTabColorEnabled,
+
+  // tab colors
   tabColors,
   setTabColor,
-  messages,
+
+  // character
+  charColors,
+  setCharColors,
+  charHeads,
+  setCharHeads,
 }) => {
+  /* =========================
+     카테고리 라벨
+  ========================= */
   const categoryLabels = useMemo(
     () => ({
       main: t("setting.main"),
@@ -26,12 +43,12 @@ const SettingsPanel = ({
   );
 
   /* =========================
-     카테고리 자동 감지 (image 제외)
+     메시지 기반 카테고리 자동 감지 (image 제외)
   ========================= */
   const detectedCategories = useMemo(() => {
-    const set = new Set(Object.keys(selectedCategories));
+    const set = new Set(Object.keys(selectedCategories || {}));
 
-    messages.forEach((msg) => {
+    messages?.forEach((msg) => {
       if (!msg?.category) return;
       if (msg.category === "image") return;
       set.add(msg.category);
@@ -53,6 +70,9 @@ const SettingsPanel = ({
     });
   }, [detectedCategories, setSelectedCategories]);
 
+  /* =========================
+     핸들러
+  ========================= */
   const handleCategoryChange = (category) => {
     setSelectedCategories((prev) => ({
       ...prev,
@@ -60,6 +80,25 @@ const SettingsPanel = ({
     }));
   };
 
+  const toggles = [
+    {
+      id: "diceToggle",
+      state: diceEnabled,
+      setState: setDiceEnabled,
+      label: "Dice 스타일링 적용",
+    },
+  
+    {
+      id: "tabColorToggle",
+      state: tabColorEnabled,
+      setState: setTabColorEnabled,
+      label: "탭 별 컬러 지정 설정",
+    },
+  ];
+
+  /* =========================
+     렌더
+  ========================= */
   return (
     <div>
       {/* =========================
@@ -77,12 +116,32 @@ const SettingsPanel = ({
               <input
                 type="checkbox"
                 id={`cat-${category}`}
-                checked={selectedCategories[category] ?? true}
+                checked={!!selectedCategories[category]}
                 onChange={() => handleCategoryChange(category)}
               />
               <label htmlFor={`cat-${category}`}>
                 {categoryLabels[category] || category}
               </label>
+
+              {!FIXED_CATEGORIES.includes(category) && tabColorEnabled && (
+                <input
+                  type="color"
+                  value={tabColors?.[category] || "#525569"}
+                  onChange={(e) =>
+                    setTabColor((prev) => ({
+                      ...prev,
+                      [category]: e.target.value,
+                    }))
+                  }
+                  style={{
+                    display: "block",
+                    width: "60px",
+                    height: "20px",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                />
+              )}
             </li>
           ))}
         </ul>
@@ -94,77 +153,60 @@ const SettingsPanel = ({
       <div className="skinTypeCheck">
         <h4>03. 기타 스타일링 적용 여부</h4>
         <ul>
-          <li>
-            <input
-              type="checkbox"
-              id="diceToggle"
-              checked={diceEnabled}
-              onChange={() => setDiceEnabled((v) => !v)}
-            />
-            <label htmlFor="diceToggle">Dice 스타일링 적용</label>
-          </li>
-
-          <li>
-            <input
-              type="checkbox"
-              id="tabColorToggle"
-              checked={tabColorEnabled}
-              onChange={() => setTabColorEnabled((v) => !v)}
-            />
-            <label htmlFor="tabColorToggle">
-              탭 별 컬러 지정 설정
-            </label>
-          </li>
+          {toggles.map(({ id, state, setState, label }) => (
+            <li key={id}>
+              <input
+                type="checkbox"
+                id={id}
+                checked={state}
+                onChange={() => setState((v) => !v)}
+              />
+              <label htmlFor={id}>{label}</label>
+            </li>
+          ))}
         </ul>
       </div>
 
-      {tabColorEnabled && (
-  <div className="skinTypeCheck">
-    <h4>탭 별 컬러 지정</h4>
+      {/* =========================
+          04. 캐릭터 컬러
+      ========================= */}
+      <div className="skinTypeCheck">
+        <h4>
+          04. {t("setting.cha_color")}
+          <b>(*{t("setting.warning_txt2")})</b>
+        </h4>
 
-    <ul>
-      {detectedCategories
-        .filter(
-          (category) =>
-            category &&
-            !FIXED_CATEGORIES.includes(category)
-        )
-        .map((category) => (
-          <li
-            key={`color-${category}`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              marginBottom: "6px",
-            }}
-          >
-            <span style={{ minWidth: "80px" }}>{category}</span>
+        <div className="color_div">
+          {Object.keys(charColors || {}).map((charName) => (
+            <div key={charName} className="color_picker">
+              <span>{charName}</span>
 
-            <input
-              type="color"
-              value={tabColors?.[category] || "#525569"}
-              onChange={(e) =>
-                setTabColor((prev) => ({
-                  ...prev,
-                  [category]: e.target.value,
-                }))
-              }
-              style={{
-                width: "40px",
-                height: "20px",
-                border: "none",
-                padding: 0,
-                background: "none",
-                cursor: "pointer",
-              }}
-            />
-          </li>
-        ))}
-    </ul>
-  </div>
-)}
+              <input
+                type="color"
+                value={charColors[charName] || "#000000"}
+                onChange={(e) =>
+                  setCharColors((prev) => ({
+                    ...prev,
+                    [charName]: e.target.value,
+                  }))
+                }
+              />
 
+              <input
+                type="text"
+                placeholder="Head Image URL"
+                value={charHeads?.[charName] || ""}
+                onChange={(e) =>
+                  setCharHeads((prev) => ({
+                    ...prev,
+                    [charName]: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
