@@ -4,6 +4,7 @@ import UploadSection from "./component/UploadSection.jsx";
 import SettingsPanel from "./component/SettingsPanel.jsx";
 import PreviewPanel from "./component/PreviewPanel.jsx";
 import { parseFirebaseMessages } from "./utils/parseFirebase.js";
+import { buildEbookJson } from "./utils/exportEbookJson.js";
 import { useTranslation } from "react-i18next";
 import "./AppV2.css";
 import "../core/styles/base.css";
@@ -43,7 +44,7 @@ const splitByMessageBlocks = (container, maxChars) => {
 /* =========================
    EXPORT CSS
 ========================= */
-const minimalExportCSS = `
+const buildMinimalExportCSS = (globalFontPercent = 100) => `
 :root {
   --background-color: rgba(44, 44, 44, 0.87);
   --text-color: white;
@@ -89,6 +90,7 @@ span {
 }
 
 .ccfolia_wrap {
+  --font-scale: ${(globalFontPercent / 100).toFixed(2)};
   position: relative;
   padding: 10px !important;
   background-color: #2c2c2cde;
@@ -194,6 +196,22 @@ b {
   overflow-wrap: anywhere;
 }
 
+.ccfolia_wrap .gap,
+.ccfolia_wrap .msg-normal-text,
+.ccfolia_wrap .msg-info-text,
+.ccfolia_wrap .msg-other-text,
+.ccfolia_wrap .other,
+.ccfolia_wrap .msg-name,
+.ccfolia_wrap .msg-timestamp,
+.ccfolia_wrap .msg-category-tag,
+.ccfolia_wrap .message-container.info span {
+  font-size: calc(1em * var(--font-scale));
+}
+
+.ccfolia_wrap span {
+  font-size: calc(1em * var(--font-scale)) !important;
+}
+
 .msg-other-box {
   padding: 10px 12px;
   border-radius: 8px;
@@ -234,6 +252,7 @@ function App() {
   const [tabColorEnabled, setTabColorEnabled] = useState(false);
   const [TabColor, setTabColor] = useState({});
   const [messages, setMessages] = useState([]);
+  const [globalFontPercent, setGlobalFontPercent] = useState(100);
 
   const handleTitleImageChange = (e) => {
     setTitleImages(
@@ -289,7 +308,7 @@ function App() {
 <meta charset="UTF-8" />
 <title>${fileName.replace(".html", "")}</title>
 <style>
-${minimalExportCSS}
+${buildMinimalExportCSS(globalFontPercent)}
 </style>
 </head>
 <body class="dark-mode">
@@ -334,7 +353,7 @@ ${rawHtml}
 <meta charset="UTF-8" />
 <title>${safeName} (${idx + 1})</title>
 <style>
-${minimalExportCSS}
+${buildMinimalExportCSS(globalFontPercent)}
 </style>
 </head>
 <body class="dark-mode">
@@ -355,6 +374,30 @@ ${minimalExportCSS}
       a.remove();
       URL.revokeObjectURL(url);
     });
+  };
+
+  const handleExportJSON = () => {
+    const payload = buildEbookJson({
+      messages,
+      fileName,
+      selectedCategories,
+    });
+
+    const safeName = (fileName || "export")
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[\\/:*?"<>|]+/g, "_");
+
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${safeName}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   /* =========================
@@ -425,6 +468,8 @@ ${minimalExportCSS}
           tabColors={TabColor}
           setTabColor={setTabColor}
           messages={messages}
+          globalFontPercent={globalFontPercent}
+          setGlobalFontPercent={setGlobalFontPercent}
         />
 
         <h4>04. {t("setting.title_img")}</h4>
@@ -450,6 +495,8 @@ ${minimalExportCSS}
         tabColorEnabled={tabColorEnabled}
         onExportHTML={handleExportHTML}
         onExportSplitHTML={handleExportSplitHTML}
+        onExportJSON={handleExportJSON}
+        globalFontPercent={globalFontPercent}
       />
     </div>
   );

@@ -242,6 +242,62 @@ b {
   background: #878b8c;
 }
 
+.font-size-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.font-size-slider {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.4);
+  outline: none;
+}
+
+.font-size-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.font-size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f2f5ff;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  margin-top: -5px;
+  cursor: pointer;
+}
+
+.font-size-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.font-size-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f2f5ff;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
 
 ::-webkit-scrollbar {
   width: 5px;
@@ -341,6 +397,7 @@ input {
 }
 
 .preview-scroll-box {
+  --font-scale: 1;
   margin: 10px;
   width: 100%;
   height: 70vh;
@@ -349,6 +406,22 @@ input {
   padding: 20px;
   overflow-y: auto;
   box-sizing: border-box;
+}
+
+.preview-scroll-box .gap,
+.preview-scroll-box .msg-normal-text,
+.preview-scroll-box .msg-info-text,
+.preview-scroll-box .msg-other-text,
+.preview-scroll-box .other,
+.preview-scroll-box .msg-name,
+.preview-scroll-box .msg-timestamp,
+.preview-scroll-box .msg-category-tag,
+.preview-scroll-box .message-container.info span {
+  font-size: calc(1em * var(--font-scale));
+}
+
+.preview-scroll-box span {
+  font-size: calc(1em * var(--font-scale)) !important;
 }
 
 .download-section {

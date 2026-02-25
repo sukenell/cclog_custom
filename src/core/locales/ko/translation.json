@@ -3,7 +3,7 @@
       "select_lang" : "언어 선택",
       "language": "한국어",
       "title": "채팅 로그 커스텀",
-      "warning_txt": "커스텀 하지 않은 코코포리아 로그 외에는 인식하지 않습니다",
+      "warning_txt": "코코포리아 공식로그 외에는 인식하지 않습니다",
       "Howtouse": "사용법",
       "file_upload": "파일 업로드",
       "help": "(*html만 지원)",

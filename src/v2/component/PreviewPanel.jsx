@@ -13,7 +13,9 @@ export default function PreviewPanel({
   inputTexts,
   onExportHTML,
   onExportSplitHTML,
+  onExportJSON,
   tabColorEnabled,
+  globalFontPercent,
 }) {
 
   const filtered = messages.filter(msg => {
@@ -42,6 +44,7 @@ const buttonStyle = {
         style={{
           flex: 1,
           overflowY: "auto",
+          "--font-scale": String((globalFontPercent || 100) / 100),
           // padding: "10px 20px",
           border: "1px solid rgba(255,255,255,0.1)",
           borderRadius: "6px",
@@ -102,6 +105,13 @@ const buttonStyle = {
       style={buttonStyle}
     >
       다운로드 (분할 HTML)
+    </button>
+
+    <button
+      onClick={onExportJSON}
+      style={buttonStyle}
+    >
+      다운로드 (JSON)
     </button>
   </div>
 )}

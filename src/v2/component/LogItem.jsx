@@ -142,14 +142,14 @@ export default function LogItem({
             {/* 이름 + 시간 */}
             {!isDice && renderType !== "other" && renderType !== "info" && (
               <div style={{ display: "flex", gap: "6px" }}>
-                <strong style={{ color: message.color }}>
+                <strong className="msg-name" style={{ color: message.color }}>
                   {message.charName}
                 </strong>
 
-                <span style={{ color: "#999" }}>
+                <span className="msg-timestamp" style={{ color: "#999" }}>
                   {timestamp}
                 </span>
-                <span style={{ color: "#6c6c6cff" }}>
+                <span className="msg-category-tag" style={{ color: "#6c6c6cff" }}>
                   - {renderType}
                 </span>
               </div>

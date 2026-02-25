@@ -23,12 +23,8 @@ const SettingsPanel = ({
   // tab colors
   tabColors,
   setTabColor,
-
-  // character
-  charColors,
-  setCharColors,
-  charHeads,
-  setCharHeads,
+  globalFontPercent,
+  setGlobalFontPercent,
 }) => {
   /* =========================
      카테고리 라벨
@@ -167,44 +163,48 @@ const SettingsPanel = ({
         </ul>
       </div>
 
-      {/* =========================
-          04. 캐릭터 컬러
-      ========================= */}
       <div className="skinTypeCheck">
-        <h4>
-          04. {t("setting.cha_color")}
-          <b>(*{t("setting.warning_txt2")})</b>
-        </h4>
-
-        <div className="color_div">
-          {Object.keys(charColors || {}).map((charName) => (
-            <div key={charName} className="color_picker">
-              <span>{charName}</span>
-
-              <input
-                type="color"
-                value={charColors[charName] || "#000000"}
-                onChange={(e) =>
-                  setCharColors((prev) => ({
-                    ...prev,
-                    [charName]: e.target.value,
-                  }))
-                }
-              />
-
-              <input
-                type="text"
-                placeholder="Head Image URL"
-                value={charHeads?.[charName] || ""}
-                onChange={(e) =>
-                  setCharHeads((prev) => ({
-                    ...prev,
-                    [charName]: e.target.value,
-                  }))
-                }
-              />
-            </div>
-          ))}
+        <h4>04. 텍스트 크기</h4>
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "10px",
+            marginTop: "8px",
+          }}
+        >
+          <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0 }}>A</span>
+          <input
+            type="range"
+            min="80"
+            max="160"
+            step="1"
+            value={globalFontPercent}
+            onInput={(e) => setGlobalFontPercent(Number(e.currentTarget.value))}
+            onChange={(e) => setGlobalFontPercent(Number(e.currentTarget.value))}
+            aria-label="텍스트 크기 조절"
+            style={{
+              flex: "1 1 auto",
+              width: "100%",
+              minWidth: "240px",
+              margin: "0 6px",
+              display: "block",
+              visibility: "visible",
+              opacity: 1,
+              appearance: "auto",
+              WebkitAppearance: "slider-horizontal",
+              accentColor: "#cfd8ff",
+              height: "24px",
+              cursor: "pointer",
+              background: "transparent",
+            }}
+          />
+          <span style={{ fontSize: "34px", lineHeight: 1, flexShrink: 0 }}>A</span>
+          <strong style={{ minWidth: "64px", textAlign: "right", flexShrink: 0 }}>
+            {globalFontPercent}%
+          </strong>
         </div>
       </div>
     </div>
