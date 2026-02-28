@@ -81,13 +81,21 @@ export function parseDiceFromText(text = "") {
   };
 }
 
-export function mapRole(message) {
-  if (message?.isDice) return "Dice";
+function isSecretCategory(category = "") {
+  const value = String(category).toLowerCase();
+  return /^비밀\(.+\)$/.test(value) || /^secret\(.+\)$/.test(value);
+}
 
-  const category = message?.category;
-  if (category === "main" || category === "info" || category === "other") {
-    return category;
-  }
+export function mapRole(message, inputTexts = []) {
+  if (message?.isDice) return "dice";
+
+  const isDesc =
+    message?.category === "main" &&
+    Array.isArray(inputTexts) &&
+    inputTexts.includes(message?.charName);
+  if (isDesc) return "system";
+
+  if (isSecretCategory(message?.category)) return "secret";
 
   return "character";
 }
@@ -99,7 +107,7 @@ function shouldIncludeMessage(message, selectedCategories) {
   return Boolean(selectedCategories[message.category]);
 }
 
-function mapLine(message) {
+function mapLine(message, inputTexts = []) {
   if (message.category === "image") {
     return {
       id: generate16DigitId(),
@@ -113,7 +121,7 @@ function mapLine(message) {
   const line = {
     id: generate16DigitId(),
     speaker: message.charName || "NONAME",
-    role: mapRole(message),
+    role: mapRole(message, inputTexts),
     timestamp: formatKoreanTime(message.timestamp),
     text: message.text || "",
     safetext: toSafeText(message.text || ""),
@@ -137,10 +145,15 @@ function mapLine(message) {
   return line;
 }
 
-export function buildEbookJson({ messages = [], fileName = "", selectedCategories } = {}) {
+export function buildEbookJson({
+  messages = [],
+  fileName = "",
+  selectedCategories,
+  inputTexts = [],
+} = {}) {
   const lines = (Array.isArray(messages) ? messages : [])
     .filter((message) => shouldIncludeMessage(message, selectedCategories))
-    .map((message) => mapLine(message));
+    .map((message) => mapLine(message, inputTexts));
 
   return {
     schemaVersion: 1,

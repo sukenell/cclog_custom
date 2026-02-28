@@ -49,14 +49,14 @@ describe('exportEbookJson', () => {
     expect(result.lines).toHaveLength(4);
 
     expect(result.lines[0].id).toMatch(/^\d{16}$/);
-    expect(result.lines[0].role).toBe('main');
+    expect(result.lines[0].role).toBe('character');
     expect(result.lines[0].timestamp).toBe('오후 1:25');
     expect(result.lines[0].input.speakerImages.standing.url).toBe('https://i.imgur.com/a.png');
 
-    expect(result.lines[1].role).toBe('other');
+    expect(result.lines[1].role).toBe('character');
     expect(result.lines[1].textColor).toBe('color: #aaaaaa');
 
-    expect(result.lines[2].role).toBe('Dice');
+    expect(result.lines[2].role).toBe('dice');
     expect(result.lines[2].input.dice.source).toBe('ccfolia');
     expect(result.lines[2].input.dice.template).toBe('coc');
 
@@ -102,5 +102,38 @@ describe('exportEbookJson', () => {
         success: 85,
       },
     });
+  });
+
+  test('maps desc to system and 비밀(...) to secret', () => {
+    const messages = [
+      {
+        id: 'm1',
+        category: 'main',
+        charName: '나레이션',
+        text: '장면 전환',
+        imgUrl: '',
+        timestamp: '2025-01-01T10:00:00+09:00',
+        isDice: false,
+      },
+      {
+        id: 'm2',
+        category: '비밀(kp,pl)',
+        charName: 'KP',
+        text: '비밀 정보',
+        imgUrl: '',
+        timestamp: '2025-01-01T10:01:00+09:00',
+        isDice: false,
+      },
+    ];
+
+    const result = buildEbookJson({
+      messages,
+      fileName: 'role-test.html',
+      selectedCategories: { main: true, '비밀(kp,pl)': true },
+      inputTexts: ['나레이션'],
+    });
+
+    expect(result.lines[0].role).toBe('system');
+    expect(result.lines[1].role).toBe('secret');
   });
 });

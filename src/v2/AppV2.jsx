@@ -381,6 +381,7 @@ ${buildMinimalExportCSS(globalFontPercent)}
       messages,
       fileName,
       selectedCategories,
+      inputTexts,
     });
 
     const safeName = (fileName || "export")
