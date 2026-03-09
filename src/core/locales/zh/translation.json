@@ -39,6 +39,7 @@
     "file_upload": "请上传文件。",
     "download_html": "下载(HTML)",
     "download_Tstory": "下载(Tstory)",
+    "download_json": "下载(JSON)",
     "download_pdf": "下载(PDF)"
   },
   "dice_result": {

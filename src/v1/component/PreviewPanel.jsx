@@ -17,8 +17,11 @@ const PreviewPanel = ({ t, fileContent, parseHtml, charColors, charHeads, titleI
             {t("preview.download_html")}
             </button>
             <button onClick={() => onDownloadClick("Tstory")} className="down_btn">
-              다운로드(Tstory 백업용)
+              {t("preview.download_Tstory")}
             </button>
+            {/* <button onClick={() => onDownloadClick("json")} className="down_btn">
+              {t("preview.download_json")}
+            </button> */}
           </>
         )}
       </div>

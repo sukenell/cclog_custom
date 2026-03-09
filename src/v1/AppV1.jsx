@@ -3,6 +3,7 @@ import UploadSection from "./component/UploadSection.jsx";
 import SettingsPanel from "./component//SettingsPanel";
 import PreviewPanel from "./component//PreviewPanel";
 import { handleDownload } from "../v1/utils/FileDownload.js";
+import { buildV1EbookJson } from "../v1/utils/exportJson.js";
 import { createImageSection, processMessageTag } from "./utils/utils.js";
 import { useTranslation } from 'react-i18next';
 import "./AppV1.css";
@@ -28,6 +29,38 @@ function App() {
 
   //함수 모음
   const onDownloadClick = (type) => {
+    if (type === "json") {
+      const payload = buildV1EbookJson({
+        fileContent,
+        fileName,
+        selectedCategories,
+        inputTexts,
+        charHeads,
+        charColors,
+        titleImages,
+        endImages,
+        diceEnabled,
+        t,
+      });
+
+      const safeName = (fileName || "export")
+        .replace(/\.[^/.]+$/, "")
+        .replace(/[\\/:*?"<>|]+/g, "_");
+
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${safeName}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
     handleDownload(() => parseContent(false), fileName, type);
   };
   const handleTitleImageChange = (event) => {

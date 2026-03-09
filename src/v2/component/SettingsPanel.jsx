@@ -102,7 +102,7 @@ const SettingsPanel = ({
       ========================= */}
       <div className="skinTypeCheck">
         <h4>
-          02. {t("setting.tab_select")}
+          02-1. {t("setting.tab_select")}
           <b>(*{t("setting.multiple")})</b>
         </h4>
 
@@ -147,7 +147,7 @@ const SettingsPanel = ({
           03. 기타 스타일링
       ========================= */}
       <div className="skinTypeCheck">
-        <h4>03. 기타 스타일링 적용 여부</h4>
+        <h4>02-2. 기타 스타일링 적용 여부</h4>
         <ul>
           {toggles.map(({ id, state, setState, label }) => (
             <li key={id}>
@@ -164,7 +164,7 @@ const SettingsPanel = ({
       </div>
 
       <div className="skinTypeCheck">
-        <h4>04. 텍스트 크기</h4>
+        <h4>03. 텍스트 크기</h4>
         <div
           style={{
             width: "100%",
