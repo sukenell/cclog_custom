@@ -20,6 +20,7 @@ export function parseFirebaseMessages(fileContent, options = {}) {
     charHeads = {},
     charColors = {},
     tabColors = {},
+    diceEnabled = true,
   } = options;
 
   const successTypes = getDiceTypes(t);
@@ -64,7 +65,7 @@ export function parseFirebaseMessages(fileContent, options = {}) {
     if (FIXED_CATEGORIES.includes(category)) {
       if (category === "info") backgroundColor = "#464646";
       else if (category === "other") backgroundColor = "#4c4c4c";
-      else backgroundColor = "transparent";
+      else backgroundColor = "#313131";
     } else {
       backgroundColor = tabColors[category] || "#525569";
     }
@@ -72,7 +73,8 @@ export function parseFirebaseMessages(fileContent, options = {}) {
     /* =========================
        Dice 판정
     ========================= */
-    const isDice = COCdice.test(fullText);
+    const isDice =
+      category === "main" && diceEnabled && COCdice.test(fullText);
     let diceStyle = null;
 
     if (isDice) {

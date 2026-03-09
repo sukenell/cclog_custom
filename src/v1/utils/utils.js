@@ -146,6 +146,7 @@ export const createImageSection = (images) => {
             cleanUpText_second();
             break;
         case category === "main":
+            backgroundColor = "#313131";
             //desc
             if (inputTexts.includes(spans[1].textContent)) {
                 p.style.display = "flow-root";
@@ -203,7 +204,7 @@ export const createImageSection = (images) => {
         default:
             if (spans.length >= 3 && category !== "other" && category !== "info") {
                 backgroundColor = tabColors?.[category] || "#525569";
-                if (COCdice.test(spans[2].textContent.trim())) {
+                if (diceEnabled && COCdice.test(spans[2].textContent.trim())) {
                     const nextText = spans[1].nextSibling.textContent.trim();
                     if (nextText === ":") {
                       spans[1].nextSibling.textContent = "";

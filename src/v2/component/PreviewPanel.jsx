@@ -67,14 +67,7 @@ const buttonStyle = {
           />
 
           {idx < filtered.length - 1 && (
-            <hr
-              className="message-divider"
-              style={{
-                border: "0",
-                borderTop: "1px solid rgba(255,255,255,0.08)",
-                margin: "0",
-              }}
-            />
+            <hr className="message-divider" />
           )}
         </React.Fragment>
 ))}
@@ -107,12 +100,12 @@ const buttonStyle = {
       다운로드 (분할 HTML)
     </button>
 
-    <button
+    {/* <button
       onClick={onExportJSON}
       style={buttonStyle}
     >
       다운로드 (JSON)
-    </button>
+    </button> */}
   </div>
 )}
 

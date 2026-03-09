@@ -2,6 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Pencil, Check, Image as ImageIcon } from "lucide-react";
 import { COCdice, getDiceTypes } from "./dice";
 
+const toCategoryClass = (value) =>
+  String(value || "unknown")
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "-");
+
 export default function LogItem({
   message,
   t,
@@ -87,20 +92,18 @@ export default function LogItem({
 
   const imgSrc = imgUrl || "https://ccfolia.com/blank.gif";
   const showGalleryAction = !isDice && renderType !== "other" && renderType !== "info" && renderType !== "desc";
+  const hasBackgroundColor = Boolean(tabColorEnabled && message.backgroundColor);
+  const rowStyle = hasBackgroundColor
+    ? { "--row-bg-color": message.backgroundColor }
+    : undefined;
+  const nameStyle = message.color
+    ? { "--msg-name-color": message.color }
+    : undefined;
 
   return (
     <div
-      className={`gap message - container ${renderType} `}
-      style={{
-        backgroundColor:
-          tabColorEnabled && message.backgroundColor
-            ? message.backgroundColor
-            : "transparent",
-        padding: "12px 0",
-        paddingLeft: renderType === "other" ? "48px" : "0",
-        margin: renderType === "other" ? "8px" : "0",
-        alignItems: "flex-start",
-      }}
+      className={`gap message-row cat-${toCategoryClass(renderType)} ${renderType === "other" ? "message-row-other" : ""} ${hasBackgroundColor ? "message-row-has-bg" : ""}`}
+      style={rowStyle}
     >
       {/* ================= DESC ================= */}
       {renderType === "desc" ? (
@@ -138,18 +141,18 @@ export default function LogItem({
             </div>
           )}
 
-          <div style={{ flex: 1 }}>
+          <div className="message-body">
             {/* 이름 + 시간 */}
             {!isDice && renderType !== "other" && renderType !== "info" && (
-              <div style={{ display: "flex", gap: "6px" }}>
-                <strong className="msg-name" style={{ color: message.color }}>
+              <div className="message-meta">
+                <strong className="msg-name" style={nameStyle}>
                   {message.charName}
                 </strong>
 
-                <span className="msg-timestamp" style={{ color: "#999" }}>
+                <span className="msg-timestamp">
                   {timestamp}
                 </span>
-                <span className="msg-category-tag" style={{ color: "#6c6c6cff" }}>
+                <span className="msg-category-tag">
                   - {renderType}
                 </span>
               </div>
