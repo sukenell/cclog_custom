@@ -141,6 +141,43 @@ p {
   padding: 3px;
 }
 
+.message-row {
+  background-color: transparent;
+  padding: 12px 0;
+  margin: 0;
+  align-items: flex-start;
+}
+
+.message-row-has-bg {
+  background-color: var(--row-bg-color);
+}
+
+.message-row-other {
+  padding-left: 48px;
+  margin: 8px;
+}
+
+.message-body {
+  flex: 1 1 0%;
+}
+
+.message-meta {
+  display: flex;
+  gap: 6px;
+}
+
+.msg-name {
+  color: var(--msg-name-color, #dddddd);
+}
+
+.msg-timestamp {
+  color: #999;
+}
+
+.msg-category-tag {
+  color: #6c6c6c;
+}
+
 b {
   color: gray;
   font-size: 9pt;

@@ -86,6 +86,17 @@ export const createImageSection = (images) => {
         }
     };
 
+    const stripImportedDiceStyles = () => {
+        const messageSpan = spans[2];
+        if (!messageSpan) return;
+        if (diceEnabled) return;
+        if (!COCdice.test(messageSpan.textContent.trim())) return;
+
+        messageSpan.querySelectorAll("[style]").forEach((el) => {
+            el.removeAttribute("style");
+        });
+    };
+
     const cleanUpText_second = () => {
         if (spans[1]) {
             const bTag = spans[1].parentNode.querySelector("b");
@@ -119,6 +130,7 @@ export const createImageSection = (images) => {
     applyCategoryStyles();
     handleConsecutiveMessages();
     cleanUpText_first();
+    stripImportedDiceStyles();
     
 
     const secretPattern = new RegExp(`^${t('preview.secret')}\\(.+\\)$`);

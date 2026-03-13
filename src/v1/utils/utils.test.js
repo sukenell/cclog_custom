@@ -78,4 +78,35 @@ describe('processMessageTag', () => {
     expect(html).toContain('background-color: #313131');
     expect(html).not.toContain('background-color: transparent');
   });
+
+  test('removes imported dice styling from custom category when diceEnabled is false', () => {
+    const p = document.createElement('p');
+    p.innerHTML =
+      '<span>[custom]</span> <span>Alice</span> : <span><span style="color: rgb(255, 0, 0); font-weight: bold;">CC<=50 성공</span></span>';
+
+    const { parsedDivs } = runProcessWithP(p, { diceEnabled: false });
+    const html = parsedDivs.join('');
+
+    expect(html).not.toContain('판정');
+    expect(html).not.toContain('flow-root');
+    expect(html).not.toContain('rgb(255, 0, 0)');
+    expect(html).not.toContain('font-weight: bold;');
+  });
+
+  test('does not inject dice presentation for custom json category when diceEnabled is false', () => {
+    const p = document.createElement('p');
+    p.innerHTML = '<span>[custom]</span> <span>Alice</span><b> - 2025/01/01</b> : <span>CC<=50 성공</span>';
+
+    const { parsedDivs } = runProcessWithP(p, {
+      type: 'json',
+      charHeads: '',
+      charColors: '#ffffff',
+      diceEnabled: false,
+    });
+    const html = parsedDivs.join('');
+
+    expect(html).not.toContain('판정');
+    expect(html).not.toContain('flow-root');
+    expect(html).toContain('background-color: #525569');
+  });
 });

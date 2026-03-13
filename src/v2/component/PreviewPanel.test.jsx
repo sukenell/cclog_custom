@@ -42,4 +42,46 @@ describe('PreviewPanel divider markup', () => {
     rootApi.unmount();
     container.remove();
   });
+
+  test('does not render a json download button', () => {
+    const messages = [
+      { id: '1', category: 'main', text: 'a', charName: 'A', imgUrl: '', color: '#fff' },
+    ];
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+    const onExportJSON = jest.fn();
+
+    flushSync(() => {
+      rootApi.render(
+        <PreviewPanel
+          messages={messages}
+          updateMessage={() => {}}
+          selectedCategories={{ main: true }}
+          tabColors={{}}
+          charColors={{}}
+          charHeads={{}}
+          diceEnabled={false}
+          secretEnabled={false}
+          inputTexts={[]}
+          onExportHTML={() => {}}
+          onExportSplitHTML={() => {}}
+          onExportJSON={onExportJSON}
+          tabColorEnabled={false}
+          globalFontPercent={100}
+        />
+      );
+    });
+
+    const jsonButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === '다운로드 (JSON)'
+    );
+
+    expect(jsonButton).toBeUndefined();
+    expect(onExportJSON).not.toHaveBeenCalled();
+
+    rootApi.unmount();
+    container.remove();
+  });
 });
