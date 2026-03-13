@@ -134,3 +134,6 @@ build/
 
 #
 .env
+
+# local deploy helper
+deploy.sh
