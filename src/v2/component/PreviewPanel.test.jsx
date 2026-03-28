@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import PreviewPanel from './PreviewPanel';
 
 describe('PreviewPanel divider markup', () => {
-  test('renders message-divider without inline style attribute', () => {
+  test('renders message-divider as a non-hr block element', () => {
     const messages = [
       { id: '1', category: 'main', text: 'a', charName: 'A', imgUrl: '', color: '#fff' },
       { id: '2', category: 'main', text: 'b', charName: 'B', imgUrl: '', color: '#fff' },
@@ -35,9 +35,10 @@ describe('PreviewPanel divider markup', () => {
       );
     });
 
-    const divider = container.querySelector('hr.message-divider');
+    const divider = container.querySelector('.message-divider');
     expect(divider).not.toBeNull();
-    expect(divider.getAttribute('style')).toBeNull();
+    expect(divider.tagName).toBe('DIV');
+    expect(container.querySelector('hr.message-divider')).toBeNull();
 
     rootApi.unmount();
     container.remove();

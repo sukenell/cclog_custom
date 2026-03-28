@@ -54,6 +54,15 @@ b{
 width: 40px;
 }
 
+.message-divider {
+  margin: 0;
+  padding: 0;
+  height: 1px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
 span:before {
   display: none !important ;
 }

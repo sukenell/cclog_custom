@@ -1,5 +1,7 @@
 import { COCdice, getDiceTypes } from '../../v2/component/dice'
 
+const dividerMarkup = '<div class="message-divider" aria-hidden="true"></div>';
+
 export const createImageSection = (images) => {
     if (!Array.isArray(images)) return "";
     return `
@@ -8,7 +10,7 @@ export const createImageSection = (images) => {
           .map(
             (url) => `
             <img src="${url}" style="max-width: 100%; height: auto; border-radius: 5px;">
-            <hr style="border: 0; flex-shrink: 0; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+            ${dividerMarkup}
             `
           )
           .join("")}
@@ -260,7 +262,7 @@ export const createImageSection = (images) => {
         ${imgTag ? `<div class="msg_container">${imgTag}</div>` : ""}
         ${p.outerHTML}
     </div>
-    <hr style="margin: 0; padding: 0; border: 0; flex-shrink: 0; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+    ${dividerMarkup}
     `;
 
     if ((!limitLines && selectedCategories[category]) || (limitLines && selectedCategories[category])) {

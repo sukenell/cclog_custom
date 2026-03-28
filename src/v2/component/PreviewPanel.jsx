@@ -67,7 +67,7 @@ const buttonStyle = {
           />
 
           {idx < filtered.length - 1 && (
-            <hr className="message-divider" />
+            <div className="message-divider" aria-hidden="true" />
           )}
         </React.Fragment>
 ))}

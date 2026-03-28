@@ -1,4 +1,4 @@
-import { processMessageTag } from './utils';
+import { createImageSection, processMessageTag } from './utils';
 
 const t = (key) => {
   const map = {
@@ -55,6 +55,52 @@ function runProcessWithP(p, overrides = {}) {
 
   return args;
 }
+
+describe('v1 divider markup', () => {
+  test('createImageSection uses a div-based divider instead of hr', () => {
+    const html = createImageSection(['https://example.com/test.png']);
+
+    expect(html).toContain('class="message-divider"');
+    expect(html).not.toContain('<hr');
+  });
+
+  test('processMessageTag appends a div-based divider to exported markup', () => {
+    const p = document.createElement('p');
+    p.innerHTML = '<span>[메인]</span><span>A</span>:<span>Hello</span>';
+
+    const count = { main: 0 };
+    const parsedDivs = [];
+    const selectedCategories = { main: true };
+
+    processMessageTag(
+      p,
+      'html',
+      (key) => key,
+      {},
+      { A: '#ffffff' },
+      false,
+      () => {},
+      false,
+      () => {},
+      false,
+      () => {},
+      {},
+      () => {},
+      false,
+      count,
+      parsedDivs,
+      '',
+      '',
+      [],
+      selectedCategories,
+      () => {}
+    );
+
+    expect(parsedDivs).toHaveLength(1);
+    expect(parsedDivs[0]).toContain('class="message-divider"');
+    expect(parsedDivs[0]).not.toContain('<hr');
+  });
+});
 
 describe('processMessageTag', () => {
   test('does not apply dice styling for custom category when diceEnabled is false', () => {

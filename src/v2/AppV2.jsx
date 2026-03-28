@@ -220,9 +220,10 @@ b {
 .message-divider {
   margin: 0;
   padding: 0;
+  height: 1px;
   border: 0;
+  background: rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .msg-info-text,
@@ -330,14 +331,12 @@ function App() {
 
     // 2. 가독성을 위한 포맷팅 (간이 Beautify)
     // - 태그 사이에 줄바꿈 추가
-    // - <hr> 태그 주변에 줄바꿈 추가
+    // - 디바이더 블록 주변에 줄바꿈 추가
     // - 불필요한 공백 제거
     rawHtml = rawHtml
       .replace(/><\/div>/g, ">\n</div>") // 닫는 div 앞에 줄바꿈
       .replace(/<\/div><div/g, "</div>\n<div") // div 사이에 줄바꿈
-      .replace(/<hr/g, "\n<hr") // hr 앞에 줄바꿈
-      .replace(/<\/hr>/g, "</hr>\n") // hr 뒤에 줄바꿈 (hr은 self-closing일수도 있지만)
-      .replace(/class="message-divider"([^>]*)>/g, 'class="message-divider"$1>\n'); // hr 태그 뒤에 확실히 줄바꿈
+      .replace(/<div class="message-divider"([^>]*)><\/div>/g, '\n<div class="message-divider"$1></div>\n');
 
     const html = `<!DOCTYPE html>
 <html lang="ko">
