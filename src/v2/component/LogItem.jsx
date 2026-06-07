@@ -188,7 +188,7 @@ export default function LogItem({
             )}
 
             {/* ================= DICE ================= */}
-            {isDice && diceStyle ? (
+            {isDice ? (
               <div data-dice="true" style={{ textAlign: "center" }}>
                 <div
                   style={{
@@ -202,7 +202,7 @@ export default function LogItem({
                 >
                   {message.charName} - 판정
                 </div>
-                <span style={diceStyle}> {text}</span>
+                <span style={diceStyle || undefined}> {text}</span>
                 {renderDeleteButton()}
               </div>
             ) : (

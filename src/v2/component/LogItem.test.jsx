@@ -86,4 +86,44 @@ describe('LogItem class naming', () => {
     rootApi.unmount();
     container.remove();
   });
+
+  test('renders a dice judgement header for 1D100 rolls without result labels', () => {
+    const message = {
+      id: 'plain-d100',
+      category: 'main',
+      text: '1D100 (1D100) ＞ 91',
+      charName: 'Alice',
+      imgUrl: 'https://ccfolia.com/blank.gif',
+      color: '#fff',
+      backgroundColor: '#123456',
+      timestamp: null,
+    };
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    flushSync(() => {
+      rootApi.render(
+        <LogItem
+          message={message}
+          t={(s) => s}
+          updateMessage={() => {}}
+          onDeleteMessage={() => {}}
+          diceEnabled={true}
+          inputTexts={[]}
+          tabColorEnabled={false}
+        />
+      );
+    });
+
+    const diceBlock = container.querySelector('[data-dice="true"]');
+    expect(diceBlock).not.toBeNull();
+    expect(diceBlock.textContent).toContain('Alice - 판정');
+    expect(diceBlock.textContent).toContain('1D100 (1D100) ＞ 91');
+    expect(container.querySelector('.msg_container')).toBeNull();
+
+    rootApi.unmount();
+    container.remove();
+  });
 });

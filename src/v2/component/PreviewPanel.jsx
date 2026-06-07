@@ -102,12 +102,12 @@ const buttonStyle = {
       다운로드 (분할 HTML)
     </button>
 
-    {/* <button
+    <button
       onClick={onExportJSON}
       style={buttonStyle}
     >
       다운로드 (JSON)
-    </button> */}
+    </button>
   </div>
 )}
 
