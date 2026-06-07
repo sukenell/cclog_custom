@@ -85,4 +85,50 @@ describe('PreviewPanel divider markup', () => {
     rootApi.unmount();
     container.remove();
   });
+
+  test('passes the delete action through to rendered log items', () => {
+    const messages = [
+      { id: 'delete-me', category: 'main', text: 'a', charName: 'A', imgUrl: '', color: '#fff' },
+    ];
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+    const deleteMessage = jest.fn();
+
+    flushSync(() => {
+      rootApi.render(
+        <PreviewPanel
+          messages={messages}
+          updateMessage={() => {}}
+          deleteMessage={deleteMessage}
+          selectedCategories={{ main: true }}
+          tabColors={{}}
+          charColors={{}}
+          charHeads={{}}
+          diceEnabled={false}
+          secretEnabled={false}
+          inputTexts={[]}
+          onExportHTML={() => {}}
+          onExportSplitHTML={() => {}}
+          onExportJSON={() => {}}
+          tabColorEnabled={false}
+          globalFontPercent={100}
+        />
+      );
+    });
+
+    const deleteButton = container.querySelector('button[title="Delete Message"]');
+    expect(deleteButton).not.toBeNull();
+
+    flushSync(() => {
+      deleteButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(deleteMessage).toHaveBeenCalledTimes(1);
+    expect(deleteMessage).toHaveBeenCalledWith('delete-me');
+
+    rootApi.unmount();
+    container.remove();
+  });
 });

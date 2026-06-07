@@ -44,7 +44,10 @@ const splitByMessageBlocks = (container, maxChars) => {
 /* =========================
    EXPORT CSS
 ========================= */
-const buildMinimalExportCSS = (globalFontPercent = 100) => `
+export const removeMessageById = (messages, id) =>
+  messages.filter((message) => message.id !== id);
+
+export const buildMinimalExportCSS = (globalFontPercent = 100) => `
 :root {
   --background-color: rgba(44, 44, 44, 0.87);
   --text-color: white;
@@ -203,8 +206,6 @@ b {
 .message-container.other {
   color: gray;
   background-color: transparent;
-  padding: 12px 0 12px 48px;
-  margin: 8px;
 }
 
 .message-container.desc,
@@ -317,6 +318,10 @@ function App() {
     setMessages(prev =>
       prev.map(msg => msg.id === id ? { ...msg, ...newValue } : msg)
     );
+  };
+
+  const deleteMessage = (id) => {
+    setMessages(prev => removeMessageById(prev, id));
   };
 
   const handleExportHTML = () => {
@@ -523,6 +528,7 @@ ${buildMinimalExportCSS(globalFontPercent)}
         messages={messages}
         t={t}
         updateMessage={updateMessage}
+        deleteMessage={deleteMessage}
         selectedCategories={selectedCategories}
         tabColors={TabColor}
         charColors={charColors}

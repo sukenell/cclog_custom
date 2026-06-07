@@ -41,4 +41,49 @@ describe('LogItem class naming', () => {
     rootApi.unmount();
     container.remove();
   });
+
+  test('calls delete handler with the message id from the delete action', () => {
+    const message = {
+      id: 'delete-me',
+      category: 'main',
+      text: '삭제할 텍스트',
+      charName: 'Alice',
+      imgUrl: 'https://ccfolia.com/blank.gif',
+      color: '#fff',
+      backgroundColor: '#123456',
+      timestamp: null,
+    };
+    const onDeleteMessage = jest.fn();
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    flushSync(() => {
+      rootApi.render(
+        <LogItem
+          message={message}
+          t={(s) => s}
+          updateMessage={() => {}}
+          onDeleteMessage={onDeleteMessage}
+          diceEnabled={false}
+          inputTexts={[]}
+          tabColorEnabled={false}
+        />
+      );
+    });
+
+    const deleteButton = container.querySelector('button[title="Delete Message"]');
+    expect(deleteButton).not.toBeNull();
+
+    flushSync(() => {
+      deleteButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onDeleteMessage).toHaveBeenCalledTimes(1);
+    expect(onDeleteMessage).toHaveBeenCalledWith('delete-me');
+
+    rootApi.unmount();
+    container.remove();
+  });
 });

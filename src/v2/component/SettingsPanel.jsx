@@ -57,14 +57,26 @@ const SettingsPanel = ({
      새 카테고리 자동 체크
   ========================= */
   useEffect(() => {
+    const missingCategories = detectedCategories.filter(
+      (cat) => !(cat in (selectedCategories || {}))
+    );
+
+    if (missingCategories.length === 0) return;
+
     setSelectedCategories((prev) => {
       const next = { ...prev };
-      detectedCategories.forEach((cat) => {
-        if (!(cat in next)) next[cat] = true;
+      let changed = false;
+
+      missingCategories.forEach((cat) => {
+        if (!(cat in next)) {
+          next[cat] = true;
+          changed = true;
+        }
       });
-      return next;
+
+      return changed ? next : prev;
     });
-  }, [detectedCategories, setSelectedCategories]);
+  }, [detectedCategories, selectedCategories, setSelectedCategories]);
 
   /* =========================
      핸들러

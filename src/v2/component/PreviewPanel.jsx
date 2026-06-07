@@ -4,6 +4,7 @@ import LogItem from "./LogItem";
 export default function PreviewPanel({
   messages,
   updateMessage,
+  deleteMessage,
   selectedCategories,
   tabColors,
   charColors,
@@ -57,6 +58,7 @@ const buttonStyle = {
           <LogItem
             message={msg}
             updateMessage={updateMessage}
+            onDeleteMessage={deleteMessage}
             tabColors={tabColors}
             charColors={charColors}
             charHeads={charHeads}
