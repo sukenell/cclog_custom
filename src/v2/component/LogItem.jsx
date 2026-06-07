@@ -7,6 +7,8 @@ const toCategoryClass = (value) =>
     .toLowerCase()
     .replace(/[^a-z0-9_-]/g, "-");
 
+const normalizeSpeakerName = (value) => String(value || "").trim();
+
 export default function LogItem({
   message,
   t,
@@ -92,10 +94,10 @@ export default function LogItem({
     );
   }
 
-  const isDesc =
-    message.category === "main" &&
-    Array.isArray(inputTexts) &&
-    inputTexts.includes(message.charName);
+  const normalizedInputTexts = Array.isArray(inputTexts)
+    ? inputTexts.map(normalizeSpeakerName).filter(Boolean)
+    : [];
+  const isDesc = normalizedInputTexts.includes(normalizeSpeakerName(message.charName));
 
   const renderType = isDesc ? "desc" : message.category;
 
@@ -202,8 +204,26 @@ export default function LogItem({
                 >
                   {message.charName} - 판정
                 </div>
-                <span style={diceStyle || undefined}> {text}</span>
-                {renderDeleteButton()}
+                {isEditing ? (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                    <input
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      style={{ width: "60%" }}
+                    />
+                    <button onClick={toggleEdit}>
+                      <Check size={18} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <span style={diceStyle || undefined}> {text}</span>
+                    <button onClick={toggleEdit} title="Edit Message" aria-label="Edit Message">
+                      <Pencil size={18} />
+                    </button>
+                    {renderDeleteButton()}
+                  </>
+                )}
               </div>
             ) : (
               <>

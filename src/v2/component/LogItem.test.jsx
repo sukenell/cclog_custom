@@ -126,4 +126,126 @@ describe('LogItem class naming', () => {
     rootApi.unmount();
     container.remove();
   });
+
+  test('shows an edit action for styled dice rolls and opens text editing', () => {
+    const message = {
+      id: 'dice-edit',
+      category: 'main',
+      text: '1D100 (1D100) ＞ 91',
+      charName: 'Alice',
+      imgUrl: 'https://ccfolia.com/blank.gif',
+      color: '#fff',
+      backgroundColor: '#123456',
+      timestamp: null,
+    };
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    flushSync(() => {
+      rootApi.render(
+        <LogItem
+          message={message}
+          t={(s) => s}
+          updateMessage={() => {}}
+          onDeleteMessage={() => {}}
+          diceEnabled={true}
+          inputTexts={[]}
+          tabColorEnabled={false}
+        />
+      );
+    });
+
+    const diceBlock = container.querySelector('[data-dice="true"]');
+    const editButton = diceBlock.querySelector('button[title="Edit Message"]');
+    expect(editButton).not.toBeNull();
+
+    flushSync(() => {
+      editButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const input = container.querySelector('input');
+    expect(input).not.toBeNull();
+    expect(input.value).toBe('1D100 (1D100) ＞ 91');
+
+    rootApi.unmount();
+    container.remove();
+  });
+
+  test('matches system styling names after trimming speaker whitespace', () => {
+    const message = {
+      id: 'trimmed-speaker',
+      category: 'main',
+      text: '앞 공백 화자',
+      charName: ' 이름',
+      imgUrl: 'https://ccfolia.com/blank.gif',
+      color: '#fff',
+      backgroundColor: '#123456',
+      timestamp: null,
+    };
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    flushSync(() => {
+      rootApi.render(
+        <LogItem
+          message={message}
+          t={(s) => s}
+          updateMessage={() => {}}
+          onDeleteMessage={() => {}}
+          diceEnabled={false}
+          inputTexts={['이름']}
+          tabColorEnabled={false}
+        />
+      );
+    });
+
+    const root = container.firstChild;
+    expect(root.className).toContain('cat-desc');
+    expect(root.textContent).toContain('앞 공백 화자');
+
+    rootApi.unmount();
+    container.remove();
+  });
+
+  test('applies system styling by speaker name regardless of message category', () => {
+    const message = {
+      id: 'secret-speaker',
+      category: '秘密(匿名者,넬)',
+      text: '비밀 탭 화자',
+      charName: 'sdfsdf',
+      imgUrl: 'https://ccfolia.com/blank.gif',
+      color: '#fff',
+      backgroundColor: '#123456',
+      timestamp: null,
+    };
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    flushSync(() => {
+      rootApi.render(
+        <LogItem
+          message={message}
+          t={(s) => s}
+          updateMessage={() => {}}
+          onDeleteMessage={() => {}}
+          diceEnabled={false}
+          inputTexts={['sdfsdf']}
+          tabColorEnabled={false}
+        />
+      );
+    });
+
+    const root = container.firstChild;
+    expect(root.className).toContain('cat-desc');
+    expect(root.textContent).toContain('비밀 탭 화자');
+
+    rootApi.unmount();
+    container.remove();
+  });
 });
