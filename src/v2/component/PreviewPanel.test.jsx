@@ -44,7 +44,7 @@ describe('PreviewPanel divider markup', () => {
     container.remove();
   });
 
-  test('renders a json download button and calls the export handler', () => {
+  test('does not render a json download button', () => {
     const messages = [
       { id: '1', category: 'main', text: 'a', charName: 'A', imgUrl: '', color: '#fff' },
     ];
@@ -79,13 +79,8 @@ describe('PreviewPanel divider markup', () => {
       (button) => button.textContent === '다운로드 (JSON)'
     );
 
-    expect(jsonButton).not.toBeUndefined();
-
-    flushSync(() => {
-      jsonButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
-
-    expect(onExportJSON).toHaveBeenCalledTimes(1);
+    expect(jsonButton).toBeUndefined();
+    expect(onExportJSON).not.toHaveBeenCalled();
 
     rootApi.unmount();
     container.remove();
