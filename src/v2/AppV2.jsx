@@ -291,7 +291,15 @@ function App() {
   const [tabColorEnabled, setTabColorEnabled] = useState(false);
   const [TabColor, setTabColor] = useState({});
   const [messages, setMessages] = useState([]);
+  const [messageOverrides, setMessageOverrides] = useState({});
+  const [deletedMessageIds, setDeletedMessageIds] = useState(() => new Set());
   const [globalFontPercent, setGlobalFontPercent] = useState(100);
+
+  const handleFileContentChange = (content) => {
+    setMessageOverrides({});
+    setDeletedMessageIds(new Set());
+    setFileContent(content);
+  };
 
   const handleTitleImageChange = (e) => {
     setTitleImages(
@@ -315,12 +323,24 @@ function App() {
   };
 
   const updateMessage = (id, newValue) => {
+    setMessageOverrides(prev => ({
+      ...prev,
+      [id]: {
+        ...(prev[id] || {}),
+        ...newValue,
+      },
+    }));
     setMessages(prev =>
       prev.map(msg => msg.id === id ? { ...msg, ...newValue } : msg)
     );
   };
 
   const deleteMessage = (id) => {
+    setDeletedMessageIds(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
     setMessages(prev => removeMessageById(prev, id));
   };
 
@@ -477,7 +497,14 @@ ${buildMinimalExportCSS(globalFontPercent)}
       imgUrl: url,
     }));
 
-    setMessages([...topImages, ...parsed, ...bottomImages]);
+    const nextMessages = [...topImages, ...parsed, ...bottomImages]
+      .filter((message) => !deletedMessageIds.has(message.id))
+      .map((message) => ({
+        ...message,
+        ...(messageOverrides[message.id] || {}),
+      }));
+
+    setMessages(nextMessages);
   }, [
     fileContent,
     titleImages,
@@ -488,6 +515,8 @@ ${buildMinimalExportCSS(globalFontPercent)}
     TabColor,
     diceEnabled,
     t,
+    messageOverrides,
+    deletedMessageIds,
   ]);
 
   /* =========================
@@ -497,7 +526,7 @@ ${buildMinimalExportCSS(globalFontPercent)}
     <div className="fix-layout">
       <div className="setting_container">
         <UploadSection
-          setFileContent={setFileContent}
+          setFileContent={handleFileContentChange}
           setFileName={setFileName}
           t={t}
         />

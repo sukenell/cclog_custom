@@ -41,7 +41,7 @@ const buttonStyle = {
 
       <div
       id="preview-scroll-box"  
-        className="preview-scroll-box"
+        className="preview-scroll-box ccfolia_wrap"
         style={{
           flex: 1,
           overflowY: "auto",

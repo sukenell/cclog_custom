@@ -93,7 +93,7 @@ export function parseFirebaseMessages(fileContent, options = {}) {
     }
 
     messages.push({
-      id: `msg_${idx++}_${Date.now().toString(36)}`,
+      id: `msg_${idx++}`,
       category,
       charName,
       text: fullText,
@@ -219,7 +219,7 @@ function parseHtmlMessages(fileContent, options = {}) {
     }
 
     messages.push({
-      id: `html_${idx++}_${Date.now().toString(36)}`,
+      id: `html_${idx++}`,
       category,
       charName,
       text,
