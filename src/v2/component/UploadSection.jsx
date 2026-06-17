@@ -1,17 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import FileUploader from "../../v1/utils/FileUploader.js";
-import i18n from "../../core/locales/i18n.ts";
+import "../../core/locales/i18n.ts";
 
 const UploadSection = ({ setFileContent, setFileName, t }) => {
-  const [language, setLanguage] = useState(i18n.language || "ko");
     // const [roomId, setRoomId] = useState("");
-
-
-  const handleLanguageChange = (event) => {
-    const selectedLanguage = event.target.value;
-    setLanguage(selectedLanguage);
-    i18n.changeLanguage(selectedLanguage);
-  };
 
 
   return (
@@ -21,8 +13,9 @@ const UploadSection = ({ setFileContent, setFileName, t }) => {
         *{t("setting.warning_txt")}{" "}
         <a href="https://www.postype.com/@reha-dev/post/18656933">({t("setting.Howtouse")})</a>
       </p>
+      {/*
       <div>
-      <label htmlFor="language-select">{t("setting.select_lang")}: </label>
+        <label htmlFor="language-select">{t("setting.select_lang")}: </label>
         <select id="language-select"  onChange={handleLanguageChange}>
           <option value="ko" >한국어</option>
           <option value="en" >English</option>
@@ -30,8 +23,9 @@ const UploadSection = ({ setFileContent, setFileName, t }) => {
           <option value="zh">中文</option>
         </select>
       </div>
+      */}
 
-      <h4>01. {t("setting.room_log_1")} <b>{t("setting.room_log_2")}</b></h4>
+      <h4>01. {t("setting.room_log_1")}</h4>
       <FileUploader
   setFileContent={setFileContent}
   setFileName={setFileName}

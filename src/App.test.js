@@ -18,7 +18,7 @@ jest.mock('./v2/AppV2', () => () => <div>Mock V2</div>);
 
 import App from './App';
 
-test('renders version selection buttons', () => {
+test('renders v2 by default without the version selection screen', () => {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const rootApi = createRoot(container);
@@ -27,8 +27,10 @@ test('renders version selection buttons', () => {
     rootApi.render(<App />);
   });
 
-  expect(container.textContent).toContain('Version 1');
-  expect(container.textContent).toContain('Version 2');
+  expect(container.textContent).toContain('Mock V2');
+  expect(container.textContent).not.toContain('Mock V1');
+  expect(container.textContent).not.toContain('Version 1');
+  expect(container.textContent).not.toContain('Version 2');
 
   rootApi.unmount();
   container.remove();

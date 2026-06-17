@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import UploadSection from "./component/UploadSection.jsx";
 import SettingsPanel from "./component/SettingsPanel.jsx";
 import PreviewPanel from "./component/PreviewPanel.jsx";
-import { parseFirebaseMessages } from "./utils/parseFirebase.js";
+import { parseLogContent } from "./utils/parseFirebase.js";
 import { buildEbookJson } from "./utils/exportEbookJson.js";
 import { useTranslation } from "react-i18next";
 import "./AppV2.css";
@@ -454,7 +454,7 @@ ${buildMinimalExportCSS(globalFontPercent)}
   useEffect(() => {
     if (!fileContent.length) return;
 
-    const parsed = parseFirebaseMessages(fileContent, {
+    const parsed = parseLogContent(fileContent, {
       inputTexts,
       charColors,
       charHeads,
@@ -483,8 +483,11 @@ ${buildMinimalExportCSS(globalFontPercent)}
     titleImages,
     endImages,
     inputTexts,
+    charColors,
+    charHeads,
     TabColor,
     diceEnabled,
+    t,
   ]);
 
   /* =========================
