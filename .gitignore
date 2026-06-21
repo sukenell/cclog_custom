@@ -137,3 +137,6 @@ build/
 
 # local deploy helper
 deploy.sh
+
+# macOS Finder metadata
+.DS_Store
