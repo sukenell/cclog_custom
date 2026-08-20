@@ -140,3 +140,6 @@ deploy.sh
 
 # macOS Finder metadata
 .DS_Store
+
+# Local Git worktrees
+.worktrees/
