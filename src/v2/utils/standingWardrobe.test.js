@@ -314,6 +314,88 @@ describe('standing wardrobe session model', () => {
     });
   });
 
+  test('sanitizes sparse variants by enumerating only own indices in numeric order', () => {
+    const sparseVariants = [];
+    sparseVariants.length = 100000;
+    sparseVariants[99999] = {
+      id: 'late',
+      label: '나중 인덱스',
+      url: 'https://example.com/late.png',
+    };
+    sparseVariants[2] = {
+      id: 'early',
+      label: '이른 인덱스',
+      url: 'https://example.com/early.png',
+    };
+
+    let numericDescriptorReads = 0;
+    const observedVariants = new Proxy(sparseVariants, {
+      getOwnPropertyDescriptor: (target, key) => {
+        if (/^(0|[1-9]\d*)$/.test(String(key))) {
+          numericDescriptorReads += 1;
+        }
+        return Reflect.getOwnPropertyDescriptor(target, key);
+      },
+    });
+
+    const result = sanitizeWardrobe({
+      version: 1,
+      characters: {
+        앨리스: {
+          displayName: '앨리스',
+          activeVariantId: 'late',
+          variants: observedVariants,
+        },
+      },
+    });
+
+    expect(result.characters.앨리스.variants.map(({ id }) => id)).toEqual([
+      'early',
+      'late',
+    ]);
+    expect(result.characters.앨리스.activeVariantId).toBe('late');
+    expect(numericDescriptorReads).toBeLessThanOrEqual(4);
+  });
+
+  test('requires normalized map and display identities to agree and remain safe', () => {
+    const result = sanitizeWardrobe({
+      version: 1,
+      characters: {
+        '  A\u030A  ': {
+          displayName: 'Å',
+          activeVariantId: null,
+          variants: [],
+        },
+        Bob: {
+          displayName: 'Alice',
+          activeVariantId: null,
+          variants: [],
+        },
+        Mallory: {
+          displayName: 'prototype',
+          activeVariantId: null,
+          variants: [],
+        },
+        ' constructor ': {
+          displayName: 'constructor',
+          activeVariantId: null,
+          variants: [],
+        },
+      },
+    });
+
+    expect(result).toEqual({
+      version: 1,
+      characters: {
+        Å: {
+          displayName: 'Å',
+          activeVariantId: null,
+          variants: [],
+        },
+      },
+    });
+  });
+
   test('loads sanitized data and returns fresh empties for absent or malformed storage', () => {
     const stored = JSON.stringify({
       version: 1,
@@ -552,6 +634,32 @@ describe('standing image resolution and apply scopes', () => {
     expect(getCharacterWardrobe(inheritedRoot, '앨리스')).toBeNull();
   });
 
+  test('looks up only the requested character without enumerating unrelated entries', () => {
+    const alice = makeWardrobe().characters.앨리스;
+    const characterEntries = { 앨리스: alice };
+    Object.defineProperty(characterEntries, 'Bob', {
+      enumerable: true,
+      get: () => {
+        throw new Error('unrelated character getter must not run');
+      },
+    });
+    const inspectedKeys = [];
+    const characters = new Proxy(characterEntries, {
+      ownKeys: () => {
+        throw new Error('character map must not be enumerated');
+      },
+      getOwnPropertyDescriptor: (target, key) => {
+        inspectedKeys.push(String(key));
+        return Reflect.getOwnPropertyDescriptor(target, key);
+      },
+    });
+
+    expect(
+      getCharacterWardrobe({ version: 1, characters }, '  앨리스  ')
+    ).toEqual(alice);
+    expect(inspectedKeys).toEqual(['앨리스']);
+  });
+
   test('resolves own override before the active variant, parsed URL, and fallback', () => {
     const wardrobe = makeWardrobe();
     const message = {
@@ -626,6 +734,42 @@ describe('standing image resolution and apply scopes', () => {
     ).toBe('https://example.com/lowercase-parsed.png');
   });
 
+  test('returns an empty fallback safely for null and revoked option records', () => {
+    const { proxy, revoke } = Proxy.revocable({}, {});
+    revoke();
+
+    expect(() => resolveStandingUrl(null)).not.toThrow();
+    expect(resolveStandingUrl(null)).toBe('');
+    expect(() => resolveStandingUrl(proxy)).not.toThrow();
+    expect(resolveStandingUrl(proxy)).toBe('');
+  });
+
+  test('ignores throwing option accessors while retaining a safe fallback value', () => {
+    const options = { fallbackUrl: 'https://example.com/fallback.png' };
+    ['message', 'override', 'wardrobe'].forEach((key) => {
+      Object.defineProperty(options, key, {
+        enumerable: true,
+        get: () => {
+          throw new Error(`${key} getter must not run`);
+        },
+      });
+    });
+    const allThrowing = {};
+    ['message', 'override', 'wardrobe', 'fallbackUrl'].forEach((key) => {
+      Object.defineProperty(allThrowing, key, {
+        enumerable: true,
+        get: () => {
+          throw new Error(`${key} getter must not run`);
+        },
+      });
+    });
+
+    expect(resolveStandingUrl(options)).toBe(
+      'https://example.com/fallback.png'
+    );
+    expect(resolveStandingUrl(allThrowing)).toBe('');
+  });
+
   test('collects single and all targets in source order across intervening categories', () => {
     const messages = [
       { id: 'a1', category: 'main', charName: ' Alice ' },
@@ -676,6 +820,86 @@ describe('standing image resolution and apply scopes', () => {
     ];
 
     expect(collectScopeTargetIds(messages, anchorId, scope)).toEqual([]);
+  });
+
+  test('uses own array entries without invoking poisoned scope iteration methods', () => {
+    const messages = [
+      { id: 'a1', category: 'main', charName: 'Alice' },
+      { id: 'a2', category: 'other', charName: 'Alice' },
+    ];
+    ['find', 'reduce', 'forEach'].forEach((method) => {
+      Object.defineProperty(messages, method, {
+        get: () => {
+          throw new Error(`${method} must not run`);
+        },
+      });
+    });
+
+    expect(
+      collectScopeTargetIds(messages, 'a1', STANDING_SCOPE.ALL)
+    ).toEqual(['a1', 'a2']);
+    expect(
+      clearCharacterImageOverrides(
+        {
+          a1: { text: '보존', imgUrl: 'https://example.com/a1.png' },
+          a2: { imgUrl: 'https://example.com/a2.png' },
+        },
+        messages,
+        'Alice'
+      )
+    ).toEqual({ a1: { text: '보존' } });
+  });
+
+  test('uses own target entries without invoking poisoned apply iteration methods', () => {
+    const targetIds = ['a1'];
+    Object.defineProperty(targetIds, 'forEach', {
+      get: () => {
+        throw new Error('forEach must not run');
+      },
+    });
+
+    expect(
+      applyImageUrlToTargets(
+        { a1: { text: '보존' } },
+        targetIds,
+        'https://example.com/a1.png'
+      )
+    ).toEqual({
+      a1: { text: '보존', imgUrl: 'https://example.com/a1.png' },
+    });
+  });
+
+  test('returns neutral results for revoked message and target arrays', () => {
+    const makeRevokedArray = () => {
+      const revocable = Proxy.revocable([], {});
+      revocable.revoke();
+      return revocable.proxy;
+    };
+    const overrides = { m1: { text: '보존' } };
+
+    expect(
+      collectScopeTargetIds(
+        makeRevokedArray(),
+        'm1',
+        STANDING_SCOPE.SINGLE
+      )
+    ).toEqual([]);
+
+    const applied = applyImageUrlToTargets(
+      overrides,
+      makeRevokedArray(),
+      'https://example.com/new.png'
+    );
+    expect(applied).toEqual(overrides);
+    expect(applied).not.toBe(overrides);
+
+    const cleared = clearCharacterImageOverrides(
+      overrides,
+      makeRevokedArray(),
+      'Alice'
+    );
+    expect(cleared).toEqual(overrides);
+    expect(cleared).not.toBe(overrides);
   });
 
   test('applies an image URL immutably while merging only selected overrides', () => {

@@ -53,22 +53,42 @@ const ownKeys = (record) => {
   }
 };
 
-const ownArrayValues = (array) => {
-  const lengthProperty = readOwnDataProperty(array, 'length');
-  if (
-    !lengthProperty.found ||
-    !Number.isSafeInteger(lengthProperty.value) ||
-    lengthProperty.value < 0
-  ) {
+const ownPropertyNames = (record) => {
+  try {
+    return Object.getOwnPropertyNames(record);
+  } catch (_error) {
     return [];
   }
+};
 
-  const values = [];
-  for (let index = 0; index < lengthProperty.value; index += 1) {
-    const item = readOwnDataProperty(array, String(index));
-    if (item.found) values.push(item.value);
+const MAX_ARRAY_INDEX = 2 ** 32 - 2;
+
+const toCanonicalArrayIndex = (key) => {
+  if (key !== '0' && !/^[1-9]\d*$/.test(key)) return null;
+  const index = Number(key);
+  if (
+    !Number.isSafeInteger(index) ||
+    index < 0 ||
+    index > MAX_ARRAY_INDEX ||
+    String(index) !== key
+  ) {
+    return null;
   }
-  return values;
+  return index;
+};
+
+const ownArrayValues = (array) => {
+  if (!isArrayValue(array)) return [];
+
+  return ownPropertyNames(array)
+    .map((key) => ({ key, index: toCanonicalArrayIndex(key) }))
+    .filter(({ index }) => index !== null)
+    .sort((left, right) => left.index - right.index)
+    .reduce((values, { key }) => {
+      const item = readOwnDataProperty(array, key);
+      if (item.found) values.push(item.value);
+      return values;
+    }, []);
 };
 
 const normalizeRequiredString = (value) => {
@@ -115,7 +135,7 @@ const sanitizeVariant = (value) => {
   return { id, label, url };
 };
 
-const sanitizeCharacter = (value) => {
+const sanitizeCharacter = (value, characterKey) => {
   if (!isPlainRecord(value)) return null;
 
   const displayNameProperty = readOwnDataProperty(value, 'displayName');
@@ -129,7 +149,7 @@ const sanitizeCharacter = (value) => {
   }
 
   const displayName = normalizeRequiredString(displayNameProperty.value);
-  if (displayName === '') return null;
+  if (!isSafeKey(displayName) || displayName !== characterKey) return null;
 
   const variants = [];
   const variantIds = new Set();
@@ -151,8 +171,8 @@ const sanitizeCharacter = (value) => {
   return { displayName, activeVariantId, variants };
 };
 
-export const sanitizeWardrobe = (value) => {
-  if (!isPlainRecord(value)) return createEmptyWardrobe();
+const getCharactersRecord = (value) => {
+  if (!isPlainRecord(value)) return null;
 
   const versionProperty = readOwnDataProperty(value, 'version');
   const charactersProperty = readOwnDataProperty(value, 'characters');
@@ -162,11 +182,17 @@ export const sanitizeWardrobe = (value) => {
     !charactersProperty.found ||
     !isPlainRecord(charactersProperty.value)
   ) {
-    return createEmptyWardrobe();
+    return null;
   }
+  return charactersProperty.value;
+};
+
+export const sanitizeWardrobe = (value) => {
+  const characterEntries = getCharactersRecord(value);
+  if (!characterEntries) return createEmptyWardrobe();
 
   const characters = {};
-  ownKeys(charactersProperty.value).forEach((rawKey) => {
+  ownKeys(characterEntries).forEach((rawKey) => {
     let key;
     try {
       key = normalizeCharacterKey(rawKey);
@@ -181,9 +207,9 @@ export const sanitizeWardrobe = (value) => {
       return;
     }
 
-    const entryProperty = readOwnDataProperty(charactersProperty.value, rawKey);
+    const entryProperty = readOwnDataProperty(characterEntries, rawKey);
     if (!entryProperty.found) return;
-    const character = sanitizeCharacter(entryProperty.value);
+    const character = sanitizeCharacter(entryProperty.value, key);
     if (!character) return;
     characters[key] = character;
   });
@@ -325,24 +351,38 @@ export const getCharacterWardrobe = (wardrobe, charName) => {
   const characterKey = normalizeCrudCharacterKey(charName);
   if (!characterKey) return null;
 
-  const sanitized = sanitizeWardrobe(wardrobe);
-  if (
-    !Object.prototype.hasOwnProperty.call(
-      sanitized.characters,
-      characterKey
-    )
-  ) {
-    return null;
-  }
-  return sanitized.characters[characterKey];
+  const characterEntries = getCharactersRecord(wardrobe);
+  if (!characterEntries) return null;
+  const entryProperty = readOwnDataProperty(characterEntries, characterKey);
+  if (!entryProperty.found) return null;
+  return sanitizeCharacter(entryProperty.value, characterKey);
 };
 
-export const resolveStandingUrl = ({
-  message,
-  override,
-  wardrobe,
-  fallbackUrl,
-} = {}) => {
+export const resolveStandingUrl = (options = {}) => {
+  const safeOptions = isPlainRecord(options) ? options : null;
+  const messageProperty = safeOptions
+    ? readOwnDataProperty(safeOptions, 'message')
+    : { found: false, value: undefined };
+  const overrideProperty = safeOptions
+    ? readOwnDataProperty(safeOptions, 'override')
+    : { found: false, value: undefined };
+  const wardrobeProperty = safeOptions
+    ? readOwnDataProperty(safeOptions, 'wardrobe')
+    : { found: false, value: undefined };
+  const fallbackProperty = safeOptions
+    ? readOwnDataProperty(safeOptions, 'fallbackUrl')
+    : { found: false, value: undefined };
+  const message = messageProperty.found ? messageProperty.value : undefined;
+  const override = overrideProperty.found
+    ? overrideProperty.value
+    : undefined;
+  const wardrobe = wardrobeProperty.found
+    ? wardrobeProperty.value
+    : undefined;
+  const fallbackUrl = fallbackProperty.found
+    ? fallbackProperty.value
+    : undefined;
+
   if (isPlainRecord(override)) {
     const overrideUrl = readOwnDataProperty(override, 'imgUrl');
     if (overrideUrl.found && typeof overrideUrl.value === 'string') {
@@ -393,13 +433,14 @@ const normalizedMessageCharacter = (message) => {
 
 export const collectScopeTargetIds = (messages, anchorId, scope) => {
   if (
-    !Array.isArray(messages) ||
+    !isArrayValue(messages) ||
     (scope !== STANDING_SCOPE.SINGLE && scope !== STANDING_SCOPE.ALL)
   ) {
     return [];
   }
 
-  const anchor = messages.find((message) => {
+  const safeMessages = ownArrayValues(messages);
+  const anchor = safeMessages.find((message) => {
     const id = readMessageProperty(message, 'id');
     return id.found && id.value === anchorId;
   });
@@ -411,7 +452,7 @@ export const collectScopeTargetIds = (messages, anchorId, scope) => {
   const characterKey = normalizedMessageCharacter(anchor);
   if (!characterKey) return [];
 
-  return messages.reduce((targetIds, message) => {
+  return safeMessages.reduce((targetIds, message) => {
     if (
       isImageMessage(message) ||
       normalizedMessageCharacter(message) !== characterKey
@@ -445,9 +486,9 @@ const normalizeOverrideId = (value) => {
 
 export const applyImageUrlToTargets = (overrides, targetIds, url) => {
   const result = cloneOwnDataRecord(overrides);
-  if (!Array.isArray(targetIds)) return result;
+  if (!isArrayValue(targetIds)) return result;
 
-  targetIds.forEach((targetId) => {
+  ownArrayValues(targetIds).forEach((targetId) => {
     const id = normalizeOverrideId(targetId);
     if (!id) return;
 
@@ -466,10 +507,10 @@ export const clearCharacterImageOverrides = (
 ) => {
   const result = cloneOwnDataRecord(overrides);
   const characterKey = normalizeCrudCharacterKey(charName);
-  if (!characterKey || !Array.isArray(messages)) return result;
+  if (!characterKey || !isArrayValue(messages)) return result;
 
   const targetIds = new Set();
-  messages.forEach((message) => {
+  ownArrayValues(messages).forEach((message) => {
     if (
       isImageMessage(message) ||
       normalizedMessageCharacter(message) !== characterKey
