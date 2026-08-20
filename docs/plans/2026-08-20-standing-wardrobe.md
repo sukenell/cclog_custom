@@ -602,13 +602,14 @@ Render the component with repeated speakers and assert using the existing
 const cards = container.querySelectorAll('.standing-wardrobe-card');
 expect(cards).toHaveLength(2);
 expect(cards[0].textContent).toContain('Alice');
-expect(cards[0].textContent).toContain('3개 대사');
+expect(cards[0].textContent).toContain('기본: 평상복');
+expect(cards[0].textContent).not.toContain('개 대사');
 expect(container.textContent).not.toContain('title-img-0');
 ```
 
 Do not add Testing Library. With `createRoot`, cover:
 
-- Unique normalized character names and full-message counts.
+- Unique normalized character names without message counts.
 - Adding a label plus an `https:` URL calls `onChange` with a new immutable variant.
 - Duplicate or invalid URLs show inline validation and do not call `onChange`.
 - Choosing “기본으로 설정” calls `onApplyDefault(charName, variantId)`.
@@ -646,8 +647,8 @@ Derive characters from `messages.filter(message => message.category !== 'image')
 
 Each character card must contain:
 
-- Display name and message count.
-- Existing variant thumbnail, label, URL, active marker, default button, and delete button.
+- Display name and active-default summary such as `기본: 평상복`.
+- Existing variant thumbnail, `@`-prefixed label, URL, `[기본]` active marker, default button, and delete button.
 - Label and URL draft inputs with an add button.
 - Inline validation without `alert()`.
 
@@ -716,7 +717,6 @@ Define the release-1 props and behavior:
   onApplyVariant={onApplyVariant}
   onApplyCustomUrl={onApplyCustomUrl}
   onClearImage={onClearImage}
-  getAffectedCount={(scope) => scope === 'all' ? 3 : 1}
   onCancel={onCancel}
   t={(key) => key}
 />
@@ -976,7 +976,8 @@ character before asserting labels. The empty App does not render a default
 button, so do not add that assertion to the fixture-less localization test:
 
 ```js
-expect(container.textContent).toContain('캐릭터 스탠딩 옷장');
+expect(container.textContent).toContain('캐릭터 스탠딩 이미지 변경');
+expect(container.textContent).toContain('URL 기준으로 작업 동안 임시 저장됩니다.');
 expect(container.textContent).toContain('기본으로 설정');
 expect(container.textContent).not.toContain('wardrobe.title');
 expect(container.textContent).not.toContain('wardrobe.set_default');
@@ -996,21 +997,22 @@ Add a `wardrobe` section containing at least:
 
 ```json
 {
-  "title": "캐릭터 스탠딩 옷장",
+  "title": "캐릭터 스탠딩 이미지 변경",
+  "storage_note": "URL 기준으로 작업 동안 임시 저장됩니다.",
+  "default_summary": "기본: {{label}}",
+  "no_default": "없음",
   "variant_label": "종류 이름",
   "variant_url": "이미지 URL",
   "add": "스탠딩 추가",
   "delete": "삭제",
   "set_default": "기본으로 설정",
-  "active": "현재 기본",
-  "message_count": "{{count}}개 대사",
+  "active": "[기본]",
   "scope_single": "이 대사만",
   "scope_all": "이 캐릭터 전체",
   "scope_from_here": "이 대사부터 이후",
   "custom_url": "직접 URL",
   "clear_image": "이미지 비우기",
   "current_log_only": "직접 URL 일괄 적용은 현재 로그에만 유지됩니다.",
-  "affected_count": "{{count}}개 대사에 적용",
   "invalid_url": "http 또는 https 이미지 URL을 입력하세요.",
   "storage_error": "세션 옷장을 저장하지 못했습니다. 현재 화면에서는 계속 사용할 수 있습니다."
 }
@@ -1141,21 +1143,12 @@ applyStandingUrl(messageId, url, STANDING_SCOPE.FROM_HERE);
 
 Do not change the wardrobe storage schema. Do not set the active default for `fromHere`.
 
-**Step 4: Show an affected-message count**
+**Step 4: Keep scope application immediate and count-free**
 
-Keep `selectedScope` local to `StandingImageEditor`, and pass a callable contract
-through AppV2 → PreviewPanel → LogItem:
-
-```js
-getAffectedCount={(scope) =>
-  collectScopeTargetIds(messages, message.id, scope).length
-}
-```
-
-The editor calls `getAffectedCount(selectedScope)` on render and shows the result
-next to each apply action. Do not render this count outside the
-`data-export-ignore` editor wrapper. Test counts for all three scopes and for a
-hidden-category match.
+Keep `selectedScope` local to `StandingImageEditor`. Applying a variant, direct
+URL, or clear-image action immediately dispatches the selected scope without an
+affected-dialogue count or an additional confirmation dialog. Add a component
+assertion that no `개 대사`/affected-count label is rendered for any scope.
 
 **Step 5: Run release-2 tests**
 

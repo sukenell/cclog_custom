@@ -79,7 +79,7 @@ Scope matching uses the complete ordered `messages` array, not the filtered prev
 1. `AppV2` loads a sanitized wardrobe through a lazy state initializer and saves changes through an effect guarded against storage errors.
 2. Parsing continues to create the existing message objects.
 3. During the current post-parse merge, `AppV2` applies deletions, message overrides, and then resolves a final `imgUrl` using the precedence above.
-4. `StandingWardrobePanel` derives unique character names and message counts from the complete message list. It adds, edits, deletes, previews, and activates labeled URL variants.
+4. `StandingWardrobePanel` derives unique character names from the complete message list. It adds, edits, deletes, previews, and activates labeled URL variants without showing dialogue counts.
 5. `StandingImageEditor` appears alongside the normal message body and offers wardrobe choices, a direct-URL input, and an explicit clear-image action. The normal message text remains rendered while the editor is open. The first release exposes `single` and `all`; the follow-up adds `fromHere` to the same scope interface.
 6. `PreviewPanel` passes each row's matching variants and the scope callback to `LogItem`.
 7. HTML export continues to clone the preview. Only the sibling interactive editor wrapper is marked `data-export-ignore="true"` and removed before serialization, so an open editor cannot leak UI markup or remove the normal message text.
@@ -107,8 +107,16 @@ Scope matching uses the complete ordered `messages` array, not the filtered prev
 ### Release 2
 
 - Add `fromHere` to wardrobe, direct-URL, and clear-image actions in the standing-image editor.
-- Show the number of affected matching messages before applying.
 - Apply to later matching appearances of the same character across every category.
+- Apply immediately without a separate affected-dialogue count or confirmation step.
+
+## UI copy and hierarchy
+
+- The settings section title is `캐릭터 스탠딩 이미지 변경`.
+- Its storage note is `URL 기준으로 작업 동안 임시 저장됩니다.`.
+- A character summary shows only the display name and active default, for example `앨리스` and `기본: 평상복`.
+- Variants use the compact form `@평상복 [기본]` followed by its URL, then `@전투` followed by its URL.
+- Neither character cards nor apply actions display affected dialogue counts.
 
 ## Testing strategy
 
