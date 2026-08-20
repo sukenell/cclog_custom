@@ -255,6 +255,65 @@ describe('standing wardrobe session model', () => {
     expect(result.characters.정상.activeVariantId).toBe('good');
   });
 
+  test('returns an empty wardrobe instead of throwing for a revoked proxy', () => {
+    const { proxy, revoke } = Proxy.revocable({}, {});
+    revoke();
+
+    expect(() => sanitizeWardrobe(proxy)).not.toThrow();
+    expect(sanitizeWardrobe(proxy)).toEqual({ version: 1, characters: {} });
+  });
+
+  test('does not invoke custom variant-array iteration while preserving other characters', () => {
+    const hostileVariants = [];
+    Object.defineProperty(hostileVariants, 'forEach', {
+      get: () => {
+        throw new Error('custom iteration must not run');
+      },
+    });
+
+    expect(
+      sanitizeWardrobe({
+        version: 1,
+        characters: {
+          앞의정상항목: {
+            displayName: '앞의정상항목',
+            activeVariantId: null,
+            variants: [],
+          },
+          악성항목: {
+            displayName: '악성항목',
+            activeVariantId: null,
+            variants: hostileVariants,
+          },
+          뒤의정상항목: {
+            displayName: '뒤의정상항목',
+            activeVariantId: null,
+            variants: [],
+          },
+        },
+      })
+    ).toEqual({
+      version: 1,
+      characters: {
+        앞의정상항목: {
+          displayName: '앞의정상항목',
+          activeVariantId: null,
+          variants: [],
+        },
+        악성항목: {
+          displayName: '악성항목',
+          activeVariantId: null,
+          variants: [],
+        },
+        뒤의정상항목: {
+          displayName: '뒤의정상항목',
+          activeVariantId: null,
+          variants: [],
+        },
+      },
+    });
+  });
+
   test('loads sanitized data and returns fresh empties for absent or malformed storage', () => {
     const stored = JSON.stringify({
       version: 1,

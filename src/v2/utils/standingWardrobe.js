@@ -12,8 +12,16 @@ const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 const isSafeKey = (value) => value !== '' && !RESERVED_KEYS.has(value);
 
+const isArrayValue = (value) => {
+  try {
+    return Array.isArray(value);
+  } catch (_error) {
+    return false;
+  }
+};
+
 const isPlainRecord = (value) => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (!value || typeof value !== 'object' || isArrayValue(value)) {
     return false;
   }
 
@@ -43,6 +51,24 @@ const ownKeys = (record) => {
   } catch (_error) {
     return [];
   }
+};
+
+const ownArrayValues = (array) => {
+  const lengthProperty = readOwnDataProperty(array, 'length');
+  if (
+    !lengthProperty.found ||
+    !Number.isSafeInteger(lengthProperty.value) ||
+    lengthProperty.value < 0
+  ) {
+    return [];
+  }
+
+  const values = [];
+  for (let index = 0; index < lengthProperty.value; index += 1) {
+    const item = readOwnDataProperty(array, String(index));
+    if (item.found) values.push(item.value);
+  }
+  return values;
 };
 
 const normalizeRequiredString = (value) => {
@@ -97,7 +123,7 @@ const sanitizeCharacter = (value) => {
   if (
     !displayNameProperty.found ||
     !variantsProperty.found ||
-    !Array.isArray(variantsProperty.value)
+    !isArrayValue(variantsProperty.value)
   ) {
     return null;
   }
@@ -107,7 +133,7 @@ const sanitizeCharacter = (value) => {
 
   const variants = [];
   const variantIds = new Set();
-  variantsProperty.value.forEach((candidate) => {
+  ownArrayValues(variantsProperty.value).forEach((candidate) => {
     const variant = sanitizeVariant(candidate);
     if (!variant || variantIds.has(variant.id)) return;
     variantIds.add(variant.id);
