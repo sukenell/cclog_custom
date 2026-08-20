@@ -1,10 +1,16 @@
 import {
   EMPTY_WARDROBE,
+  STANDING_SCOPE,
   WARDROBE_STORAGE_KEY,
+  applyImageUrlToTargets,
+  clearCharacterImageOverrides,
+  collectScopeTargetIds,
+  getCharacterWardrobe,
   isSupportedStandingUrl,
   loadWardrobe,
   normalizeCharacterKey,
   removeVariant,
+  resolveStandingUrl,
   sanitizeWardrobe,
   saveWardrobe,
   setActiveVariant,
@@ -451,5 +457,239 @@ describe('standing wardrobe session model', () => {
     expect(input).toEqual(snapshot);
     expect(activated.characters.앨리스.activeVariantId).toBe('battle');
     expect(missing).toEqual(input);
+  });
+});
+
+describe('standing image resolution and apply scopes', () => {
+  test('exposes only single and all scopes', () => {
+    expect(STANDING_SCOPE).toEqual({ SINGLE: 'single', ALL: 'all' });
+    expectExactKeys(STANDING_SCOPE, ['SINGLE', 'ALL']);
+    expect(Object.values(STANDING_SCOPE)).not.toContain('fromHere');
+  });
+
+  test('gets a normalized own character entry without reading inherited data', () => {
+    const wardrobe = makeWardrobe();
+
+    expect(getCharacterWardrobe(wardrobe, '  앨리스  ')).toEqual(
+      wardrobe.characters.앨리스
+    );
+    expect(getCharacterWardrobe(wardrobe, 'alice')).toBeNull();
+    expect(getCharacterWardrobe(wardrobe, '__proto__')).toBeNull();
+
+    const inheritedCharacters = Object.create({
+      앨리스: wardrobe.characters.앨리스,
+    });
+    expect(
+      getCharacterWardrobe(
+        { version: 1, characters: inheritedCharacters },
+        '앨리스'
+      )
+    ).toBeNull();
+
+    const inheritedRoot = Object.create({
+      version: 1,
+      characters: wardrobe.characters,
+    });
+    expect(getCharacterWardrobe(inheritedRoot, '앨리스')).toBeNull();
+  });
+
+  test('resolves own override before the active variant, parsed URL, and fallback', () => {
+    const wardrobe = makeWardrobe();
+    const message = {
+      id: 'm1',
+      charName: '앨리스',
+      imgUrl: 'https://example.com/parsed.png',
+    };
+
+    expect(
+      resolveStandingUrl({
+        message,
+        override: { imgUrl: 'https://example.com/override.png' },
+        wardrobe,
+        fallbackUrl: 'https://example.com/fallback.png',
+      })
+    ).toBe('https://example.com/override.png');
+
+    expect(
+      resolveStandingUrl({
+        message,
+        override: { imgUrl: '' },
+        wardrobe,
+        fallbackUrl: 'https://example.com/fallback.png',
+      })
+    ).toBe('');
+
+    const inheritedOverride = Object.create({
+      imgUrl: 'https://example.com/inherited.png',
+    });
+    expect(
+      resolveStandingUrl({
+        message,
+        override: inheritedOverride,
+        wardrobe,
+        fallbackUrl: 'https://example.com/fallback.png',
+      })
+    ).toBe('https://example.com/alice-casual.png');
+  });
+
+  test('falls back from a missing or deleted active variant to parsed and fallback URLs', () => {
+    const wardrobe = makeWardrobe();
+    wardrobe.characters.앨리스.activeVariantId = 'deleted';
+
+    expect(
+      resolveStandingUrl({
+        message: {
+          charName: '앨리스',
+          imgUrl: 'https://example.com/parsed.png',
+        },
+        wardrobe,
+        fallbackUrl: 'https://example.com/fallback.png',
+      })
+    ).toBe('https://example.com/parsed.png');
+
+    expect(
+      resolveStandingUrl({
+        message: { charName: '앨리스' },
+        wardrobe,
+        fallbackUrl: 'https://example.com/fallback.png',
+      })
+    ).toBe('https://example.com/fallback.png');
+
+    expect(
+      resolveStandingUrl({
+        message: {
+          charName: 'alice',
+          imgUrl: 'https://example.com/lowercase-parsed.png',
+        },
+        wardrobe: makeWardrobe(),
+        fallbackUrl: 'https://example.com/fallback.png',
+      })
+    ).toBe('https://example.com/lowercase-parsed.png');
+  });
+
+  test('collects single and all targets in source order across intervening categories', () => {
+    const messages = [
+      { id: 'a1', category: 'main', charName: ' Alice ' },
+      { id: 'b1', category: 'main', charName: 'Bob' },
+      {
+        id: 'a-secret',
+        category: 'secret(kp,alice)',
+        charName: 'Alice',
+        hidden: true,
+      },
+      { id: 'a-image', category: 'image', charName: 'Alice' },
+      { id: 'a-other', category: 'other', charName: 'Alice' },
+      { id: 'a-lower', category: 'main', charName: 'alice' },
+      { id: 'a2', category: 'main', charName: 'Alice' },
+    ];
+
+    expect(
+      collectScopeTargetIds(messages, 'a-secret', STANDING_SCOPE.SINGLE)
+    ).toEqual(['a-secret']);
+    expect(
+      collectScopeTargetIds(messages, 'a1', STANDING_SCOPE.ALL)
+    ).toEqual(['a1', 'a-secret', 'a-other', 'a2']);
+  });
+
+  test('matches character names by trim and NFC while remaining case-sensitive', () => {
+    const messages = [
+      { id: 'nfc-anchor', category: 'main', charName: '  Ålice ' },
+      { id: 'decomposed', category: 'main', charName: 'A\u030Alice' },
+      { id: 'lower', category: 'main', charName: 'ålice' },
+    ];
+
+    expect(
+      collectScopeTargetIds(messages, 'nfc-anchor', STANDING_SCOPE.ALL)
+    ).toEqual(['nfc-anchor', 'decomposed']);
+  });
+
+  test.each([
+    ['missing', STANDING_SCOPE.SINGLE],
+    ['missing', STANDING_SCOPE.ALL],
+    ['a1', 'fromHere'],
+    ['a1', undefined],
+    ['image', STANDING_SCOPE.SINGLE],
+    ['image', STANDING_SCOPE.ALL],
+  ])('returns no targets for anchor %p and scope %p', (anchorId, scope) => {
+    const messages = [
+      { id: 'a1', category: 'main', charName: 'Alice' },
+      { id: 'image', category: 'image', charName: 'Alice' },
+    ];
+
+    expect(collectScopeTargetIds(messages, anchorId, scope)).toEqual([]);
+  });
+
+  test('applies an image URL immutably while merging only selected overrides', () => {
+    const overrides = {
+      a1: { text: '수정된 대사', mood: 'calm' },
+      b1: { text: 'Bob 대사', imgUrl: 'https://example.com/bob.png' },
+    };
+    const snapshot = JSON.parse(JSON.stringify(overrides));
+
+    const result = applyImageUrlToTargets(
+      overrides,
+      ['a1', 'a2'],
+      'https://example.com/alice.png'
+    );
+
+    expect(overrides).toEqual(snapshot);
+    expect(result).not.toBe(overrides);
+    expect(result.a1).not.toBe(overrides.a1);
+    expect(result).toEqual({
+      a1: {
+        text: '수정된 대사',
+        mood: 'calm',
+        imgUrl: 'https://example.com/alice.png',
+      },
+      a2: { imgUrl: 'https://example.com/alice.png' },
+      b1: {
+        text: 'Bob 대사',
+        imgUrl: 'https://example.com/bob.png',
+      },
+    });
+  });
+
+  test('keeps an explicit empty applied image URL', () => {
+    expect(applyImageUrlToTargets({}, ['m1'], '')).toEqual({
+      m1: { imgUrl: '' },
+    });
+  });
+
+  test('clears only matching character image fields and removes now-empty overrides', () => {
+    const overrides = {
+      a1: { text: '수정된 대사', imgUrl: 'https://example.com/a1.png' },
+      a2: { imgUrl: 'https://example.com/a2.png' },
+      a3: { text: '이미지만 없던 수정' },
+      aImage: { imgUrl: 'https://example.com/title.png' },
+      lower: { imgUrl: 'https://example.com/lower.png' },
+      bob: { text: 'Bob', imgUrl: 'https://example.com/bob.png' },
+      orphan: { imgUrl: 'https://example.com/orphan.png' },
+    };
+    const snapshot = JSON.parse(JSON.stringify(overrides));
+    const messages = [
+      { id: 'a1', category: 'main', charName: '  Ålice ' },
+      { id: 'a2', category: 'other', charName: 'A\u030Alice' },
+      { id: 'a3', category: 'secret', charName: 'Ålice' },
+      { id: 'aImage', category: 'image', charName: 'Ålice' },
+      { id: 'lower', category: 'main', charName: 'ålice' },
+      { id: 'bob', category: 'main', charName: 'Bob' },
+    ];
+
+    const result = clearCharacterImageOverrides(
+      overrides,
+      messages,
+      'A\u030Alice'
+    );
+
+    expect(overrides).toEqual(snapshot);
+    expect(result).not.toBe(overrides);
+    expect(result).toEqual({
+      a1: { text: '수정된 대사' },
+      a3: { text: '이미지만 없던 수정' },
+      aImage: { imgUrl: 'https://example.com/title.png' },
+      lower: { imgUrl: 'https://example.com/lower.png' },
+      bob: { text: 'Bob', imgUrl: 'https://example.com/bob.png' },
+      orphan: { imgUrl: 'https://example.com/orphan.png' },
+    });
   });
 });

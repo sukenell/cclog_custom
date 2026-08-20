@@ -289,3 +289,187 @@ export const setActiveVariant = (wardrobe, charName, variantId) => {
   };
   return result;
 };
+
+export const STANDING_SCOPE = Object.freeze({
+  SINGLE: 'single',
+  ALL: 'all',
+});
+
+export const getCharacterWardrobe = (wardrobe, charName) => {
+  const characterKey = normalizeCrudCharacterKey(charName);
+  if (!characterKey) return null;
+
+  const sanitized = sanitizeWardrobe(wardrobe);
+  if (
+    !Object.prototype.hasOwnProperty.call(
+      sanitized.characters,
+      characterKey
+    )
+  ) {
+    return null;
+  }
+  return sanitized.characters[characterKey];
+};
+
+export const resolveStandingUrl = ({
+  message,
+  override,
+  wardrobe,
+  fallbackUrl,
+} = {}) => {
+  if (isPlainRecord(override)) {
+    const overrideUrl = readOwnDataProperty(override, 'imgUrl');
+    if (overrideUrl.found && typeof overrideUrl.value === 'string') {
+      return overrideUrl.value;
+    }
+  }
+
+  if (isPlainRecord(message)) {
+    const charName = readOwnDataProperty(message, 'charName');
+    if (charName.found) {
+      const character = getCharacterWardrobe(wardrobe, charName.value);
+      if (character && character.activeVariantId !== null) {
+        const activeVariant = character.variants.find(
+          ({ id }) => id === character.activeVariantId
+        );
+        if (activeVariant) return activeVariant.url;
+      }
+    }
+
+    const parsedUrl = readOwnDataProperty(message, 'imgUrl');
+    if (
+      parsedUrl.found &&
+      typeof parsedUrl.value === 'string' &&
+      parsedUrl.value !== ''
+    ) {
+      return parsedUrl.value;
+    }
+  }
+
+  return typeof fallbackUrl === 'string' ? fallbackUrl : '';
+};
+
+const readMessageProperty = (message, key) => {
+  if (!isPlainRecord(message)) return { found: false, value: undefined };
+  return readOwnDataProperty(message, key);
+};
+
+const isImageMessage = (message) => {
+  const category = readMessageProperty(message, 'category');
+  return category.found && category.value === 'image';
+};
+
+const normalizedMessageCharacter = (message) => {
+  const charName = readMessageProperty(message, 'charName');
+  if (!charName.found) return '';
+  return normalizeCrudCharacterKey(charName.value);
+};
+
+export const collectScopeTargetIds = (messages, anchorId, scope) => {
+  if (
+    !Array.isArray(messages) ||
+    (scope !== STANDING_SCOPE.SINGLE && scope !== STANDING_SCOPE.ALL)
+  ) {
+    return [];
+  }
+
+  const anchor = messages.find((message) => {
+    const id = readMessageProperty(message, 'id');
+    return id.found && id.value === anchorId;
+  });
+  if (!anchor || isImageMessage(anchor)) return [];
+
+  const anchorIdProperty = readMessageProperty(anchor, 'id');
+  if (scope === STANDING_SCOPE.SINGLE) return [anchorIdProperty.value];
+
+  const characterKey = normalizedMessageCharacter(anchor);
+  if (!characterKey) return [];
+
+  return messages.reduce((targetIds, message) => {
+    if (
+      isImageMessage(message) ||
+      normalizedMessageCharacter(message) !== characterKey
+    ) {
+      return targetIds;
+    }
+
+    const id = readMessageProperty(message, 'id');
+    if (id.found) targetIds.push(id.value);
+    return targetIds;
+  }, []);
+};
+
+const cloneOwnDataRecord = (record) => {
+  if (!isPlainRecord(record)) return {};
+
+  const clone = {};
+  ownKeys(record).forEach((key) => {
+    if (!isSafeKey(key)) return;
+    const property = readOwnDataProperty(record, key);
+    if (property.found) clone[key] = property.value;
+  });
+  return clone;
+};
+
+const normalizeOverrideId = (value) => {
+  if (typeof value !== 'string' && typeof value !== 'number') return '';
+  const id = String(value);
+  return isSafeKey(id) ? id : '';
+};
+
+export const applyImageUrlToTargets = (overrides, targetIds, url) => {
+  const result = cloneOwnDataRecord(overrides);
+  if (!Array.isArray(targetIds)) return result;
+
+  targetIds.forEach((targetId) => {
+    const id = normalizeOverrideId(targetId);
+    if (!id) return;
+
+    const existing = Object.prototype.hasOwnProperty.call(result, id)
+      ? cloneOwnDataRecord(result[id])
+      : {};
+    result[id] = { ...existing, imgUrl: url };
+  });
+  return result;
+};
+
+export const clearCharacterImageOverrides = (
+  overrides,
+  messages,
+  charName
+) => {
+  const result = cloneOwnDataRecord(overrides);
+  const characterKey = normalizeCrudCharacterKey(charName);
+  if (!characterKey || !Array.isArray(messages)) return result;
+
+  const targetIds = new Set();
+  messages.forEach((message) => {
+    if (
+      isImageMessage(message) ||
+      normalizedMessageCharacter(message) !== characterKey
+    ) {
+      return;
+    }
+
+    const id = readMessageProperty(message, 'id');
+    if (!id.found) return;
+    const normalizedId = normalizeOverrideId(id.value);
+    if (normalizedId) targetIds.add(normalizedId);
+  });
+
+  targetIds.forEach((id) => {
+    if (!Object.prototype.hasOwnProperty.call(result, id)) return;
+    const existing = result[id];
+    if (!isPlainRecord(existing)) return;
+
+    const imageUrl = readOwnDataProperty(existing, 'imgUrl');
+    if (!imageUrl.found) return;
+
+    const nextOverride = cloneOwnDataRecord(existing);
+    delete nextOverride.imgUrl;
+    if (Object.keys(nextOverride).length === 0) delete result[id];
+    else result[id] = nextOverride;
+  });
+
+  return result;
+};
