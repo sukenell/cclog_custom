@@ -1,71 +1,184 @@
 import { buildEbookJson, parseDiceFromText, toSafeText } from './exportEbookJson';
 
+const expectExactKeys = (value, expectedKeys) => {
+  expect(Object.keys(value).sort()).toEqual([...expectedKeys].sort());
+};
+
+const collectObjectKeys = (value, keys = []) => {
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectObjectKeys(item, keys));
+    return keys;
+  }
+
+  if (value && typeof value === 'object') {
+    Object.entries(value).forEach(([key, nestedValue]) => {
+      keys.push(key);
+      collectObjectKeys(nestedValue, keys);
+    });
+  }
+
+  return keys;
+};
+
 describe('exportEbookJson', () => {
-  test('builds lines with required mapping and includes image category', () => {
+  test('locks the complete schema-v1 export shape without wardrobe metadata', () => {
     const messages = [
       {
-        id: 'a',
+        id: 'character',
         category: 'main',
-        charName: 'KP',
-        text: '일반 대사',
-        imgUrl: 'https://i.imgur.com/a.png',
+        charName: '앨리스',
+        text: 'wardrobe variantId applyScope messageOverrides도 대사로 보존',
+        imgUrl: 'https://example.com/alice-standing.png',
         timestamp: '2025-01-01T13:25:00+09:00',
         isDice: false,
       },
       {
-        id: 'b',
-        category: 'other',
-        charName: 'PL',
-        text: '잡담!',
-        imgUrl: 'https://i.imgur.com/b.png',
-        timestamp: '2025-01-01T20:42:00+09:00',
+        id: 'system',
+        category: 'main',
+        charName: '나레이션',
+        text: '장면 전환',
+        imgUrl: '',
+        timestamp: '2025-01-01T13:26:00+09:00',
         isDice: false,
       },
       {
-        id: 'c',
-        category: 'secret',
-        charName: 'A',
-        text: 'CC(+1)<=55 굴림: 67',
-        imgUrl: 'https://i.imgur.com/c.png',
-        timestamp: '2025-01-01T20:42:00+09:00',
+        id: 'secret',
+        category: 'secret(kp,alice)',
+        charName: 'KP',
+        text: '비밀 정보',
+        imgUrl: 'https://example.com/kp.png',
+        timestamp: '2025-01-01T13:27:00+09:00',
+        isDice: false,
+      },
+      {
+        id: 'other',
+        category: 'other',
+        charName: 'PL',
+        text: '잡담!',
+        imgUrl: 'https://example.com/pl.png',
+        timestamp: '2025-01-01T13:28:00+09:00',
+        isDice: false,
+      },
+      {
+        id: 'dice',
+        category: 'main',
+        charName: '앨리스',
+        text: 'CC<=75 [관찰력] 굴림: 33',
+        imgUrl: 'https://example.com/alice-standing.png',
+        timestamp: '2025-01-01T13:29:00+09:00',
         isDice: true,
       },
       {
-        id: 'd',
+        id: 'image',
         category: 'image',
-        text: '',
+        text: '이미지 설명',
+        imgUrl: 'https://example.com/title.png',
       },
     ];
 
     const result = buildEbookJson({
       messages,
-      fileName: '테스트룸.html',
-      selectedCategories: { main: true, other: true, secret: true },
+      fileName: '스키마 계약.html',
+      selectedCategories: {
+        main: true,
+        other: true,
+        'secret(kp,alice)': true,
+      },
+      inputTexts: ['나레이션'],
     });
 
+    expectExactKeys(result, ['schemaVersion', 'ebookView', 'lines']);
+    expectExactKeys(result.ebookView, ['titlePage']);
+    expectExactKeys(result.ebookView.titlePage, [
+      'scenarioTitle',
+      'ruleType',
+      'gm',
+      'pl',
+      'writer',
+      'copyright',
+      'identifier',
+      'extraMetaItems',
+    ]);
+    expect(result.ebookView.titlePage).toEqual({
+      scenarioTitle: '스키마 계약',
+      ruleType: 'COC',
+      gm: '',
+      pl: '',
+      writer: '',
+      copyright: '',
+      identifier: '',
+      extraMetaItems: [],
+    });
     expect(result.schemaVersion).toBe(1);
-    expect(result.ebookView.titlePage.scenarioTitle).toBe('테스트룸');
-    expect(result.ebookView.titlePage.ruleType).toBe('COC');
-    expect(result.lines).toHaveLength(4);
+    expect(result.lines).toHaveLength(6);
 
-    expect(result.lines[0].id).toMatch(/^\d{16}$/);
-    expect(result.lines[0].role).toBe('character');
-    expect(result.lines[0].timestamp).toBe('오후 1:25');
-    expect(result.lines[0].input.speakerImages.standing.url).toBe('https://i.imgur.com/a.png');
+    const [character, system, secret, other, dice, image] = result.lines;
+    const standardLineKeys = [
+      'id',
+      'speaker',
+      'role',
+      'timestamp',
+      'text',
+      'safetext',
+      'input',
+    ];
 
-    expect(result.lines[1].role).toBe('character');
-    expect(result.lines[1].textColor).toBe('color: #aaaaaa');
+    [character, system, secret].forEach((line) => {
+      expectExactKeys(line, standardLineKeys);
+      expectExactKeys(line.input, ['speakerImages']);
+      expectExactKeys(line.input.speakerImages, ['standing']);
+      expectExactKeys(line.input.speakerImages.standing, ['url']);
+    });
 
-    expect(result.lines[2].role).toBe('dice');
-    expect(result.lines[2].input.dice.source).toBe('ccfolia');
-    expect(result.lines[2].input.dice.template).toBe('coc');
+    expect(character.id).toMatch(/^\d{16}$/);
+    expect(character.role).toBe('character');
+    expect(character.timestamp).toBe('오후 1:25');
+    expect(character.text).toBe(
+      'wardrobe variantId applyScope messageOverrides도 대사로 보존'
+    );
+    expect(character.input.speakerImages.standing.url).toBe(
+      'https://example.com/alice-standing.png'
+    );
+    expect(system.role).toBe('system');
+    expect(secret.role).toBe('secret');
 
-    expect(result.lines[3]).toEqual({
+    expectExactKeys(other, [...standardLineKeys, 'textColor']);
+    expectExactKeys(other.input, ['speakerImages']);
+    expectExactKeys(other.input.speakerImages, ['standing']);
+    expectExactKeys(other.input.speakerImages.standing, ['url']);
+    expect(other.role).toBe('character');
+    expect(other.textColor).toBe('color: #aaaaaa');
+
+    expectExactKeys(dice, standardLineKeys);
+    expectExactKeys(dice.input, ['speakerImages', 'dice']);
+    expectExactKeys(dice.input.speakerImages, ['standing']);
+    expectExactKeys(dice.input.speakerImages.standing, ['url']);
+    expectExactKeys(dice.input.dice, ['source', 'rule', 'template', 'inputs']);
+    expectExactKeys(dice.input.dice.inputs, ['skill', 'roll', 'success']);
+    expect(dice.role).toBe('dice');
+    expect(dice.input.dice).toEqual({
+      source: 'ccfolia',
+      rule: 'coc7',
+      template: 'coc-1',
+      inputs: {
+        skill: '관찰력',
+        roll: 33,
+        success: 75,
+      },
+    });
+
+    expectExactKeys(image, ['id', 'speaker', 'role', 'text', 'imageUrl']);
+    expect(image).toEqual({
       id: expect.stringMatching(/^\d{16}$/),
       speaker: '',
       role: 'system',
-      text: '',
-      imageUrl: '',
+      text: '이미지 설명',
+      imageUrl: 'https://example.com/title.png',
+    });
+
+    const serializedKeys = collectObjectKeys(result);
+    ['wardrobe', 'variantId', 'applyScope', 'messageOverrides'].forEach((key) => {
+      expect(serializedKeys).not.toContain(key);
     });
   });
 

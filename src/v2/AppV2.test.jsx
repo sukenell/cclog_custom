@@ -342,6 +342,180 @@ describe('AppV2 uploaded-file settings', () => {
     }
   });
 
+  test('locks the downloaded html message and image wrapper structure', async () => {
+    const originalCreateObjectURL = URL.createObjectURL;
+    const originalRevokeObjectURL = URL.revokeObjectURL;
+    const originalClick = HTMLAnchorElement.prototype.click;
+    const downloads = [];
+
+    URL.createObjectURL = jest.fn((blob) => {
+      downloads.push({ blob, download: null });
+      return `blob:download-${downloads.length}`;
+    });
+    URL.revokeObjectURL = jest.fn();
+    HTMLAnchorElement.prototype.click = function click() {
+      downloads[downloads.length - 1].download = this.download;
+    };
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => {
+        rootApi.render(<AppV2 />);
+      });
+
+      await uploadLogFile(
+        container,
+        `
+          <div>
+            <p><span>[main]</span> <span>PL</span> : <span>일반 대사</span></p>
+            <p><span>[정보]</span> <span>system</span> : <span>정보 대사</span></p>
+            <p><span>[잡담]</span> <span>PL2</span> : <span>잡담 대사</span></p>
+            <p><span>[main]</span> <span>나레이션</span> : <span>설명 대사</span></p>
+            <p><span>[main]</span> <span>PL</span> : <span>1D100 (1D100) ＞ 42</span></p>
+          </div>
+        `
+      );
+
+      await act(async () => {
+        container.querySelector('label[for="cat-info"]').click();
+        container.querySelector('label[for="cat-other"]').click();
+      });
+
+      await updateTextInput(
+        container.querySelector('.title_input'),
+        'https://example.com/title.png'
+      );
+      await updateTextInput(
+        container.querySelector('.end_input'),
+        'https://example.com/end.png'
+      );
+      await updateTextInput(container.querySelector('.system_input'), '나레이션');
+
+      const htmlDownloadButton = Array.from(container.querySelectorAll('button')).find(
+        (button) => button.textContent === '다운로드 (HTML)'
+      );
+
+      await act(async () => {
+        htmlDownloadButton.click();
+      });
+
+      expect(downloads).toHaveLength(1);
+      expect(downloads[0].download).toBe('session.html');
+
+      const html = await readBlobText(downloads[0].blob);
+      const exportedDocument = new DOMParser().parseFromString(html, 'text/html');
+      const exportWrapper = exportedDocument.querySelector('body > .ccfolia_wrap');
+
+      expect(exportWrapper).not.toBeNull();
+
+      const rows = Array.from(
+        exportedDocument.querySelectorAll('.ccfolia_wrap > .message-row')
+      );
+      expect(rows).toHaveLength(5);
+
+      const normalRow = rows[0];
+      expect(normalRow.textContent).toContain('PL');
+      expect(normalRow.textContent).toContain('일반 대사');
+      expect(Array.from(normalRow.classList)).toEqual([
+        'gap',
+        'message-row',
+        'cat-main',
+      ]);
+      expect(normalRow.children).toHaveLength(2);
+      expect(normalRow.firstElementChild.matches('.msg_container')).toBe(true);
+      expect(normalRow.lastElementChild.matches('.message-body')).toBe(true);
+
+      const standingImages = normalRow.querySelectorAll('.msg_container > img');
+      expect(standingImages).toHaveLength(1);
+      expect(standingImages[0].getAttribute('src')).toBe(
+        'https://ccfolia.com/blank.gif'
+      );
+
+      const infoRow = rows.find((row) => row.textContent.includes('정보 대사'));
+      expect(Array.from(infoRow.classList)).toEqual([
+        'gap',
+        'message-row',
+        'cat-info',
+      ]);
+      expect(
+        infoRow.querySelector('.message-body > .message-container > .info')
+      ).not.toBeNull();
+
+      const otherRow = rows.find((row) => row.textContent.includes('잡담 대사'));
+      expect(Array.from(otherRow.classList)).toEqual([
+        'gap',
+        'message-row',
+        'cat-other',
+        'message-row-other',
+      ]);
+      expect(
+        otherRow.querySelector('.message-body > .message-container.other > .other')
+      ).not.toBeNull();
+
+      const descriptionRow = rows.find((row) => row.textContent.includes('설명 대사'));
+      expect(Array.from(descriptionRow.classList)).toEqual([
+        'gap',
+        'message-row',
+        'cat-desc',
+      ]);
+      expect(descriptionRow.firstElementChild.tagName).toBe('DIV');
+      expect(descriptionRow.firstElementChild.querySelector('span').textContent).toBe(
+        '설명 대사'
+      );
+
+      const diceRow = rows.find((row) => row.textContent.includes('1D100'));
+      expect(Array.from(diceRow.classList)).toEqual([
+        'gap',
+        'message-row',
+        'cat-main',
+      ]);
+      expect(diceRow.querySelector('.message-body > [data-dice="true"]')).not.toBeNull();
+
+      const imageWrappers = Array.from(exportWrapper.children).filter((element) =>
+        element.matches('.message-container.image')
+      );
+      expect(imageWrappers).toHaveLength(2);
+      expect(Array.from(imageWrappers[0].classList)).toEqual([
+        'message-container',
+        'image',
+      ]);
+      expect(Array.from(imageWrappers[1].classList)).toEqual([
+        'message-container',
+        'image',
+      ]);
+      expect(exportWrapper.firstElementChild).toBe(imageWrappers[0]);
+      expect(exportWrapper.lastElementChild).toBe(imageWrappers[1]);
+      expect(imageWrappers[0].children).toHaveLength(1);
+      expect(imageWrappers[1].children).toHaveLength(1);
+      expect(imageWrappers[0].firstElementChild.getAttribute('src')).toBe(
+        'https://example.com/title.png'
+      );
+      expect(imageWrappers[1].firstElementChild.getAttribute('src')).toBe(
+        'https://example.com/end.png'
+      );
+
+      expect(
+        exportedDocument.querySelectorAll('button, input, select, textarea')
+      ).toHaveLength(0);
+      expect(
+        exportedDocument.querySelectorAll(
+          '[data-export-ignore], [data-wardrobe-id], [data-apply-scope]'
+        )
+      ).toHaveLength(0);
+    } finally {
+      await act(async () => {
+        rootApi.unmount();
+      });
+      container.remove();
+      URL.createObjectURL = originalCreateObjectURL;
+      URL.revokeObjectURL = originalRevokeObjectURL;
+      HTMLAnchorElement.prototype.click = originalClick;
+    }
+  });
+
   test('exports settings into html, split html, and json file contents', async () => {
     const originalCreateObjectURL = URL.createObjectURL;
     const originalRevokeObjectURL = URL.revokeObjectURL;
