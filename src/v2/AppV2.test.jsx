@@ -70,12 +70,52 @@ const readBlobText = (blob) =>
     reader.readAsText(blob);
   });
 
+let originalDownloadGlobals = null;
+
+const captureDownloads = () => {
+  if (originalDownloadGlobals) {
+    throw new Error('Download capture is already active');
+  }
+
+  const downloads = [];
+  originalDownloadGlobals = {
+    createObjectURL: URL.createObjectURL,
+    revokeObjectURL: URL.revokeObjectURL,
+    anchorClick: HTMLAnchorElement.prototype.click,
+  };
+
+  URL.createObjectURL = jest.fn((blob) => {
+    downloads.push({ blob, download: null });
+    return `blob:download-${downloads.length}`;
+  });
+  URL.revokeObjectURL = jest.fn();
+  HTMLAnchorElement.prototype.click = function click() {
+    downloads[downloads.length - 1].download = this.download;
+  };
+
+  return downloads;
+};
+
+const restoreDownloadCapture = () => {
+  if (!originalDownloadGlobals) return;
+
+  URL.createObjectURL = originalDownloadGlobals.createObjectURL;
+  URL.revokeObjectURL = originalDownloadGlobals.revokeObjectURL;
+  HTMLAnchorElement.prototype.click = originalDownloadGlobals.anchorClick;
+  originalDownloadGlobals = null;
+};
+
+const expectClassTokens = (element, expectedTokens) => {
+  expect(Array.from(element.classList).sort()).toEqual([...expectedTokens].sort());
+};
+
 beforeEach(() => {
   global.FileReader = MockFileReader;
 });
 
 afterEach(() => {
   global.FileReader = NativeFileReader;
+  restoreDownloadCapture();
 });
 
 describe('AppV2 message deletion', () => {
@@ -272,19 +312,7 @@ describe('AppV2 uploaded-file settings', () => {
   });
 
   test('starts html, split html, and json downloads after file upload', async () => {
-    const originalCreateObjectURL = URL.createObjectURL;
-    const originalRevokeObjectURL = URL.revokeObjectURL;
-    const originalClick = HTMLAnchorElement.prototype.click;
-    const downloads = [];
-
-    URL.createObjectURL = jest.fn((blob) => {
-      downloads.push({ blob, download: null });
-      return `blob:download-${downloads.length}`;
-    });
-    URL.revokeObjectURL = jest.fn();
-    HTMLAnchorElement.prototype.click = function click() {
-      downloads[downloads.length - 1].download = this.download;
-    };
+    const downloads = captureDownloads();
 
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -336,26 +364,11 @@ describe('AppV2 uploaded-file settings', () => {
         rootApi.unmount();
       });
       container.remove();
-      URL.createObjectURL = originalCreateObjectURL;
-      URL.revokeObjectURL = originalRevokeObjectURL;
-      HTMLAnchorElement.prototype.click = originalClick;
     }
   });
 
   test('locks the downloaded html message and image wrapper structure', async () => {
-    const originalCreateObjectURL = URL.createObjectURL;
-    const originalRevokeObjectURL = URL.revokeObjectURL;
-    const originalClick = HTMLAnchorElement.prototype.click;
-    const downloads = [];
-
-    URL.createObjectURL = jest.fn((blob) => {
-      downloads.push({ blob, download: null });
-      return `blob:download-${downloads.length}`;
-    });
-    URL.revokeObjectURL = jest.fn();
-    HTMLAnchorElement.prototype.click = function click() {
-      downloads[downloads.length - 1].download = this.download;
-    };
+    const downloads = captureDownloads();
 
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -419,7 +432,7 @@ describe('AppV2 uploaded-file settings', () => {
       const normalRow = rows[0];
       expect(normalRow.textContent).toContain('PL');
       expect(normalRow.textContent).toContain('일반 대사');
-      expect(Array.from(normalRow.classList)).toEqual([
+      expectClassTokens(normalRow, [
         'gap',
         'message-row',
         'cat-main',
@@ -435,7 +448,7 @@ describe('AppV2 uploaded-file settings', () => {
       );
 
       const infoRow = rows.find((row) => row.textContent.includes('정보 대사'));
-      expect(Array.from(infoRow.classList)).toEqual([
+      expectClassTokens(infoRow, [
         'gap',
         'message-row',
         'cat-info',
@@ -445,7 +458,7 @@ describe('AppV2 uploaded-file settings', () => {
       ).not.toBeNull();
 
       const otherRow = rows.find((row) => row.textContent.includes('잡담 대사'));
-      expect(Array.from(otherRow.classList)).toEqual([
+      expectClassTokens(otherRow, [
         'gap',
         'message-row',
         'cat-other',
@@ -456,7 +469,7 @@ describe('AppV2 uploaded-file settings', () => {
       ).not.toBeNull();
 
       const descriptionRow = rows.find((row) => row.textContent.includes('설명 대사'));
-      expect(Array.from(descriptionRow.classList)).toEqual([
+      expectClassTokens(descriptionRow, [
         'gap',
         'message-row',
         'cat-desc',
@@ -467,7 +480,7 @@ describe('AppV2 uploaded-file settings', () => {
       );
 
       const diceRow = rows.find((row) => row.textContent.includes('1D100'));
-      expect(Array.from(diceRow.classList)).toEqual([
+      expectClassTokens(diceRow, [
         'gap',
         'message-row',
         'cat-main',
@@ -478,11 +491,11 @@ describe('AppV2 uploaded-file settings', () => {
         element.matches('.message-container.image')
       );
       expect(imageWrappers).toHaveLength(2);
-      expect(Array.from(imageWrappers[0].classList)).toEqual([
+      expectClassTokens(imageWrappers[0], [
         'message-container',
         'image',
       ]);
-      expect(Array.from(imageWrappers[1].classList)).toEqual([
+      expectClassTokens(imageWrappers[1], [
         'message-container',
         'image',
       ]);
@@ -510,26 +523,11 @@ describe('AppV2 uploaded-file settings', () => {
         rootApi.unmount();
       });
       container.remove();
-      URL.createObjectURL = originalCreateObjectURL;
-      URL.revokeObjectURL = originalRevokeObjectURL;
-      HTMLAnchorElement.prototype.click = originalClick;
     }
   });
 
   test('exports settings into html, split html, and json file contents', async () => {
-    const originalCreateObjectURL = URL.createObjectURL;
-    const originalRevokeObjectURL = URL.revokeObjectURL;
-    const originalClick = HTMLAnchorElement.prototype.click;
-    const downloads = [];
-
-    URL.createObjectURL = jest.fn((blob) => {
-      downloads.push({ blob, download: null });
-      return `blob:download-${downloads.length}`;
-    });
-    URL.revokeObjectURL = jest.fn();
-    HTMLAnchorElement.prototype.click = function click() {
-      downloads[downloads.length - 1].download = this.download;
-    };
+    const downloads = captureDownloads();
 
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -614,26 +612,11 @@ describe('AppV2 uploaded-file settings', () => {
         rootApi.unmount();
       });
       container.remove();
-      URL.createObjectURL = originalCreateObjectURL;
-      URL.revokeObjectURL = originalRevokeObjectURL;
-      HTMLAnchorElement.prototype.click = originalClick;
     }
   });
 
   test('keeps edited and deleted messages in every download after settings change', async () => {
-    const originalCreateObjectURL = URL.createObjectURL;
-    const originalRevokeObjectURL = URL.revokeObjectURL;
-    const originalClick = HTMLAnchorElement.prototype.click;
-    const downloads = [];
-
-    URL.createObjectURL = jest.fn((blob) => {
-      downloads.push({ blob, download: null });
-      return `blob:download-${downloads.length}`;
-    });
-    URL.revokeObjectURL = jest.fn();
-    HTMLAnchorElement.prototype.click = function click() {
-      downloads[downloads.length - 1].download = this.download;
-    };
+    const downloads = captureDownloads();
 
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -717,9 +700,6 @@ describe('AppV2 uploaded-file settings', () => {
         rootApi.unmount();
       });
       container.remove();
-      URL.createObjectURL = originalCreateObjectURL;
-      URL.revokeObjectURL = originalRevokeObjectURL;
-      HTMLAnchorElement.prototype.click = originalClick;
     }
   });
 });

@@ -29,7 +29,7 @@ describe('exportEbookJson', () => {
         charName: '앨리스',
         text: 'wardrobe variantId applyScope messageOverrides도 대사로 보존',
         imgUrl: 'https://example.com/alice-standing.png',
-        timestamp: '2025-01-01T13:25:00+09:00',
+        timestamp: '2025-01-01T13:25:00',
         isDice: false,
       },
       {
@@ -38,7 +38,7 @@ describe('exportEbookJson', () => {
         charName: '나레이션',
         text: '장면 전환',
         imgUrl: '',
-        timestamp: '2025-01-01T13:26:00+09:00',
+        timestamp: '2025-01-01T13:26:00',
         isDice: false,
       },
       {
@@ -47,7 +47,7 @@ describe('exportEbookJson', () => {
         charName: 'KP',
         text: '비밀 정보',
         imgUrl: 'https://example.com/kp.png',
-        timestamp: '2025-01-01T13:27:00+09:00',
+        timestamp: '2025-01-01T13:27:00',
         isDice: false,
       },
       {
@@ -56,7 +56,7 @@ describe('exportEbookJson', () => {
         charName: 'PL',
         text: '잡담!',
         imgUrl: 'https://example.com/pl.png',
-        timestamp: '2025-01-01T13:28:00+09:00',
+        timestamp: '2025-01-01T13:28:00',
         isDice: false,
       },
       {
@@ -65,7 +65,7 @@ describe('exportEbookJson', () => {
         charName: '앨리스',
         text: 'CC<=75 [관찰력] 굴림: 33',
         imgUrl: 'https://example.com/alice-standing.png',
-        timestamp: '2025-01-01T13:29:00+09:00',
+        timestamp: '2025-01-01T13:29:00',
         isDice: true,
       },
       {
