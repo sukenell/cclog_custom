@@ -14,6 +14,7 @@ import AppV2, {
 } from './AppV2';
 import translationKO from '../core/locales/ko/translation.json';
 import { WARDROBE_STORAGE_KEY } from './utils/standingWardrobe';
+import { main_style } from '../v1/utils/FileDownload';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -479,6 +480,42 @@ describe('AppV2 localization', () => {
 });
 
 describe('AppV2 editor shell accessibility', () => {
+  test('does not inject or accumulate export styles in the live document under StrictMode', async () => {
+    const exportStyleNodes = () =>
+      Array.from(document.head.querySelectorAll('style')).filter(
+        (style) => style.textContent === main_style
+      );
+    const baselineNodes = new Set(exportStyleNodes());
+    const baselineCount = baselineNodes.size;
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+    let mountedCount;
+    let unmountedCount;
+
+    try {
+      await act(async () => {
+        rootApi.render(
+          <React.StrictMode>
+            <AppV2 />
+          </React.StrictMode>
+        );
+      });
+      mountedCount = exportStyleNodes().length;
+
+      await act(async () => rootApi.unmount());
+      unmountedCount = exportStyleNodes().length;
+    } finally {
+      exportStyleNodes().forEach((style) => {
+        if (!baselineNodes.has(style)) style.remove();
+      });
+      container.remove();
+    }
+
+    expect(mountedCount).toBe(baselineCount);
+    expect(unmountedCount).toBe(baselineCount);
+  });
+
   test('styles the h1 page title separately from h2 numbered sections', () => {
     const css = readFileSync(
       path.join(process.cwd(), 'src/v2/AppV2.css'),

@@ -19,7 +19,6 @@ import {
 import { useTranslation } from "react-i18next";
 import "./AppV2.css";
 import "../core/styles/base.css";
-import { main_style } from "../v1/utils/FileDownload.js";
 
 
 const splitByMessageBlocks = (container, maxChars) => {
@@ -550,12 +549,6 @@ ${buildMinimalExportCSS(globalFontPercent)}
   /* =========================
      EFFECTS
   ========================= */
-  useEffect(() => {
-    const styleTag = document.createElement("style");
-    styleTag.innerHTML = main_style;
-    document.head.appendChild(styleTag);
-  }, []);
-
   useEffect(() => {
     const result = saveWardrobe(undefined, wardrobe);
     setWardrobeStorageError(result.ok ? null : result.error);
