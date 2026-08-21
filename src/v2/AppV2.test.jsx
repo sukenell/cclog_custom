@@ -5,6 +5,8 @@ jest.mock('jspdf', () => ({
 
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
+import { readFileSync } from 'fs';
+import path from 'path';
 import AppV2, { buildMinimalExportCSS, removeMessageById } from './AppV2';
 import { WARDROBE_STORAGE_KEY } from './utils/standingWardrobe';
 
@@ -350,9 +352,14 @@ describe('AppV2 session standing wardrobe integration', () => {
       const setBattleDefault = Array.from(
         wardrobePanel.querySelectorAll('button')
       ).find((button) => button.textContent.includes('전투 기본으로 설정'));
+      setBattleDefault.focus();
+      expect(document.activeElement).toBe(setBattleDefault);
       await act(async () => {
         setBattleDefault.click();
       });
+
+      expect(document.activeElement).toBe(setBattleDefault);
+      expect(setBattleDefault.getAttribute('aria-pressed')).toBe('true');
 
       expect(getProfileImageUrl(container, '수정된 첫 번째 대사')).toBe(
         'https://example.com/alice-battle.png'
@@ -369,6 +376,51 @@ describe('AppV2 session standing wardrobe integration', () => {
       const stored = JSON.parse(sessionStorage.getItem(WARDROBE_STORAGE_KEY));
       expect(Object.keys(stored).sort()).toEqual(['characters', 'version']);
       expect(stored.characters['앨리스'].activeVariantId).toBe('battle');
+    } finally {
+      await act(async () => {
+        rootApi.unmount();
+      });
+      container.remove();
+    }
+  });
+
+  test('keeps focus on the add form and announces deletion after removing the last variant', async () => {
+    seedAliceWardrobe();
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => {
+        rootApi.render(<AppV2 />);
+      });
+      await uploadLogFile(
+        container,
+        `
+          <div>
+            <p><span>[main]</span> <span>앨리스</span> : <span>삭제 후 대사</span></p>
+          </div>
+        `
+      );
+
+      const wardrobePanel = container.querySelector('.standing-wardrobe-panel');
+      const deleteButton = wardrobePanel.querySelector(
+        '.standing-wardrobe-delete-button'
+      );
+      deleteButton.focus();
+      await act(async () => {
+        deleteButton.click();
+      });
+
+      const currentNameInput = wardrobePanel.querySelector('input[type="text"]');
+      expect(document.activeElement).toBe(currentNameInput);
+      expect(wardrobePanel.querySelector('[role="status"]').textContent).toContain(
+        '평상복 이미지를 삭제했습니다.'
+      );
+      expect(wardrobePanel.querySelector('summary').textContent).toContain(
+        '기본: 없음'
+      );
     } finally {
       await act(async () => {
         rootApi.unmount();
@@ -1194,5 +1246,39 @@ describe('AppV2 export CSS', () => {
     expect(otherRule[1]).toContain('background-color: transparent');
     expect(otherRule[1]).not.toMatch(/\bpadding\s*:/);
     expect(otherRule[1]).not.toMatch(/\bmargin\s*:/);
+  });
+});
+
+describe('AppV2 narrow-screen accessibility CSS', () => {
+  test('stacks the fixed layout and constrains wardrobe content without horizontal overflow', () => {
+    const css = readFileSync(
+      path.join(process.cwd(), 'src/v2/AppV2.css'),
+      'utf8'
+    );
+    const narrowMediaStart = css.indexOf('@media (max-width: 800px)');
+
+    expect(narrowMediaStart).toBeGreaterThanOrEqual(0);
+    const narrowCss = css.slice(narrowMediaStart);
+    expect(narrowCss).toMatch(
+      /\.fix-layout\s*\{[^}]*flex-direction:\s*column/
+    );
+    expect(narrowCss).toMatch(
+      /\.setting_container,\s*\.preview-wrapper\s*\{[^}]*width:\s*100%[^}]*min-width:\s*0/
+    );
+    expect(narrowCss).toMatch(
+      /\.preview-scroll-box\s*\{[^}]*width:\s*100%[^}]*max-width:\s*100%/
+    );
+    expect(css).toMatch(
+      /\.standing-wardrobe-card\s*\{[^}]*min-width:\s*0/
+    );
+    expect(css).toMatch(
+      /\.standing-wardrobe-variant\s*\{[^}]*min-width:\s*0/
+    );
+    expect(css).toMatch(
+      /\.standing-wardrobe-thumbnail\s*\{[^}]*max-width:\s*100%/
+    );
+    expect(css).toMatch(
+      /\.standing-wardrobe-actions button,\s*\.standing-wardrobe-add-button\s*\{[^}]*min-width:\s*0[^}]*overflow-wrap:\s*anywhere/
+    );
   });
 });

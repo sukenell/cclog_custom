@@ -5,6 +5,7 @@ import StandingWardrobePanel from './StandingWardrobePanel';
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const t = (_key, options = {}) => options.defaultValue || _key;
+const BLANK_IMAGE_URL = 'https://ccfolia.com/blank.gif';
 
 const WARDROBE = {
   version: 1,
@@ -121,6 +122,21 @@ test('shows unique normalized message characters, defaults, and compact variant 
   expect(container.querySelectorAll('.standing-wardrobe-thumbnail[alt=""]')).toHaveLength(2);
 });
 
+test('falls back once when a decorative thumbnail cannot load', async () => {
+  await renderPanel();
+
+  const thumbnail = container.querySelector('.standing-wardrobe-thumbnail');
+  await act(async () => {
+    thumbnail.dispatchEvent(new Event('error', { bubbles: false }));
+  });
+  expect(thumbnail.getAttribute('src')).toBe(BLANK_IMAGE_URL);
+
+  await act(async () => {
+    thumbnail.dispatchEvent(new Event('error', { bubbles: false }));
+  });
+  expect(thumbnail.getAttribute('src')).toBe(BLANK_IMAGE_URL);
+});
+
 test('uses native and explicitly labelled controls with status and alert semantics', async () => {
   await renderPanel({ storageError: new DOMException('blocked', 'SecurityError') });
 
@@ -135,10 +151,19 @@ test('uses native and explicitly labelled controls with status and alert semanti
     expect(id).not.toBe('');
     expect(container.querySelector(`[id="${id}"]`)).not.toBeNull();
   });
-  Array.from(container.querySelectorAll('button')).forEach((button) => {
+  const addButtons = Array.from(
+    container.querySelectorAll('.standing-wardrobe-add-button')
+  );
+  expect(addButtons).toHaveLength(2);
+  addButtons.forEach((button) => {
+    expect(button.getAttribute('type')).toBe('submit');
+  });
+  Array.from(container.querySelectorAll('button'))
+    .filter((button) => !button.classList.contains('standing-wardrobe-add-button'))
+    .forEach((button) => {
     expect(button.getAttribute('type')).toBe('button');
     expect(button.textContent.trim() || button.getAttribute('aria-label')).toBeTruthy();
-  });
+    });
 
   const firstCard = container.querySelector('details');
   const nameInput = firstCard.querySelector('input[type="text"]');
@@ -173,7 +198,7 @@ test('uses native and explicitly labelled controls with status and alert semanti
   expect(firstCard.querySelector('[role="alert"]')).toBeNull();
 });
 
-test('adds a valid variant immutably and clears the submitted draft', async () => {
+test('adds a valid variant immutably through the form submit route used by Enter', async () => {
   const onChange = jest.fn();
   const original = JSON.parse(JSON.stringify(WARDROBE));
   await renderPanel({ onChange });
@@ -184,10 +209,12 @@ test('adds a valid variant immutably and clears the submitted draft', async () =
   await updateInput(nameInput, '정장');
   await updateInput(urlInput, 'https://example.com/alice-formal.png');
 
+  const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
   await act(async () => {
-    firstCard.querySelector('.standing-wardrobe-add-button').click();
+    firstCard.querySelector('form').dispatchEvent(submitEvent);
   });
 
+  expect(submitEvent.defaultPrevented).toBe(true);
   expect(onChange).toHaveBeenCalledTimes(1);
   const nextWardrobe = onChange.mock.calls[0][0];
   expect(WARDROBE).toEqual(original);
@@ -205,6 +232,120 @@ test('adds a valid variant immutably and clears the submitted draft', async () =
   expect(urlInput.value).toBe('');
   expect(firstCard.querySelector('[role="alert"]')).toBeNull();
 });
+
+test('uses a guaranteed unique fallback id after repeated random UUID collisions', async () => {
+  const onChange = jest.fn();
+  const originalCryptoDescriptor = Object.getOwnPropertyDescriptor(
+    window,
+    'crypto'
+  );
+  const randomUUID = jest.fn().mockReturnValue('casual');
+  Object.defineProperty(window, 'crypto', {
+    configurable: true,
+    value: { randomUUID },
+  });
+
+  try {
+    await renderPanel({ onChange });
+    const firstCard = container.querySelector('details');
+    await updateInput(firstCard.querySelector('input[type="text"]'), '정장');
+    await updateInput(
+      firstCard.querySelector('input[type="url"]'),
+      'https://example.com/alice-formal.png'
+    );
+
+    await act(async () => {
+      firstCard
+        .querySelector('form')
+        .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    });
+
+    expect(randomUUID).toHaveBeenCalledTimes(3);
+    const variants = onChange.mock.calls[0][0].characters['Ålice'].variants;
+    expect(variants).toHaveLength(3);
+    expect(variants).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'casual', label: '평상복' }),
+        expect.objectContaining({ id: 'battle', label: '전투' }),
+        expect.objectContaining({ id: 'variant-1', label: '정장' }),
+      ])
+    );
+  } finally {
+    if (originalCryptoDescriptor) {
+      Object.defineProperty(window, 'crypto', originalCryptoDescriptor);
+    } else {
+      delete window.crypto;
+    }
+  }
+});
+
+test('accepts a normal variant label after the storage model normalizes Unicode', async () => {
+  const onChange = jest.fn();
+  await renderPanel({ onChange });
+
+  const firstCard = container.querySelector('details');
+  await updateInput(firstCard.querySelector('input[type="text"]'), 'A\u030A 복장');
+  await updateInput(
+    firstCard.querySelector('input[type="url"]'),
+    'https://example.com/alice-normalized.png'
+  );
+  await act(async () => {
+    firstCard
+      .querySelector('form')
+      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  });
+
+  expect(onChange).toHaveBeenCalledTimes(1);
+  expect(
+    onChange.mock.calls[0][0].characters['Ålice'].variants.at(-1).label
+  ).toBe('Å 복장');
+  expect(firstCard.querySelector('[role="alert"]')).toBeNull();
+});
+
+test.each(['__proto__', 'constructor', 'prototype'])(
+  'retains the draft and links an alert when character %s is rejected by storage',
+  async (reservedName) => {
+    const onChange = jest.fn();
+    await renderPanel({
+      messages: [
+        MESSAGES[0],
+        {
+          id: `reserved-${reservedName}`,
+          category: 'main',
+          charName: reservedName,
+          text: '예약어 대사',
+        },
+      ],
+      onChange,
+    });
+
+    const reservedCard = Array.from(container.querySelectorAll('details')).find(
+      (card) =>
+        card.querySelector('.standing-wardrobe-character-name').textContent ===
+        reservedName
+    );
+    const form = reservedCard.querySelector('form');
+    const nameInput = form.querySelector('input[type="text"]');
+    const urlInput = form.querySelector('input[type="url"]');
+    await updateInput(nameInput, '평상복');
+    await updateInput(urlInput, `https://example.com/${reservedName}.png`);
+
+    await act(async () => {
+      form.dispatchEvent(
+        new Event('submit', { bubbles: true, cancelable: true })
+      );
+    });
+
+    const alert = form.querySelector('[role="alert"]');
+    expect(onChange).not.toHaveBeenCalled();
+    expect(nameInput.value).toBe('평상복');
+    expect(urlInput.value).toBe(`https://example.com/${reservedName}.png`);
+    expect(alert.textContent).toContain('저장할 수 없습니다');
+    expect(form.getAttribute('aria-describedby')).toBe(alert.id);
+    expect(nameInput.getAttribute('aria-invalid')).toBe('false');
+    expect(urlInput.getAttribute('aria-invalid')).toBe('false');
+  }
+);
 
 test('keeps invalid and duplicate URL drafts without changing the wardrobe', async () => {
   const onChange = jest.fn();
@@ -242,9 +383,18 @@ test('requests an immediate default change and immutably clears active state on 
   await renderPanel({ onChange, onApplyDefault });
 
   const firstCard = container.querySelector('details');
-  const setBattleDefault = Array.from(firstCard.querySelectorAll('button')).find(
+  const defaultButtons = Array.from(
+    firstCard.querySelectorAll('.standing-wardrobe-default-button')
+  );
+  expect(defaultButtons).toHaveLength(2);
+  const casualDefault = defaultButtons.find((button) =>
+    button.textContent.includes('평상복 기본으로 설정')
+  );
+  const setBattleDefault = defaultButtons.find(
     (button) => button.textContent.includes('전투 기본으로 설정')
   );
+  expect(casualDefault.getAttribute('aria-pressed')).toBe('true');
+  expect(setBattleDefault.getAttribute('aria-pressed')).toBe('false');
   await act(async () => {
     setBattleDefault.click();
   });
@@ -254,6 +404,7 @@ test('requests an immediate default change and immutably clears active state on 
   const deleteCasual = Array.from(firstCard.querySelectorAll('button')).find(
     (button) => button.getAttribute('aria-label') === '평상복 삭제'
   );
+  deleteCasual.focus();
   await act(async () => {
     deleteCasual.click();
   });
@@ -264,6 +415,13 @@ test('requests an immediate default change and immutably clears active state on 
   expect(nextWardrobe.characters['Ålice'].variants.map(({ id }) => id)).toEqual([
     'battle',
   ]);
+  expect(document.activeElement).toBe(
+    firstCard.querySelector('input[type="text"]')
+  );
+  const deletionStatus = Array.from(firstCard.querySelectorAll('[role="status"]')).find(
+    (status) => status.textContent.includes('평상복')
+  );
+  expect(deletionStatus.textContent).toContain('삭제');
 });
 
 test('keeps editing enabled while the nonblocking storage warning is visible', async () => {

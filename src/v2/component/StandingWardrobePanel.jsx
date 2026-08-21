@@ -1,4 +1,4 @@
-import React, { useId, useMemo, useState } from 'react';
+import React, { useId, useMemo, useRef, useState } from 'react';
 import {
   getCharacterWardrobe,
   isSupportedStandingUrl,
@@ -6,6 +6,9 @@ import {
   removeVariant,
   upsertVariant,
 } from '../utils/standingWardrobe.js';
+
+const BLANK_IMAGE_URL = 'https://ccfolia.com/blank.gif';
+const RANDOM_ID_ATTEMPTS = 3;
 
 const translate = (t, key, defaultValue, values = {}) => {
   if (typeof t !== 'function') return defaultValue;
@@ -53,10 +56,20 @@ const fallbackVariantId = (variants) => {
 };
 
 const createVariantId = (variants) => {
+  const existingIds = new Set(variants.map(({ id }) => id));
+
   try {
     const runtimeCrypto = typeof window === 'undefined' ? null : window.crypto;
     if (typeof runtimeCrypto?.randomUUID === 'function') {
-      return runtimeCrypto.randomUUID();
+      for (let attempt = 0; attempt < RANDOM_ID_ATTEMPTS; attempt += 1) {
+        const candidate = runtimeCrypto.randomUUID();
+        if (typeof candidate !== 'string') continue;
+
+        const normalizedCandidate = candidate.normalize('NFC').trim();
+        if (normalizedCandidate && !existingIds.has(normalizedCandidate)) {
+          return normalizedCandidate;
+        }
+      }
     }
   } catch (_error) {
     // Use the stable per-character sequence below when crypto is unavailable.
@@ -73,9 +86,11 @@ const CharacterWardrobeCard = ({
   t,
 }) => {
   const formId = useId();
+  const nameInputRef = useRef(null);
   const [variantName, setVariantName] = useState('');
   const [variantUrl, setVariantUrl] = useState('');
   const [validationError, setValidationError] = useState(null);
+  const [actionStatus, setActionStatus] = useState('');
 
   const storedCharacter = getCharacterWardrobe(wardrobe, character.key);
   const variants = storedCharacter?.variants || [];
@@ -87,8 +102,9 @@ const CharacterWardrobeCard = ({
   const errorId = `${formId}-validation`;
 
   const handleAdd = () => {
-    const label = variantName.trim();
+    const label = variantName.normalize('NFC').trim();
     const url = variantUrl.trim();
+    setActionStatus('');
 
     if (label === '') {
       setValidationError({
@@ -124,12 +140,32 @@ const CharacterWardrobeCard = ({
       return;
     }
 
+    const variantId = createVariantId(variants);
     const nextWardrobe = upsertVariant(wardrobe, character.key, {
-      id: createVariantId(variants),
+      id: variantId,
       label,
       url,
     });
-    if (typeof onChange === 'function') onChange(nextWardrobe);
+    const nextCharacter = getCharacterWardrobe(nextWardrobe, character.key);
+    const wasStored = nextCharacter?.variants.some(
+      (variant) =>
+        variant.id === variantId &&
+        variant.label === label &&
+        variant.url === url
+    );
+    if (!wasStored || typeof onChange !== 'function') {
+      setValidationError({
+        field: 'character',
+        message: translate(
+          t,
+          'setting.standing_wardrobe_character_unsupported',
+          '이 캐릭터 이름에는 이미지를 저장할 수 없습니다.'
+        ),
+      });
+      return;
+    }
+
+    onChange(nextWardrobe);
     setVariantName('');
     setVariantUrl('');
     setValidationError(null);
@@ -137,7 +173,23 @@ const CharacterWardrobeCard = ({
 
   const handleDelete = (variantId) => {
     if (typeof onChange !== 'function') return;
+    const deletedVariant = variants.find(({ id }) => id === variantId);
     onChange(removeVariant(wardrobe, character.key, variantId));
+    setActionStatus(
+      translate(
+        t,
+        'setting.standing_wardrobe_delete_status',
+        `${deletedVariant?.label || ''} 이미지를 삭제했습니다.`.trim(),
+        { variant: deletedVariant?.label || '' }
+      )
+    );
+    nameInputRef.current?.focus();
+  };
+
+  const handleThumbnailError = (event) => {
+    if (event.currentTarget.getAttribute('src') !== BLANK_IMAGE_URL) {
+      event.currentTarget.setAttribute('src', BLANK_IMAGE_URL);
+    }
   };
 
   const activeSummary = activeVariant
@@ -213,22 +265,22 @@ const CharacterWardrobeCard = ({
                     src={variant.url}
                     alt=""
                     loading="lazy"
+                    onError={handleThumbnailError}
                   />
                   <div className="standing-wardrobe-actions">
-                    {!isActive && (
-                      <button
-                        type="button"
-                        className="standing-wardrobe-default-button"
-                        aria-label={defaultActionLabel}
-                        onClick={() => {
-                          if (typeof onApplyDefault === 'function') {
-                            onApplyDefault(character.displayName, variant.id);
-                          }
-                        }}
-                      >
-                        {defaultActionLabel}
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="standing-wardrobe-default-button"
+                      aria-label={defaultActionLabel}
+                      aria-pressed={isActive}
+                      onClick={() => {
+                        if (typeof onApplyDefault === 'function') {
+                          onApplyDefault(character.displayName, variant.id);
+                        }
+                      }}
+                    >
+                      {defaultActionLabel}
+                    </button>
                     <button
                       type="button"
                       className="standing-wardrobe-delete-button"
@@ -251,6 +303,9 @@ const CharacterWardrobeCard = ({
         <form
           className="standing-wardrobe-form"
           noValidate
+          aria-describedby={
+            validationError?.field === 'character' ? errorId : undefined
+          }
           onSubmit={(event) => {
             event.preventDefault();
             handleAdd();
@@ -265,12 +320,16 @@ const CharacterWardrobeCard = ({
               )}
             </label>
             <input
+              ref={nameInputRef}
               id={nameInputId}
               type="text"
               value={variantName}
               aria-invalid={validationError?.field === 'name'}
               aria-describedby={
-                validationError?.field === 'name' ? errorId : undefined
+                validationError?.field === 'name' ||
+                validationError?.field === 'character'
+                  ? errorId
+                  : undefined
               }
               onChange={(event) => {
                 setVariantName(event.target.value);
@@ -295,7 +354,10 @@ const CharacterWardrobeCard = ({
               value={variantUrl}
               aria-invalid={validationError?.field === 'url'}
               aria-describedby={
-                validationError?.field === 'url' ? errorId : undefined
+                validationError?.field === 'url' ||
+                validationError?.field === 'character'
+                  ? errorId
+                  : undefined
               }
               onChange={(event) => {
                 setVariantUrl(event.target.value);
@@ -311,9 +373,8 @@ const CharacterWardrobeCard = ({
             </p>
           )}
           <button
-            type="button"
+            type="submit"
             className="standing-wardrobe-add-button"
-            onClick={handleAdd}
           >
             {translate(
               t,
@@ -321,6 +382,11 @@ const CharacterWardrobeCard = ({
               '이미지 추가'
             )}
           </button>
+          {actionStatus && (
+            <p className="standing-wardrobe-action-status" role="status">
+              {actionStatus}
+            </p>
+          )}
         </form>
       </div>
     </details>
