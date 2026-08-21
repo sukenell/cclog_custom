@@ -117,6 +117,59 @@ const expectClassTokens = (element, expectedTokens) => {
   expect(Array.from(element.classList).sort()).toEqual([...expectedTokens].sort());
 };
 
+const collectObjectKeys = (value, keys = []) => {
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectObjectKeys(item, keys));
+    return keys;
+  }
+
+  if (value && typeof value === 'object') {
+    Object.entries(value).forEach(([key, nestedValue]) => {
+      keys.push(key);
+      collectObjectKeys(nestedValue, keys);
+    });
+  }
+
+  return keys;
+};
+
+const normalizeDomNode = (node) => {
+  if (node.nodeType === 3) {
+    const text = node.textContent.replace(/\s+/g, ' ').trim();
+    return text ? { type: 'text', text } : null;
+  }
+  if (node.nodeType !== 1) return null;
+
+  const attributes = Object.fromEntries(
+    Array.from(node.attributes)
+      .map(({ name, value }) => [name, value.replace(/\s+/g, ' ').trim()])
+      .sort(([left], [right]) => left.localeCompare(right))
+  );
+  const children = Array.from(node.childNodes)
+    .map(normalizeDomNode)
+    .filter(Boolean);
+
+  return {
+    type: 'element',
+    tag: node.tagName.toLowerCase(),
+    attributes,
+    children,
+  };
+};
+
+const normalizeHtmlExport = (content) => {
+  const documentNode = new DOMParser().parseFromString(content, 'text/html');
+  return {
+    doctype: documentNode.doctype?.name || null,
+    document: normalizeDomNode(documentNode.documentElement),
+  };
+};
+
+const normalizeEbookExport = (payload) => ({
+  ...payload,
+  lines: payload.lines.map((line) => ({ ...line, id: '<generated-line-id>' })),
+});
+
 const ALICE_WARDROBE = {
   version: 1,
   characters: {
@@ -998,9 +1051,17 @@ describe('AppV2 session standing wardrobe integration', () => {
 
       const stored = JSON.parse(sessionStorage.getItem(WARDROBE_STORAGE_KEY));
       expect(stored).toEqual(ALICE_TWO_VARIANT_WARDROBE);
-      expect(JSON.stringify(stored)).not.toMatch(
-        /첫 번째 대사|두 번째 대사|alice-line|messageOverrides|applyScope|"scope"|"imgUrl"/
-      );
+      const storedKeys = collectObjectKeys(stored);
+      [
+        'messageId',
+        'messageOverrides',
+        'overrides',
+        'applyScope',
+        'scope',
+        'imgUrl',
+      ].forEach((forbiddenKey) => {
+        expect(storedKeys).not.toContain(forbiddenKey);
+      });
     } finally {
       await act(async () => rootApi.unmount());
       container.remove();
@@ -1547,6 +1608,10 @@ describe('AppV2 uploaded-file settings', () => {
 
 describe('AppV2 open standing editor export contract', () => {
   test('exports one final dialogue image without editor drafts or schema metadata', async () => {
+    const dialogueText =
+      'wardrobe variantId applyScope messageOverrides도 대사로 보존';
+    const finalUrl =
+      'https://example.com/wardrobe/variantId/applyScope/messageOverrides/standing-image-editor.png';
     sessionStorage.setItem(
       WARDROBE_STORAGE_KEY,
       JSON.stringify(ALICE_TWO_VARIANT_WARDROBE)
@@ -1560,31 +1625,50 @@ describe('AppV2 open standing editor export contract', () => {
       await act(async () => rootApi.render(<AppV2 />));
       await uploadLogFile(
         container,
-        '<p><span>[main]</span> <span>앨리스</span> : <span>열린 편집기 대사</span></p>'
+        `<p><span>[main]</span> <span>앨리스</span> : <span>${dialogueText}</span></p>`
       );
       await applyMessageUrl(
         container,
-        '열린 편집기 대사',
-        'https://example.com/applied-final.png'
+        dialogueText,
+        finalUrl
       );
 
-      const editor = await openStandingEditor(container, '열린 편집기 대사');
-      await updateTextInput(
-        editor.querySelector('input[type="url"]'),
-        'https://example.com/unapplied-draft.png'
-      );
-      expect(container.querySelector('.standing-image-editor')).not.toBeNull();
-
-      const downloadButtons = Array.from(container.querySelectorAll('button')).filter(
+      let downloadButtons = Array.from(container.querySelectorAll('button')).filter(
         (button) => button.textContent.startsWith('다운로드')
       );
       await act(async () => downloadButtons[0].click());
       await act(async () => downloadButtons[1].click());
       await act(async () => downloadButtons[2].click());
 
-      const html = await readBlobText(downloads[0].blob);
-      const splitHtml = await readBlobText(downloads[1].blob);
-      const jsonText = await readBlobText(downloads[2].blob);
+      const editor = await openStandingEditor(container, dialogueText);
+      await updateTextInput(
+        editor.querySelector('input[type="url"]'),
+        'https://example.com/unapplied-draft.png'
+      );
+      expect(container.querySelector('.standing-image-editor')).not.toBeNull();
+
+      downloadButtons = Array.from(container.querySelectorAll('button')).filter(
+        (button) => button.textContent.startsWith('다운로드')
+      );
+      await act(async () => downloadButtons[0].click());
+      await act(async () => downloadButtons[1].click());
+      await act(async () => downloadButtons[2].click());
+
+      expect(downloads.map(({ download }) => download)).toEqual([
+        'session.html',
+        'session (1).html',
+        'session.json',
+        'session.html',
+        'session (1).html',
+        'session.json',
+      ]);
+
+      const closedHtml = await readBlobText(downloads[0].blob);
+      const closedSplitHtml = await readBlobText(downloads[1].blob);
+      const closedJson = JSON.parse(await readBlobText(downloads[2].blob));
+      const html = await readBlobText(downloads[3].blob);
+      const splitHtml = await readBlobText(downloads[4].blob);
+      const jsonText = await readBlobText(downloads[5].blob);
       const forbiddenSelector = [
         '[data-export-ignore]',
         '[data-wardrobe-id]',
@@ -1597,11 +1681,21 @@ describe('AppV2 open standing editor export contract', () => {
         'input',
         'select',
         'textarea',
+        'label',
+        'fieldset',
+        'legend',
       ].join(', ');
 
+      expect(normalizeHtmlExport(html)).toEqual(
+        normalizeHtmlExport(closedHtml)
+      );
+      expect(normalizeHtmlExport(splitHtml)).toEqual(
+        normalizeHtmlExport(closedSplitHtml)
+      );
+
       [html, splitHtml].forEach((content) => {
-        expect(content.split('열린 편집기 대사')).toHaveLength(2);
-        expect(content).toContain('https://example.com/applied-final.png');
+        expect(content.split(dialogueText)).toHaveLength(2);
+        expect(content).toContain(finalUrl);
         expect(content).not.toContain('https://example.com/unapplied-draft.png');
         expect(content).not.toContain('URL 적용');
 
@@ -1610,16 +1704,17 @@ describe('AppV2 open standing editor export contract', () => {
           'text/html'
         );
         const row = exportedDocument.querySelector('.message-row');
-        expect(row.querySelector('.msg-normal-text > span').textContent).toBe(
-          '열린 편집기 대사'
-        );
+        expect(row.querySelector('.msg-normal-text > span').textContent).toBe(dialogueText);
         expect(row.querySelector('.msg_container > img').getAttribute('src')).toBe(
-          'https://example.com/applied-final.png'
+          finalUrl
         );
         expect(exportedDocument.querySelectorAll(forbiddenSelector)).toHaveLength(0);
       });
 
       const json = JSON.parse(jsonText);
+      expect(normalizeEbookExport(json)).toEqual(
+        normalizeEbookExport(closedJson)
+      );
       expect(Object.keys(json).sort()).toEqual(
         ['schemaVersion', 'ebookView', 'lines'].sort()
       );
@@ -1628,16 +1723,23 @@ describe('AppV2 open standing editor export contract', () => {
       expect(Object.keys(json.lines[0]).sort()).toEqual(
         ['id', 'speaker', 'role', 'timestamp', 'text', 'safetext', 'input'].sort()
       );
-      expect(json.lines[0].text).toBe('열린 편집기 대사');
+      expect(json.lines[0].text).toBe(dialogueText);
       expect(json.lines[0].input).toEqual({
         speakerImages: {
-          standing: { url: 'https://example.com/applied-final.png' },
+          standing: { url: finalUrl },
         },
       });
       expect(jsonText).not.toContain('https://example.com/unapplied-draft.png');
-      expect(jsonText).not.toMatch(
-        /wardrobe|variantId|applyScope|messageOverrides|standing-image-editor/
-      );
+      const jsonKeys = collectObjectKeys(json);
+      [
+        'wardrobe',
+        'variantId',
+        'applyScope',
+        'messageOverrides',
+        'standing-image-editor',
+      ].forEach((forbiddenKey) => {
+        expect(jsonKeys).not.toContain(forbiddenKey);
+      });
     } finally {
       await act(async () => rootApi.unmount());
       container.remove();
