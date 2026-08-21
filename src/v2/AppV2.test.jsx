@@ -447,6 +447,22 @@ describe('AppV2 localization', () => {
 });
 
 describe('AppV2 editor shell accessibility', () => {
+  test('styles the h1 page title separately from h2 numbered sections', () => {
+    const css = readFileSync(
+      path.join(process.cwd(), 'src/v2/AppV2.css'),
+      'utf8'
+    );
+    const pageTitleRule = css.match(/h1\s*\{([^}]*)\}/);
+    const numberedHeadingRule = css.match(/h2,\s*h3,\s*h4\s*\{([^}]*)\}/);
+
+    expect(pageTitleRule).not.toBeNull();
+    expect(pageTitleRule[1]).toMatch(/margin:\s*auto/);
+    expect(numberedHeadingRule).not.toBeNull();
+    expect(numberedHeadingRule[1]).toMatch(/margin-bottom:\s*0/);
+    expect(numberedHeadingRule[1]).not.toMatch(/margin:\s*auto/);
+    expect(css).toMatch(/h2 b,\s*h3 b,\s*h4 b\s*\{/);
+  });
+
   test('uses one main landmark with an h1 page title outside the export preview', async () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -463,14 +479,28 @@ describe('AppV2 editor shell accessibility', () => {
       expect(container.querySelectorAll('main')).toHaveLength(1);
       expect(pageTitle?.textContent).toBe('CCFolia 채팅 로그 커스텀');
       expect(container.querySelector('#preview-scroll-box h1')).toBeNull();
-      expect(container.querySelector('.setting_container h2')).toBeNull();
+      expect(
+        Array.from(container.querySelectorAll('.setting_container h2')).map(
+          (heading) => heading.textContent.trim()
+        )
+      ).toEqual([
+        '01. 룸로그 불러오기',
+        expect.stringMatching(/^02-1\./),
+        '02-2. 기타 스타일링 적용 여부',
+        '03. 텍스트 크기',
+        '04. 캐릭터 스탠딩 이미지 변경',
+        expect.stringMatching(/^05\./),
+        expect.stringMatching(/^06\./),
+        expect.stringMatching(/^07\./),
+      ]);
+      expect(container.querySelector('.setting_container h3')).toBeNull();
     } finally {
       await act(async () => rootApi.unmount());
       container.remove();
     }
   });
 
-  test('programmatically labels the three URL/name settings with unique ids and h3 headings', async () => {
+  test('programmatically labels the three URL/name settings with unique ids and h2 headings', async () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const rootApi = createRoot(container);
@@ -493,7 +523,7 @@ describe('AppV2 editor shell accessibility', () => {
         expect(input).not.toBeNull();
         expect(label).not.toBeNull();
         expect(label.textContent).toContain(number);
-        expect(label.closest('h3')).not.toBeNull();
+        expect(label.closest('h2')).not.toBeNull();
       });
       expect(new Set(expectedFields.map(([id]) => id)).size).toBe(3);
       expect(container.querySelector('.setting_container > h4')).toBeNull();
@@ -573,7 +603,7 @@ describe('AppV2 session standing wardrobe integration', () => {
 
       const wardrobePanel = container.querySelector('.standing-wardrobe-panel');
       expect(wardrobePanel).not.toBeNull();
-      expect(wardrobePanel.querySelector('h3, h4').textContent).toBe(
+      expect(wardrobePanel.querySelector('h2, h3, h4').textContent).toBe(
         '04. 캐릭터 스탠딩 이미지 변경'
       );
       expect(container.querySelector('.setting_container > .standing-wardrobe-panel')).toBe(

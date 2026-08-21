@@ -122,12 +122,12 @@ const SettingsPanel = ({
           02. 출력 탭 선택
       ========================= */}
       <section className="skinTypeCheck">
-        <h3 id="category-settings-heading">
+        <h2 id="category-settings-heading">
           02-1. {translate(t, "setting.tab_select", "출력 탭 선택")}
           <b>
             (*{translate(t, "setting.multiple", "중복 선택 가능")})
           </b>
-        </h3>
+        </h2>
 
         <div role="group" aria-labelledby="category-settings-heading">
           <ul>
@@ -179,7 +179,7 @@ const SettingsPanel = ({
           03. 기타 스타일링
       ========================= */}
       <section className="skinTypeCheck">
-        <h3 id="style-settings-heading">02-2. 기타 스타일링 적용 여부</h3>
+        <h2 id="style-settings-heading">02-2. 기타 스타일링 적용 여부</h2>
         <div role="group" aria-labelledby="style-settings-heading">
           <ul>
             {toggles.map(({ id, state, setState, label }) => (
@@ -198,7 +198,7 @@ const SettingsPanel = ({
       </section>
 
       <div className="skinTypeCheck">
-        <h3>03. 텍스트 크기</h3>
+        <h2>03. 텍스트 크기</h2>
         <div className="font-size-row">
           <span aria-hidden="true" className="font-size-sample-small">A</span>
           <input

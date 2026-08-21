@@ -87,7 +87,8 @@ describe('SettingsPanel accessibility', () => {
         expect.stringContaining('02-1.'),
         expect.stringContaining('02-2.'),
       ]);
-      expect(rendered.container.querySelectorAll('h3')).toHaveLength(3);
+      expect(rendered.container.querySelectorAll('h2')).toHaveLength(3);
+      expect(rendered.container.querySelector('h3')).toBeNull();
       expect(rendered.container.querySelector('h4')).toBeNull();
     } finally {
       await cleanupSettings(rendered);

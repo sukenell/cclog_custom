@@ -107,7 +107,7 @@ afterEach(async () => {
 test('shows unique normalized message characters, defaults, and compact variant labels', async () => {
   await renderPanel();
 
-  expect(container.querySelector('h3').textContent).toBe(
+  expect(container.querySelector('h2').textContent).toBe(
     '04. 캐릭터 스탠딩 이미지 변경'
   );
   expect(container.textContent).toContain(
@@ -309,7 +309,7 @@ test.each([
   ) => {
     await renderPanel({ t: createTranslator(language, translation) });
 
-    expect(container.querySelector('h3').textContent).toBe(`04. ${heading}`);
+    expect(container.querySelector('h2').textContent).toBe(`04. ${heading}`);
     expect(container.querySelector('.standing-wardrobe-storage-note').textContent).toBe(
       storageNote
     );

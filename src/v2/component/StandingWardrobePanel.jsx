@@ -436,14 +436,14 @@ const StandingWardrobePanel = ({
       aria-labelledby={headingId}
       data-export-ignore="true"
     >
-      <h3 id={headingId}>
+      <h2 id={headingId}>
         04.{' '}
         {translate(
           t,
           'setting.standing_wardrobe_title',
           '캐릭터 스탠딩 이미지 변경'
         )}
-      </h3>
+      </h2>
       <p className="standing-wardrobe-storage-note">
         {translate(
           t,

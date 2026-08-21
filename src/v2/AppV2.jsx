@@ -663,29 +663,29 @@ ${buildMinimalExportCSS(globalFontPercent)}
           t={t}
         />
 
-        <h3>
+        <h2>
           <label htmlFor="title-image-urls">05. {t("setting.title_img")}</label>
-        </h3>
+        </h2>
         <input
           id="title-image-urls"
           className="title_input"
           onChange={handleTitleImageChange}
         />
 
-        <h3>
+        <h2>
           <label htmlFor="end-image-urls">06. {t("setting.end_img")}</label>
-        </h3>
+        </h2>
         <input
           id="end-image-urls"
           className="end_input"
           onChange={handleEndImageChange}
         />
 
-        <h3>
+        <h2>
           <label htmlFor="system-character-names">
             07. {t("setting.system_cha")}
           </label>
-        </h3>
+        </h2>
         <input
           id="system-character-names"
           className="system_input"

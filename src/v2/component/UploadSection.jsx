@@ -25,7 +25,7 @@ const UploadSection = ({ setFileContent, setFileName, t }) => {
       </div>
       */}
 
-      <h3>01. {t("setting.room_log_1")}</h3>
+      <h2>01. {t("setting.room_log_1")}</h2>
       <FileUploader
   setFileContent={setFileContent}
   setFileName={setFileName}

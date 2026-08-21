@@ -49,10 +49,10 @@ test('shows the v2 room log heading without the room URL prompt', async () => {
   expect(container.querySelector('h1')?.textContent).toBe(
     'CCFolia 채팅 로그 커스텀'
   );
-  expect(container.querySelector('h2')).toBeNull();
-  expect(container.querySelector('h3')?.textContent).toBe(
+  expect(container.querySelector('h2')?.textContent).toBe(
     '01. 룸로그 불러오기'
   );
+  expect(container.querySelector('h3')).toBeNull();
   expect(container.querySelector('h4')).toBeNull();
 
   await act(async () => {
