@@ -401,8 +401,10 @@ b {
 
 .standing-image-editor-scopes label {
   display: inline-flex;
+  min-width: 0;
   align-items: center;
   gap: 7px;
+  overflow-wrap: anywhere;
 }
 
 .standing-image-editor-scopes input[type="radio"] {

@@ -317,11 +317,11 @@ describe('LogItem standing image editor', () => {
     try {
       const trigger = container.querySelector('button[title="Change Image"]');
       const textBlock = container.querySelector('.msg-normal-text');
-      const controlledId = trigger.getAttribute('aria-controls');
 
       expect(trigger.tagName).toBe('BUTTON');
       expect(trigger.getAttribute('aria-label')).toBe('Change Image');
       expect(trigger.getAttribute('aria-expanded')).toBe('false');
+      expect(trigger.getAttribute('aria-controls')).toBeNull();
       expect(textBlock.querySelector('span').textContent).toBe('원문 대사');
 
       trigger.focus();
@@ -329,8 +329,10 @@ describe('LogItem standing image editor', () => {
         trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       });
 
+      const controlledId = trigger.getAttribute('aria-controls');
       const editor = container.querySelector(`#${controlledId}`);
       expect(trigger.getAttribute('aria-expanded')).toBe('true');
+      expect(controlledId).toBe(editor.id);
       expect(editor).not.toBeNull();
       expect(editor.previousElementSibling).toBe(textBlock);
       expect(textBlock.contains(editor)).toBe(false);
@@ -435,6 +437,31 @@ describe('LogItem standing image editor', () => {
       );
       expect(editInput.getAttribute('aria-label')).toBe('Edit message text');
       expect(saveButton).not.toBeNull();
+    } finally {
+      cleanup();
+    }
+  });
+
+  test('moves focus into text editing when switching from the standing editor', () => {
+    const { container, cleanup } = renderItem();
+
+    try {
+      const standingTrigger = container.querySelector(
+        'button[title="Change Image"]'
+      );
+      flushSync(() => standingTrigger.click());
+      const editButton = container.querySelector(
+        '.msg-normal-text button[aria-label="Edit Message"]'
+      );
+      editButton.focus();
+
+      flushSync(() => editButton.click());
+
+      const textInput = container.querySelector(
+        'input[aria-label="Edit message text"]'
+      );
+      expect(container.querySelector('.standing-image-editor')).toBeNull();
+      expect(document.activeElement).toBe(textInput);
     } finally {
       cleanup();
     }

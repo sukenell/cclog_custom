@@ -1745,6 +1745,59 @@ describe('AppV2 open standing editor export contract', () => {
       container.remove();
     }
   });
+
+  test('keeps the saved standing URL in every export after a preview load error', async () => {
+    const savedUrl = 'https://example.com/unavailable-standing.png';
+    const downloads = captureDownloads();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => rootApi.render(<AppV2 />));
+      await uploadLogFile(
+        container,
+        '<p><span>[main]</span> <span>앨리스</span> : <span>로드 실패 대사</span></p>'
+      );
+      await applyMessageUrl(container, '로드 실패 대사', savedUrl);
+
+      const previewImage = getMessageRowByText(container, '로드 실패 대사')
+        .querySelector('.msg_container > img');
+      await act(async () => {
+        previewImage.dispatchEvent(new Event('error', { bubbles: false }));
+      });
+      expect(previewImage.getAttribute('src')).toBe(
+        'https://ccfolia.com/blank.gif'
+      );
+
+      const downloadButtons = Array.from(container.querySelectorAll('button')).filter(
+        (button) => button.textContent.startsWith('다운로드')
+      );
+      await act(async () => downloadButtons[0].click());
+      await act(async () => downloadButtons[1].click());
+      await act(async () => downloadButtons[2].click());
+
+      const html = await readBlobText(downloads[0].blob);
+      const splitHtml = await readBlobText(downloads[1].blob);
+      const json = JSON.parse(await readBlobText(downloads[2].blob));
+
+      [html, splitHtml].forEach((content) => {
+        const exportedDocument = new DOMParser().parseFromString(
+          content,
+          'text/html'
+        );
+        const exportedImage = exportedDocument.querySelector(
+          '.message-row .msg_container > img'
+        );
+        expect(exportedImage.getAttribute('src')).toBe(savedUrl);
+        expect(exportedImage.hasAttribute('data-export-src')).toBe(false);
+      });
+      expect(json.lines[0].input.speakerImages.standing.url).toBe(savedUrl);
+    } finally {
+      await act(async () => rootApi.unmount());
+      container.remove();
+    }
+  });
 });
 
 describe('AppV2 export CSS', () => {
@@ -1803,6 +1856,9 @@ describe('AppV2 narrow-screen accessibility CSS', () => {
     );
     expect(css).toMatch(
       /\.standing-image-editor-scopes\s*\{[^}]*flex-wrap:\s*wrap/
+    );
+    expect(css).toMatch(
+      /\.standing-image-editor-scopes label\s*\{[^}]*min-width:\s*0[^}]*overflow-wrap:\s*anywhere/
     );
     expect(css).toMatch(
       /\.standing-image-editor-actions\s*\{[^}]*flex-wrap:\s*wrap/

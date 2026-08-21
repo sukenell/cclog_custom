@@ -51,6 +51,10 @@ const splitByMessageBlocks = (container, maxChars) => {
 
 export const clonePreviewForExport = (preview) => {
   const cloned = preview.cloneNode(true);
+  cloned.querySelectorAll('img[data-export-src]').forEach((image) => {
+    image.setAttribute('src', image.getAttribute('data-export-src'));
+    image.removeAttribute('data-export-src');
+  });
   cloned
     .querySelectorAll(
       '[data-export-ignore="true"], button, input, select, textarea'

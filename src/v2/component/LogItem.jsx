@@ -3,6 +3,8 @@ import { Pencil, Check, Image as ImageIcon, Trash2 } from "lucide-react";
 import { COCdice, getDiceTypes } from "./dice";
 import StandingImageEditor from "./StandingImageEditor";
 
+const BLANK_IMAGE_URL = "https://ccfolia.com/blank.gif";
+
 const toCategoryClass = (value) =>
   String(value || "unknown")
     .toLowerCase()
@@ -27,10 +29,12 @@ export default function LogItem({
   const [isImgEditing, setImgEditing] = useState(false);
   const [text, setText] = useState(message.text);
   const [imgUrl, setImgUrl] = useState(message.imgUrl);
+  const [failedImageUrl, setFailedImageUrl] = useState(null);
   const [standingStatus, setStandingStatus] = useState("");
   const generatedEditorId = useId().replace(/:/g, "");
   const standingEditorId = `standing-image-editor-${generatedEditorId}`;
   const standingTriggerRef = useRef(null);
+  const textInputRef = useRef(null);
   const wasImgEditing = useRef(false);
 
   useEffect(() => {
@@ -39,6 +43,7 @@ export default function LogItem({
 
   useEffect(() => {
     setImgUrl(message.imgUrl);
+    setFailedImageUrl(null);
   }, [message.imgUrl]);
 
   useEffect(() => {
@@ -51,6 +56,10 @@ export default function LogItem({
     }
     wasImgEditing.current = isImgEditing;
   }, [isImgEditing]);
+
+  useEffect(() => {
+    if (isEditing) textInputRef.current?.focus();
+  }, [isEditing]);
 
   const toggleEdit = () => {
     if (isImgEditing) setImgEditing(false); // 이미지 수정 중이면 종료
@@ -113,8 +122,14 @@ export default function LogItem({
     </button>
   );
 
-  const handleImgError = (e) => {
-    e.target.src = "https://ccfolia.com/blank.gif";
+  const requestedImgSrc = imgUrl || BLANK_IMAGE_URL;
+  const hasImageError = failedImageUrl === requestedImgSrc;
+  const previewImgSrc = hasImageError ? BLANK_IMAGE_URL : requestedImgSrc;
+
+  const handleImgError = () => {
+    if (requestedImgSrc !== BLANK_IMAGE_URL) {
+      setFailedImageUrl(requestedImgSrc);
+    }
   };
 
   if (message.category === "image") {
@@ -131,7 +146,8 @@ export default function LogItem({
         }}
       >
         <img
-          src={imgUrl || "https://ccfolia.com/blank.gif"}
+          src={previewImgSrc}
+          data-export-src={hasImageError ? requestedImgSrc : undefined}
           alt=""
           style={{ maxWidth: "450px", width: "100%", margin: "0 auto" }}
           onError={handleImgError}
@@ -168,7 +184,7 @@ export default function LogItem({
     ? new Date(message.timestamp).toLocaleDateString('ja-JP')
     : "";
 
-  const imgSrc = imgUrl || "https://ccfolia.com/blank.gif";
+  const imgSrc = previewImgSrc;
   const showGalleryAction = !isDice && renderType !== "other" && renderType !== "info" && renderType !== "desc";
   const hasBackgroundColor = Boolean(tabColorEnabled && message.backgroundColor);
   const rowStyle = hasBackgroundColor
@@ -198,6 +214,7 @@ export default function LogItem({
         >
           {isEditing ? (
             <input
+              ref={textInputRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
               style={{ width: "60%" }}
@@ -221,7 +238,12 @@ export default function LogItem({
           {/* ================= 이미지 ================= */}
           {renderType !== "other" && renderType !== "info" && !isDice && (
             <div className="msg_container">
-              <img src={imgSrc} alt="" onError={handleImgError} />
+              <img
+                src={imgSrc}
+                data-export-src={hasImageError ? requestedImgSrc : undefined}
+                alt=""
+                onError={handleImgError}
+              />
             </div>
           )}
 
@@ -260,6 +282,7 @@ export default function LogItem({
                 {isEditing ? (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
                     <input
+                      ref={textInputRef}
                       value={text}
                       onChange={(e) => setText(e.target.value)}
                       style={{ width: "60%" }}
@@ -290,6 +313,7 @@ export default function LogItem({
                   /* --- 텍스트 수정 UI --- */
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <input
+                      ref={textInputRef}
                       value={text}
                       onChange={(e) => setText(e.target.value)}
                       style={{ width: "95%" }}
@@ -379,7 +403,7 @@ export default function LogItem({
                               title="Change Image"
                               aria-label="Change Image"
                               aria-expanded={isImgEditing}
-                              aria-controls={standingEditorId}
+                              aria-controls={isImgEditing ? standingEditorId : undefined}
                             >
                               <ImageIcon size={18} />
                             </button>
