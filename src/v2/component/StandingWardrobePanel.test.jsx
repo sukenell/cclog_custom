@@ -123,18 +123,28 @@ test('shows unique normalized message characters, defaults, and compact variant 
 });
 
 test('falls back once when a decorative thumbnail cannot load', async () => {
-  await renderPanel();
+  const onChange = jest.fn();
+  const originalWardrobe = JSON.parse(JSON.stringify(WARDROBE));
+  const failedUrl = WARDROBE.characters['Ålice'].variants[0].url;
+  await renderPanel({ onChange });
 
   const thumbnail = container.querySelector('.standing-wardrobe-thumbnail');
+  const visibleUrl = container.querySelector('.standing-wardrobe-url');
   await act(async () => {
     thumbnail.dispatchEvent(new Event('error', { bubbles: false }));
   });
   expect(thumbnail.getAttribute('src')).toBe(BLANK_IMAGE_URL);
+  expect(visibleUrl.getAttribute('href')).toBe(failedUrl);
+  expect(onChange).not.toHaveBeenCalled();
+  expect(WARDROBE).toEqual(originalWardrobe);
 
   await act(async () => {
     thumbnail.dispatchEvent(new Event('error', { bubbles: false }));
   });
   expect(thumbnail.getAttribute('src')).toBe(BLANK_IMAGE_URL);
+  expect(visibleUrl.getAttribute('href')).toBe(failedUrl);
+  expect(onChange).not.toHaveBeenCalled();
+  expect(WARDROBE).toEqual(originalWardrobe);
 });
 
 test('uses native and explicitly labelled controls with status and alert semantics', async () => {
