@@ -268,6 +268,38 @@ test('adds a valid variant immutably through the form submit route used by Enter
   expect(addStatus.textContent).not.toMatch(/\d+\s*개 대사|개 대사/);
 });
 
+test('remounts the live status when the same variant name is added repeatedly', async () => {
+  await renderPanel();
+
+  const firstCard = container.querySelector('details');
+  const nameInput = firstCard.querySelector('input[type="text"]');
+  const urlInput = firstCard.querySelector('input[type="url"]');
+
+  await updateInput(nameInput, '정장');
+  await updateInput(urlInput, 'https://example.com/alice-formal-1.png');
+  await act(async () => {
+    firstCard
+      .querySelector('form')
+      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  });
+
+  const firstStatus = firstCard.querySelector('.standing-wardrobe-action-status');
+  expect(firstStatus.textContent).toBe('정장 이미지를 추가했습니다.');
+
+  await updateInput(nameInput, '정장');
+  await updateInput(urlInput, 'https://example.com/alice-formal-2.png');
+  await act(async () => {
+    firstCard
+      .querySelector('form')
+      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  });
+
+  const secondStatus = firstCard.querySelector('.standing-wardrobe-action-status');
+  expect(secondStatus).not.toBe(firstStatus);
+  expect(secondStatus.getAttribute('aria-atomic')).toBe('true');
+  expect(secondStatus.textContent).toBe('정장 이미지를 추가했습니다.');
+});
+
 test.each([
   [
     'en',

@@ -1803,6 +1803,10 @@ describe('AppV2 uploaded-file settings', () => {
       expect(
         infoRow.querySelector('.message-body > .message-container > .info')
       ).not.toBeNull();
+      expect(
+        infoRow.querySelector('.message-body > .message-container > div > span')
+          .style.color
+      ).toBe('rgb(141, 141, 141)');
 
       const otherRow = rows.find((row) => row.textContent.includes('잡담 대사'));
       expectClassTokens(otherRow, [

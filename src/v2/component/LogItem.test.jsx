@@ -2,6 +2,8 @@ import React from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { createInstance } from 'i18next';
+import { readFileSync } from 'fs';
+import path from 'path';
 import LogItem from './LogItem';
 import translationEN from '../../core/locales/en/translation.json';
 import translationJP from '../../core/locales/jp/translation.json';
@@ -20,7 +22,7 @@ const createTranslator = (language, translation) => {
 };
 
 describe('LogItem class naming', () => {
-  test('keeps the small info badge text at 4.5:1 contrast or better', () => {
+  test('preserves the exported info badge color while the live preview meets AA contrast', () => {
     const message = {
       id: 'info-contrast',
       category: 'info',
@@ -51,8 +53,23 @@ describe('LogItem class naming', () => {
 
     const badge = container.querySelector('.message-container > div:first-child');
     const badgeText = badge.querySelector('span');
-    const parseRgb = (value) =>
-      value.match(/\d+/g).slice(0, 3).map(Number);
+    const css = readFileSync(
+      path.join(process.cwd(), 'src/v2/AppV2.css'),
+      'utf8'
+    );
+    const livePreviewColor = css.match(
+      /\.preview-scroll-box\s+\.message-row\.cat-info\s+\.message-container\s*>\s*div:first-child\s*>\s*span\s*\{[^}]*color:\s*(#[0-9a-f]{3,6})/i
+    )?.[1];
+    const parseRgb = (value) => {
+      if (value.startsWith('#')) {
+        const hex = value.slice(1);
+        const channels = hex.length === 3
+          ? hex.split('').map((channel) => channel.repeat(2))
+          : hex.match(/.{2}/g);
+        return channels.map((channel) => Number.parseInt(channel, 16));
+      }
+      return value.match(/\d+/g).slice(0, 3).map(Number);
+    };
     const luminance = (value) => {
       const channels = parseRgb(value).map((channel) => {
         const normalized = channel / 255;
@@ -66,7 +83,10 @@ describe('LogItem class naming', () => {
         channels[2] * 0.0722
       );
     };
-    const foreground = luminance(badgeText.style.color);
+    expect(badgeText.style.color).toBe('rgb(141, 141, 141)');
+    expect(livePreviewColor).toBeDefined();
+
+    const foreground = luminance(livePreviewColor);
     const background = luminance(badge.style.background);
     const contrast =
       (Math.max(foreground, background) + 0.05) /

@@ -405,7 +405,7 @@ export default function LogItem({
                             flexShrink: 0,
                           }}
                         >
-                          <span style={{ color: "#c7c7c7", fontSize: "14px" }}>
+                          <span style={{ color: "#8d8d8d", fontSize: "14px" }}>
                             정보
                           </span>
                         </div>

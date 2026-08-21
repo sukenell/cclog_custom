@@ -100,7 +100,7 @@ const CharacterWardrobeCard = ({
   const [variantName, setVariantName] = useState('');
   const [variantUrl, setVariantUrl] = useState('');
   const [validationError, setValidationError] = useState(null);
-  const [actionStatus, setActionStatus] = useState('');
+  const [actionStatus, setActionStatus] = useState(null);
 
   const storedCharacter = getCharacterWardrobe(wardrobe, character.key);
   const variants = storedCharacter?.variants || [];
@@ -114,9 +114,9 @@ const CharacterWardrobeCard = ({
   const handleAdd = () => {
     const label = variantName.normalize('NFC').trim();
     const url = variantUrl.trim();
-    setActionStatus('');
 
     if (label === '') {
+      setActionStatus(null);
       setValidationError({
         field: 'name',
         message: translate(
@@ -128,6 +128,7 @@ const CharacterWardrobeCard = ({
       return;
     }
     if (!isSupportedStandingUrl(url)) {
+      setActionStatus(null);
       setValidationError({
         field: 'url',
         message: translate(
@@ -139,6 +140,7 @@ const CharacterWardrobeCard = ({
       return;
     }
     if (variants.some((variant) => variant.url.trim() === url)) {
+      setActionStatus(null);
       setValidationError({
         field: 'url',
         message: translate(
@@ -164,6 +166,7 @@ const CharacterWardrobeCard = ({
         variant.url === url
     );
     if (!wasStored || typeof onChange !== 'function') {
+      setActionStatus(null);
       setValidationError({
         field: 'character',
         message: translate(
@@ -179,28 +182,30 @@ const CharacterWardrobeCard = ({
     setVariantName('');
     setVariantUrl('');
     setValidationError(null);
-    setActionStatus(
-      translate(
+    setActionStatus((previousStatus) => ({
+      message: translate(
         t,
         'setting.standing_wardrobe_add_status',
         `${label} 이미지를 추가했습니다.`,
         { variant: label }
-      )
-    );
+      ),
+      sequence: (previousStatus?.sequence || 0) + 1,
+    }));
   };
 
   const handleDelete = (variantId) => {
     if (typeof onChange !== 'function') return;
     const deletedVariant = variants.find(({ id }) => id === variantId);
     onChange(removeVariant(wardrobe, character.key, variantId));
-    setActionStatus(
-      translate(
+    setActionStatus((previousStatus) => ({
+      message: translate(
         t,
         'setting.standing_wardrobe_delete_status',
         `${deletedVariant?.label || ''} 이미지를 삭제했습니다.`.trim(),
         { variant: deletedVariant?.label || '' }
-      )
-    );
+      ),
+      sequence: (previousStatus?.sequence || 0) + 1,
+    }));
     nameInputRef.current?.focus();
   };
 
@@ -409,8 +414,13 @@ const CharacterWardrobeCard = ({
             )}
           </button>
           {actionStatus && (
-            <p className="standing-wardrobe-action-status" role="status">
-              {actionStatus}
+            <p
+              key={actionStatus.sequence}
+              className="standing-wardrobe-action-status"
+              role="status"
+              aria-atomic="true"
+            >
+              {actionStatus.message}
             </p>
           )}
         </form>
