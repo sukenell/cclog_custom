@@ -1,8 +1,25 @@
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
+
+const translate = (t, key, fallback) => {
+  if (typeof t !== "function") return fallback;
+
+  try {
+    const translated = t(key, { defaultValue: fallback });
+    return typeof translated === "string" &&
+      translated.trim() !== "" &&
+      translated !== key
+      ? translated
+      : fallback;
+  } catch (_error) {
+    return fallback;
+  }
+};
 
 function FileUploader({ t, setFileContent, setFileName }) {
   const [pendingFileContent, setPendingFileContent] = useState(null);
   const [pendingFileName, setPendingFileName] = useState("");
+  const generatedId = useId().replace(/:/g, "");
+  const fileInputId = `log-file-upload-${generatedId}`;
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -34,9 +51,16 @@ function FileUploader({ t, setFileContent, setFileName }) {
   
   return (
     <div>
-      <div className="file_upload" style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-        
-        <input type="file" accept=".html" onChange={handleFileUpload} />
+      <div className="file_upload">
+        <label className="file-upload-label" htmlFor={fileInputId}>
+          {translate(t, "setting.file", "파일 선택")}
+        </label>
+        <input
+          id={fileInputId}
+          type="file"
+          accept=".html"
+          onChange={handleFileUpload}
+        />
         <button type="button" onClick={handleConfirm}>
           {t("setting.ok")}
         </button>

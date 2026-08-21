@@ -26,9 +26,51 @@ afterEach(() => {
 
 const t = (key) => ({
   'setting.room_input': '룸 정보 입력',
+  'setting.file': '파일 선택',
   'setting.ok': '확인',
   'setting.loading': '로딩 중...',
 }[key] || key);
+
+test('gives every file picker a unique id and a translated or safe fallback label', async () => {
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const rootApi = createRoot(container);
+
+  await act(async () => {
+    rootApi.render(
+      <>
+        <FileUploader
+          t={t}
+          setFileContent={jest.fn()}
+          setFileName={jest.fn()}
+        />
+        <FileUploader
+          t={(key) => key}
+          setFileContent={jest.fn()}
+          setFileName={jest.fn()}
+        />
+      </>
+    );
+  });
+
+  const inputs = Array.from(container.querySelectorAll('input[type="file"]'));
+  const ids = inputs.map((input) => input.id);
+  const labels = inputs.map((input) =>
+    container.querySelector(`label[for="${input.id}"]`)
+  );
+
+  expect(ids.every(Boolean)).toBe(true);
+  expect(new Set(ids).size).toBe(inputs.length);
+  expect(labels.map((label) => label?.textContent)).toEqual([
+    '파일 선택',
+    '파일 선택',
+  ]);
+
+  await act(async () => {
+    rootApi.unmount();
+  });
+  container.remove();
+});
 
 test('renders the confirm button immediately next to the file picker without room text', async () => {
   const container = document.createElement('div');

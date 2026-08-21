@@ -447,6 +447,29 @@ describe('AppV2 localization', () => {
 });
 
 describe('AppV2 editor shell accessibility', () => {
+  test('uses one main landmark with an h1 page title outside the export preview', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => {
+        rootApi.render(<AppV2 />);
+      });
+
+      const main = container.querySelector('main.fix-layout');
+      const pageTitle = main?.querySelector('h1');
+
+      expect(container.querySelectorAll('main')).toHaveLength(1);
+      expect(pageTitle?.textContent).toBe('CCFolia 채팅 로그 커스텀');
+      expect(container.querySelector('#preview-scroll-box h1')).toBeNull();
+      expect(container.querySelector('.setting_container h2')).toBeNull();
+    } finally {
+      await act(async () => rootApi.unmount());
+      container.remove();
+    }
+  });
+
   test('programmatically labels the three URL/name settings with unique ids and h3 headings', async () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -2134,6 +2157,61 @@ describe('AppV2 export CSS', () => {
 });
 
 describe('AppV2 narrow-screen accessibility CSS', () => {
+  test('keeps audited form and preview targets at least 24px tall and wide', () => {
+    const css = readFileSync(
+      path.join(process.cwd(), 'src/v2/AppV2.css'),
+      'utf8'
+    );
+    const rule = (selector) => {
+      const match = css.match(new RegExp(`${selector}\\s*\\{([^}]*)\\}`));
+      expect(match).not.toBeNull();
+      return match[1];
+    };
+
+    expect(rule('\\.file_upload input\\[type="file"\\]')).toMatch(
+      /min-height:\s*28px/
+    );
+    expect(rule('\\.file_upload button')).toMatch(/min-width:\s*24px/);
+    expect(rule('\\.file_upload button')).toMatch(/min-height:\s*28px/);
+    expect(rule('\\.font-size-slider')).toMatch(/height:\s*24px/);
+    expect(rule('\\.font-size-slider::-webkit-slider-thumb')).toMatch(
+      /width:\s*24px[\s\S]*height:\s*24px/
+    );
+    expect(rule('\\.font-size-slider::-moz-range-thumb')).toMatch(
+      /width:\s*24px[\s\S]*height:\s*24px/
+    );
+    expect(rule('\\.preview-scroll-box button')).toMatch(
+      /min-width:\s*24px[\s\S]*min-height:\s*24px/
+    );
+    expect(rule('\\.standing-image-editor-scopes label')).toMatch(
+      /min-height:\s*24px/
+    );
+  });
+
+  test('lets the labeled file picker shrink inside a 320px settings column', () => {
+    const css = readFileSync(
+      path.join(process.cwd(), 'src/v2/AppV2.css'),
+      'utf8'
+    );
+    const uploadRule = css.match(/\.file_upload\s*\{([^}]*)\}/);
+    const inputRule = css.match(
+      /\.file_upload input\[type=["']file["']\]\s*\{([^}]*)\}/
+    );
+
+    expect(uploadRule).not.toBeNull();
+    expect(uploadRule[1]).toMatch(/max-width:\s*100%/);
+    expect(uploadRule[1]).toMatch(/min-width:\s*0/);
+    expect(uploadRule[1]).toMatch(/margin:\s*20px 0/);
+    expect(uploadRule[1]).toMatch(/flex-wrap:\s*wrap/);
+
+    expect(inputRule).not.toBeNull();
+    expect(inputRule[1]).toMatch(/width:\s*100%/);
+    expect(inputRule[1]).toMatch(/max-width:\s*100%/);
+    expect(inputRule[1]).toMatch(/min-width:\s*0/);
+    expect(inputRule[1]).toMatch(/margin:\s*0/);
+    expect(inputRule[1]).toMatch(/box-sizing:\s*border-box/);
+  });
+
   test('stacks the fixed layout and constrains wardrobe content without horizontal overflow', () => {
     const css = readFileSync(
       path.join(process.cwd(), 'src/v2/AppV2.css'),

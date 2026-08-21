@@ -20,6 +20,64 @@ const createTranslator = (language, translation) => {
 };
 
 describe('LogItem class naming', () => {
+  test('keeps the small info badge text at 4.5:1 contrast or better', () => {
+    const message = {
+      id: 'info-contrast',
+      category: 'info',
+      text: '정보 대사',
+      charName: 'system',
+      imgUrl: '',
+      color: '#fff',
+      backgroundColor: null,
+      timestamp: null,
+    };
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    flushSync(() => {
+      rootApi.render(
+        <LogItem
+          message={message}
+          t={(s) => s}
+          updateMessage={() => {}}
+          onDeleteMessage={() => {}}
+          diceEnabled={false}
+          inputTexts={[]}
+          tabColorEnabled={false}
+        />
+      );
+    });
+
+    const badge = container.querySelector('.message-container > div:first-child');
+    const badgeText = badge.querySelector('span');
+    const parseRgb = (value) =>
+      value.match(/\d+/g).slice(0, 3).map(Number);
+    const luminance = (value) => {
+      const channels = parseRgb(value).map((channel) => {
+        const normalized = channel / 255;
+        return normalized <= 0.04045
+          ? normalized / 12.92
+          : ((normalized + 0.055) / 1.055) ** 2.4;
+      });
+      return (
+        channels[0] * 0.2126 +
+        channels[1] * 0.7152 +
+        channels[2] * 0.0722
+      );
+    };
+    const foreground = luminance(badgeText.style.color);
+    const background = luminance(badge.style.background);
+    const contrast =
+      (Math.max(foreground, background) + 0.05) /
+      (Math.min(foreground, background) + 0.05);
+
+    expect(contrast).toBeGreaterThanOrEqual(4.5);
+
+    rootApi.unmount();
+    container.remove();
+  });
+
   test('prefixes category classes to avoid collision with styling utility classes', () => {
     const message = {
       id: '1',

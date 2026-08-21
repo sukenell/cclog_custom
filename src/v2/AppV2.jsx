@@ -631,7 +631,7 @@ ${buildMinimalExportCSS(globalFontPercent)}
      RENDER
   ========================= */
   return (
-    <div className="fix-layout">
+    <main className="fix-layout">
       <div className="setting_container">
         <UploadSection
           setFileContent={handleFileContentChange}
@@ -718,7 +718,7 @@ ${buildMinimalExportCSS(globalFontPercent)}
           STANDING_SCOPE.ALL,
         ]}
       />
-    </div>
+    </main>
   );
 }
 

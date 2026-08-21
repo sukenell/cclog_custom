@@ -8,7 +8,7 @@ const UploadSection = ({ setFileContent, setFileName, t }) => {
 
   return (
     <div>
-      <h2>CCFolia {t("setting.title")}</h2>
+      <h1>CCFolia {t("setting.title")}</h1>
       <p>
         *{t("setting.warning_txt")}{" "}
         <a href="https://www.postype.com/@reha-dev/post/18656933">({t("setting.Howtouse")})</a>

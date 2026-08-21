@@ -46,9 +46,10 @@ test('shows the v2 room log heading without the room URL prompt', async () => {
   expect(container.textContent).not.toContain('(*룸 주소를 입력하세요)');
   expect(container.textContent).not.toContain('언어 선택');
   expect(container.querySelector('#language-select')).toBeNull();
-  expect(container.querySelector('h2')?.textContent).toBe(
+  expect(container.querySelector('h1')?.textContent).toBe(
     'CCFolia 채팅 로그 커스텀'
   );
+  expect(container.querySelector('h2')).toBeNull();
   expect(container.querySelector('h3')?.textContent).toBe(
     '01. 룸로그 불러오기'
   );

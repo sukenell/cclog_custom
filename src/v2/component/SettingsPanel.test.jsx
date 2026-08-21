@@ -129,6 +129,8 @@ describe('SettingsPanel accessibility', () => {
       expect(colorInput).not.toBeNull();
       expect(colorInput.getAttribute('aria-label')).toContain('custom');
       expect(colorInput.getAttribute('aria-label')).not.toContain('setting.');
+      expect(colorInput.style.width).toBe('60px');
+      expect(colorInput.style.height).toBe('24px');
     } finally {
       await cleanupSettings(rendered);
     }

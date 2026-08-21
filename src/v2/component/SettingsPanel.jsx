@@ -162,7 +162,7 @@ const SettingsPanel = ({
                       style={{
                         display: "block",
                         width: "60px",
-                        height: "20px",
+                        height: "24px",
                         border: "none",
                         cursor: "pointer",
                       }}

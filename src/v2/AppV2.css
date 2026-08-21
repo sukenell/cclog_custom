@@ -109,7 +109,36 @@ b {
 }
 
 .file_upload {
-  margin: 20px;
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 20px 0;
+  box-sizing: border-box;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.file-upload-label {
+  flex: 1 0 100%;
+}
+
+.file_upload input[type="file"] {
+  flex: 1 1 180px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.file_upload button {
+  min-width: 24px;
+  min-height: 28px;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .setting_container {
@@ -405,6 +434,8 @@ b {
 .standing-image-editor-scopes label {
   display: inline-flex;
   min-width: 0;
+  min-height: 24px;
+  box-sizing: border-box;
   align-items: center;
   gap: 7px;
   overflow-wrap: anywhere;
@@ -629,9 +660,9 @@ b {
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
-  height: 8px;
+  height: 24px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.4);
+  background: transparent;
   outline: none;
 }
 
@@ -663,30 +694,30 @@ b {
 .font-size-slider::-webkit-slider-runnable-track {
   height: 8px;
   border-radius: 999px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .font-size-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: #f2f5ff;
   border: 1px solid rgba(0, 0, 0, 0.25);
-  margin-top: -5px;
+  margin-top: -8px;
   cursor: pointer;
 }
 
 .font-size-slider::-moz-range-track {
   height: 8px;
   border-radius: 999px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .font-size-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: #f2f5ff;
   border: 1px solid rgba(0, 0, 0, 0.25);
@@ -843,6 +874,15 @@ input {
   padding: 20px;
   overflow-y: auto;
   box-sizing: border-box;
+}
+
+.preview-scroll-box button {
+  display: inline-flex;
+  min-width: 24px;
+  min-height: 24px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
 }
 
 .preview-scroll-box .gap,
