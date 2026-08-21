@@ -1021,7 +1021,8 @@ input {
   }
 
   .preview-wrapper button {
-    min-width: 0;
+    min-width: 28px;
+    min-height: 28px;
     max-width: 100%;
     white-space: normal;
     overflow-wrap: anywhere;

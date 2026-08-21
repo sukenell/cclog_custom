@@ -2157,6 +2157,22 @@ describe('AppV2 export CSS', () => {
 });
 
 describe('AppV2 narrow-screen accessibility CSS', () => {
+  test('preserves 28px preview button targets after mobile cascade overrides', () => {
+    const css = readFileSync(
+      path.join(process.cwd(), 'src/v2/AppV2.css'),
+      'utf8'
+    );
+    const narrowCss = css.slice(css.indexOf('@media (max-width: 800px)'));
+    const mobileButtonRule = narrowCss.match(
+      /\.preview-wrapper button\s*\{([^}]*)\}/
+    );
+
+    expect(mobileButtonRule).not.toBeNull();
+    expect(mobileButtonRule[1]).toMatch(/min-width:\s*28px/);
+    expect(mobileButtonRule[1]).toMatch(/min-height:\s*28px/);
+    expect(mobileButtonRule[1]).toMatch(/max-width:\s*100%/);
+  });
+
   test('keeps audited form and preview targets at least 24px tall and wide', () => {
     const css = readFileSync(
       path.join(process.cwd(), 'src/v2/AppV2.css'),
