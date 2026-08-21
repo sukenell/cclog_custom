@@ -12,6 +12,21 @@ const toCategoryClass = (value) =>
 
 const normalizeSpeakerName = (value) => String(value || "").trim();
 
+const translate = (t, key, fallback, values = {}) => {
+  if (typeof t !== "function") return fallback;
+
+  try {
+    const translated = t(key, { ...values, defaultValue: fallback });
+    return typeof translated === "string" &&
+      translated.trim() !== "" &&
+      translated !== key
+      ? translated
+      : fallback;
+  } catch (_error) {
+    return fallback;
+  }
+};
+
 export default function LogItem({
   message,
   t,
@@ -36,6 +51,31 @@ export default function LogItem({
   const standingTriggerRef = useRef(null);
   const textInputRef = useRef(null);
   const wasImgEditing = useRef(false);
+  const changeImageLabel = translate(
+    t,
+    "standing_editor.change_image",
+    "Change Image"
+  );
+  const editMessageLabel = translate(
+    t,
+    "preview.edit_message",
+    "Edit Message"
+  );
+  const editMessageTextLabel = translate(
+    t,
+    "preview.edit_message_text",
+    "Edit message text"
+  );
+  const saveMessageLabel = translate(
+    t,
+    "preview.save_message",
+    "Save Message"
+  );
+  const deleteMessageLabel = translate(
+    t,
+    "preview.delete_message",
+    "Delete Message"
+  );
 
   useEffect(() => {
     setText(message.text);
@@ -85,7 +125,13 @@ export default function LogItem({
     if (typeof onApplyStandingVariant === "function") {
       onApplyStandingVariant(message.id, variantId, url, scope);
     }
-    setStandingStatus("이미지를 적용했습니다.");
+    setStandingStatus(
+      translate(
+        t,
+        "standing_editor.applied_status",
+        "이미지를 적용했습니다."
+      )
+    );
     setImgEditing(false);
   };
 
@@ -93,7 +139,13 @@ export default function LogItem({
     if (typeof onApplyStandingUrl === "function") {
       onApplyStandingUrl(message.id, url, scope);
     }
-    setStandingStatus("이미지를 적용했습니다.");
+    setStandingStatus(
+      translate(
+        t,
+        "standing_editor.applied_status",
+        "이미지를 적용했습니다."
+      )
+    );
     setImgEditing(false);
   };
 
@@ -101,7 +153,13 @@ export default function LogItem({
     if (typeof onApplyStandingUrl === "function") {
       onApplyStandingUrl(message.id, "", scope);
     }
-    setStandingStatus("이미지를 비웠습니다.");
+    setStandingStatus(
+      translate(
+        t,
+        "standing_editor.cleared_status",
+        "이미지를 비웠습니다."
+      )
+    );
     setImgEditing(false);
   };
 
@@ -115,8 +173,8 @@ export default function LogItem({
     <button
       type="button"
       onClick={handleDelete}
-      title="Delete Message"
-      aria-label="Delete Message"
+      title={deleteMessageLabel}
+      aria-label={deleteMessageLabel}
     >
       <Trash2 size={18} />
     </button>
@@ -218,7 +276,7 @@ export default function LogItem({
               value={text}
               onChange={(e) => setText(e.target.value)}
               style={{ width: "60%" }}
-              aria-label="Edit message text"
+              aria-label={editMessageTextLabel}
             />
           ) : (
             <span>{text}</span>
@@ -227,7 +285,8 @@ export default function LogItem({
           <button
             type="button"
             onClick={toggleEdit}
-            aria-label={isEditing ? "Save Message" : "Edit Message"}
+            title={isEditing ? saveMessageLabel : editMessageLabel}
+            aria-label={isEditing ? saveMessageLabel : editMessageLabel}
           >
             {isEditing ? <Check size={18} /> : <Pencil size={18} />}
           </button>
@@ -286,12 +345,13 @@ export default function LogItem({
                       value={text}
                       onChange={(e) => setText(e.target.value)}
                       style={{ width: "60%" }}
-                      aria-label="Edit message text"
+                      aria-label={editMessageTextLabel}
                     />
                     <button
                       type="button"
                       onClick={toggleEdit}
-                      aria-label="Save Message"
+                      title={saveMessageLabel}
+                      aria-label={saveMessageLabel}
                     >
                       <Check size={18} />
                     </button>
@@ -299,7 +359,7 @@ export default function LogItem({
                 ) : (
                   <>
                     <span style={diceStyle || undefined}> {text}</span>
-                    <button type="button" onClick={toggleEdit} title="Edit Message" aria-label="Edit Message">
+                    <button type="button" onClick={toggleEdit} title={editMessageLabel} aria-label={editMessageLabel}>
                       <Pencil size={18} />
                     </button>
                     {renderDeleteButton()}
@@ -317,12 +377,13 @@ export default function LogItem({
                       value={text}
                       onChange={(e) => setText(e.target.value)}
                       style={{ width: "95%" }}
-                      aria-label="Edit message text"
+                      aria-label={editMessageTextLabel}
                     />
                     <button
                       type="button"
                       onClick={toggleEdit}
-                      aria-label="Save Message"
+                      title={saveMessageLabel}
+                      aria-label={saveMessageLabel}
                     >
                       <Check size={18} />
                     </button>
@@ -358,7 +419,8 @@ export default function LogItem({
                           <button
                             type="button"
                             onClick={toggleEdit}
-                            aria-label="Edit Message"
+                            title={editMessageLabel}
+                            aria-label={editMessageLabel}
                           >
                             <Pencil size={18} />
                           </button>
@@ -379,7 +441,8 @@ export default function LogItem({
                         <button
                           type="button"
                           onClick={toggleEdit}
-                          aria-label="Edit Message"
+                          title={editMessageLabel}
+                          aria-label={editMessageLabel}
                         >
                           <Pencil size={18} />
                         </button>
@@ -400,8 +463,8 @@ export default function LogItem({
                               ref={standingTriggerRef}
                               type="button"
                               onClick={toggleImgEdit}
-                              title="Change Image"
-                              aria-label="Change Image"
+                              title={changeImageLabel}
+                              aria-label={changeImageLabel}
                               aria-expanded={isImgEditing}
                               aria-controls={isImgEditing ? standingEditorId : undefined}
                             >
@@ -411,7 +474,8 @@ export default function LogItem({
                           <button
                             type="button"
                             onClick={toggleEdit}
-                            aria-label="Edit Message"
+                            title={editMessageLabel}
+                            aria-label={editMessageLabel}
                           >
                             <Pencil size={18} />
                           </button>

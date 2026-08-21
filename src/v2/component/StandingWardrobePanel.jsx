@@ -12,7 +12,17 @@ const RANDOM_ID_ATTEMPTS = 3;
 
 const translate = (t, key, defaultValue, values = {}) => {
   if (typeof t !== 'function') return defaultValue;
-  return t(key, { ...values, defaultValue });
+
+  try {
+    const translated = t(key, { ...values, defaultValue });
+    return typeof translated === 'string' &&
+      translated.trim() !== '' &&
+      translated !== key
+      ? translated
+      : defaultValue;
+  } catch (_error) {
+    return defaultValue;
+  }
 };
 
 const collectCharacters = (messages) => {
@@ -169,6 +179,14 @@ const CharacterWardrobeCard = ({
     setVariantName('');
     setVariantUrl('');
     setValidationError(null);
+    setActionStatus(
+      translate(
+        t,
+        'setting.standing_wardrobe_add_status',
+        `${label} 이미지를 추가했습니다.`,
+        { variant: label }
+      )
+    );
   };
 
   const handleDelete = (variantId) => {
@@ -235,6 +253,12 @@ const CharacterWardrobeCard = ({
                 `${variant.label} 삭제`,
                 { variant: variant.label }
               );
+              const urlNewWindowLabel = translate(
+                t,
+                'setting.standing_wardrobe_url_new_window',
+                `${variant.url}, 새 창에서 열기`,
+                { url: variant.url }
+              );
 
               return (
                 <li className="standing-wardrobe-variant" key={variant.id}>
@@ -257,6 +281,8 @@ const CharacterWardrobeCard = ({
                     href={variant.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={urlNewWindowLabel}
+                    title={urlNewWindowLabel}
                   >
                     {variant.url}
                   </a>
@@ -410,14 +436,14 @@ const StandingWardrobePanel = ({
       aria-labelledby={headingId}
       data-export-ignore="true"
     >
-      <h4 id={headingId}>
+      <h3 id={headingId}>
         04.{' '}
         {translate(
           t,
           'setting.standing_wardrobe_title',
           '캐릭터 스탠딩 이미지 변경'
         )}
-      </h4>
+      </h3>
       <p className="standing-wardrobe-storage-note">
         {translate(
           t,

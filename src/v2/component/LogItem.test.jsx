@@ -1,7 +1,23 @@
 import React from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
+import { createInstance } from 'i18next';
 import LogItem from './LogItem';
+import translationEN from '../../core/locales/en/translation.json';
+import translationJP from '../../core/locales/jp/translation.json';
+import translationZH from '../../core/locales/zh/translation.json';
+
+const createTranslator = (language, translation) => {
+  const i18n = createInstance();
+  i18n.init({
+    resources: { [language]: { translation } },
+    lng: language,
+    fallbackLng: false,
+    initImmediate: false,
+    interpolation: { escapeValue: false },
+  });
+  return i18n.t.bind(i18n);
+};
 
 describe('LogItem class naming', () => {
   test('prefixes category classes to avoid collision with styling utility classes', () => {
@@ -441,6 +457,119 @@ describe('LogItem standing image editor', () => {
       cleanup();
     }
   });
+
+  test.each([
+    [
+      'en',
+      translationEN,
+      {
+        change: 'Change standing image',
+        edit: 'Edit message',
+        editText: 'Edit message text',
+        save: 'Save message',
+        delete: 'Delete message',
+        applied: 'Image applied.',
+        cleared: 'Image cleared.',
+      },
+    ],
+    [
+      'jp',
+      translationJP,
+      {
+        change: '立ち絵を変更',
+        edit: '台詞を編集',
+        editText: '台詞の内容を編集',
+        save: '台詞を保存',
+        delete: '台詞を削除',
+        applied: '画像を適用しました。',
+        cleared: '画像をクリアしました。',
+      },
+    ],
+    [
+      'zh',
+      translationZH,
+      {
+        change: '更改立绘',
+        edit: '编辑台词',
+        editText: '编辑台词内容',
+        save: '保存台词',
+        delete: '删除台词',
+        applied: '已应用图片。',
+        cleared: '已清除图片。',
+      },
+    ],
+  ])(
+    'localizes standing feedback and message action names in %s',
+    (language, translation, expected) => {
+      const { container, cleanup } = renderItem({
+        t: createTranslator(language, translation),
+      });
+
+      try {
+        const findButton = (accessibleName) =>
+          Array.from(container.querySelectorAll('button')).find(
+            (button) => button.getAttribute('aria-label') === accessibleName
+          );
+
+        let trigger = findButton(expected.change);
+        const editButton = findButton(expected.edit);
+        const deleteButton = findButton(expected.delete);
+        expect(trigger).not.toBeNull();
+        expect(trigger.getAttribute('title')).toBe(expected.change);
+        expect(editButton).not.toBeNull();
+        expect(deleteButton).not.toBeNull();
+
+        flushSync(() => editButton.click());
+        const editInput = container.querySelector('.message-body input');
+        expect(editInput.getAttribute('aria-label')).toBe(expected.editText);
+        const saveButton = findButton(expected.save);
+        expect(saveButton).not.toBeNull();
+        flushSync(() => saveButton.click());
+
+        trigger = findButton(expected.change);
+        flushSync(() => trigger.click());
+        const applyVariant = container.querySelector(
+          '.standing-image-editor-field button'
+        );
+        flushSync(() => applyVariant.click());
+        expect(container.querySelector('[role="status"]').textContent).toBe(
+          expected.applied
+        );
+
+        trigger = findButton(expected.change);
+        flushSync(() => trigger.click());
+        const clearButton = Array.from(
+          container.querySelectorAll('.standing-image-editor button')
+        ).find(
+          (button) =>
+            button.textContent === translation.standing_editor.clear
+        );
+        flushSync(() => clearButton.click());
+        expect(container.querySelector('[role="status"]').textContent).toBe(
+          expected.cleared
+        );
+
+        const localizedUi = [
+          expected.change,
+          expected.edit,
+          expected.editText,
+          expected.save,
+          expected.delete,
+          expected.applied,
+          expected.cleared,
+        ].join(' ');
+        if (language === 'en') {
+          expect(localizedUi).not.toMatch(/이미지를 적용|이미지를 비웠/);
+        } else {
+          expect(localizedUi).not.toMatch(
+            /Change Image|Edit Message|Delete Message|Save Message|Edit message text|이미지를 적용|이미지를 비웠/
+          );
+        }
+      } finally {
+        cleanup();
+      }
+    }
+  );
 
   test('moves focus into text editing when switching from the standing editor', () => {
     const { container, cleanup } = renderItem();

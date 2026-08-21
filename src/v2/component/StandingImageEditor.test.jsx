@@ -1,6 +1,11 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
+import { createInstance } from 'i18next';
 import StandingImageEditor from './StandingImageEditor';
+import translationEN from '../../core/locales/en/translation.json';
+import translationJP from '../../core/locales/jp/translation.json';
+import translationKO from '../../core/locales/ko/translation.json';
+import translationZH from '../../core/locales/zh/translation.json';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -16,6 +21,18 @@ const variants = [
     url: 'https://example.com/alice-battle.png',
   },
 ];
+
+const createTranslator = (language, translation) => {
+  const i18n = createInstance();
+  i18n.init({
+    resources: { [language]: { translation } },
+    lng: language,
+    fallbackLng: false,
+    initImmediate: false,
+    interpolation: { escapeValue: false },
+  });
+  return i18n.t.bind(i18n);
+};
 
 const setNativeValue = (element, value) => {
   const prototype =
@@ -130,6 +147,25 @@ describe('StandingImageEditor', () => {
     }
   });
 
+  test.each([
+    ['ko', translationKO, '@평상복 [기본]'],
+    ['en', translationEN, '@평상복 [Default]'],
+    ['jp', translationJP, '@평상복 [デフォルト]'],
+    ['zh', translationZH, '@평상복 [默认]'],
+  ])('localizes the active variant marker in %s', (language, translation, expected) => {
+    const { container, cleanup } = renderEditor({
+      t: createTranslator(language, translation),
+    });
+
+    try {
+      expect(container.querySelector('select').options[0].textContent).toBe(
+        expected
+      );
+    } finally {
+      cleanup();
+    }
+  });
+
   test('uses the same all scope for direct URL and clear actions', () => {
     const { container, props, cleanup } = renderEditor();
 
@@ -194,6 +230,61 @@ describe('StandingImageEditor', () => {
       expect(urlInput.getAttribute('aria-describedby')).toBe(alert.id);
       expect(alert.textContent).toContain('http');
       expect(props.onApplyUrl).not.toHaveBeenCalled();
+    } finally {
+      cleanup();
+    }
+  });
+
+  test('applies a valid direct URL with Enter while keeping focus in the URL field', () => {
+    const { container, props, cleanup } = renderEditor();
+
+    try {
+      const urlInput = container.querySelector('input[type="url"]');
+      act(() => {
+        setNativeValue(urlInput, 'https://example.com/enter.png');
+        urlInput.focus();
+        urlInput.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'Enter',
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      });
+
+      expect(props.onApplyUrl).toHaveBeenCalledTimes(1);
+      expect(props.onApplyUrl).toHaveBeenCalledWith({
+        url: 'https://example.com/enter.png',
+        scope: 'single',
+      });
+      expect(document.activeElement).toBe(urlInput);
+    } finally {
+      cleanup();
+    }
+  });
+
+  test('keeps focus and announces an invalid direct URL submitted with Enter', () => {
+    const { container, props, cleanup } = renderEditor();
+
+    try {
+      const urlInput = container.querySelector('input[type="url"]');
+      act(() => {
+        setNativeValue(urlInput, '/relative/enter.png');
+        urlInput.focus();
+        urlInput.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'Enter',
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      });
+
+      const alert = container.querySelector('[role="alert"]');
+      expect(props.onApplyUrl).not.toHaveBeenCalled();
+      expect(alert).not.toBeNull();
+      expect(urlInput.getAttribute('aria-describedby')).toBe(alert.id);
+      expect(document.activeElement).toBe(urlInput);
     } finally {
       cleanup();
     }

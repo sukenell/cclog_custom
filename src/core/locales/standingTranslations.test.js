@@ -14,6 +14,7 @@ const TRANSLATIONS = {
 const WARDROBE_KEYS = [
   'standing_wardrobe_active',
   'standing_wardrobe_add',
+  'standing_wardrobe_add_status',
   'standing_wardrobe_character_unsupported',
   'standing_wardrobe_default_empty',
   'standing_wardrobe_default_summary',
@@ -27,15 +28,20 @@ const WARDROBE_KEYS = [
   'standing_wardrobe_title',
   'standing_wardrobe_url_duplicate',
   'standing_wardrobe_url_invalid',
+  'standing_wardrobe_url_new_window',
   'standing_wardrobe_variant_name',
   'standing_wardrobe_variant_url',
 ];
 
 const EDITOR_KEYS = [
+  'active',
+  'applied_status',
   'apply_url',
   'apply_variant',
   'cancel',
+  'change_image',
   'clear',
+  'cleared_status',
   'scope',
   'scope_all',
   'scope_from_here',
@@ -45,9 +51,17 @@ const EDITOR_KEYS = [
   'variant_label',
 ];
 
+const PREVIEW_A11Y_KEYS = [
+  'delete_message',
+  'edit_message',
+  'edit_message_text',
+  'save_message',
+];
+
 const FULL_KEYS = [
   ...WARDROBE_KEYS.map((key) => `setting.${key}`),
   ...EDITOR_KEYS.map((key) => `standing_editor.${key}`),
+  ...PREVIEW_A11Y_KEYS.map((key) => `preview.${key}`),
 ];
 
 describe('standing image translations', () => {
@@ -62,6 +76,9 @@ describe('standing image translations', () => {
       expect(Object.keys(translation.standing_editor).sort()).toEqual(
         [...EDITOR_KEYS].sort()
       );
+      PREVIEW_A11Y_KEYS.forEach((key) => {
+        expect(translation.preview).toHaveProperty(key);
+      });
     }
   );
 
@@ -101,6 +118,7 @@ describe('standing image translations', () => {
       )
     ).toBe('기본: 평상복');
     expect(`[${setting.standing_wardrobe_active}]`).toBe('[기본]');
+    expect(`[${editor.active}]`).toBe('[기본]');
     expect(editor.scope_single).toBe('이 대사만');
     expect(editor.scope_from_here).toBe('이 대사부터 이후');
     expect(editor.scope_all).toBe('캐릭터 전체');
@@ -118,4 +136,19 @@ describe('standing image translations', () => {
       expect(standingCopy).not.toContain('개 대사');
     }
   );
+
+  test('uses natural storage and URL guidance in the reviewed locales', () => {
+    expect(translationJP.setting.standing_wardrobe_storage_note).toBe(
+      '画像ファイルは保存せず、URLのみを作業中に一時保存します。'
+    );
+    expect(translationZH.setting.standing_wardrobe_storage_note).toBe(
+      '不会保存图片文件，仅在本次编辑期间临时保存 URL。'
+    );
+    expect(translationEN.setting.standing_wardrobe_url_invalid).toBe(
+      'Enter a full URL that starts with http:// or https://.'
+    );
+    expect(translationEN.standing_editor.url_error).toBe(
+      'Enter a full URL that starts with http:// or https://.'
+    );
+  });
 });

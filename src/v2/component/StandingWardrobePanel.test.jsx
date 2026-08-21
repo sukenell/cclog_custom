@@ -1,11 +1,27 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
+import { createInstance } from 'i18next';
 import StandingWardrobePanel from './StandingWardrobePanel';
+import translationEN from '../../core/locales/en/translation.json';
+import translationJP from '../../core/locales/jp/translation.json';
+import translationZH from '../../core/locales/zh/translation.json';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const t = (_key, options = {}) => options.defaultValue || _key;
 const BLANK_IMAGE_URL = 'https://ccfolia.com/blank.gif';
+
+const createTranslator = (language, translation) => {
+  const i18n = createInstance();
+  i18n.init({
+    resources: { [language]: { translation } },
+    lng: language,
+    fallbackLng: false,
+    initImmediate: false,
+    interpolation: { escapeValue: false },
+  });
+  return i18n.t.bind(i18n);
+};
 
 const WARDROBE = {
   version: 1,
@@ -91,7 +107,7 @@ afterEach(async () => {
 test('shows unique normalized message characters, defaults, and compact variant labels', async () => {
   await renderPanel();
 
-  expect(container.querySelector('h4').textContent).toBe(
+  expect(container.querySelector('h3').textContent).toBe(
     '04. 캐릭터 스탠딩 이미지 변경'
   );
   expect(container.textContent).toContain(
@@ -119,6 +135,12 @@ test('shows unique normalized message characters, defaults, and compact variant 
   expect(links[0].textContent).toBe('https://example.com/alice-casual.png');
   expect(links[0].getAttribute('target')).toBe('_blank');
   expect(links[0].getAttribute('rel')).toBe('noopener noreferrer');
+  expect(links[0].getAttribute('aria-label')).toBe(
+    'https://example.com/alice-casual.png, 새 창에서 열기'
+  );
+  expect(links[0].getAttribute('title')).toBe(
+    'https://example.com/alice-casual.png, 새 창에서 열기'
+  );
   expect(container.querySelectorAll('.standing-wardrobe-thumbnail[alt=""]')).toHaveLength(2);
 });
 
@@ -241,7 +263,89 @@ test('adds a valid variant immutably through the form submit route used by Enter
   expect(nameInput.value).toBe('');
   expect(urlInput.value).toBe('');
   expect(firstCard.querySelector('[role="alert"]')).toBeNull();
+  const addStatus = firstCard.querySelector('[role="status"]');
+  expect(addStatus.textContent).toBe('정장 이미지를 추가했습니다.');
+  expect(addStatus.textContent).not.toMatch(/\d+\s*개 대사|개 대사/);
 });
+
+test.each([
+  [
+    'en',
+    translationEN,
+    'Change character standing images',
+    'Only URLs are stored temporarily during this editing session.',
+    '@평상복 [Default]',
+    'https://example.com/alice-casual.png, opens in a new window',
+    'Added the Formal image.',
+  ],
+  [
+    'jp',
+    translationJP,
+    'キャラクターの立ち絵を変更',
+    '画像ファイルは保存せず、URLのみを作業中に一時保存します。',
+    '@평상복 [デフォルト]',
+    'https://example.com/alice-casual.png、新しいウィンドウで開きます',
+    'Formalの画像を追加しました。',
+  ],
+  [
+    'zh',
+    translationZH,
+    '更改角色立绘',
+    '不会保存图片文件，仅在本次编辑期间临时保存 URL。',
+    '@평상복 [默认]',
+    'https://example.com/alice-casual.png，将在新窗口中打开',
+    '已添加 Formal 图片。',
+  ],
+])(
+  'renders localized heading, storage note, link context, and add feedback in %s',
+  async (
+    language,
+    translation,
+    heading,
+    storageNote,
+    activeLabel,
+    linkLabel,
+    addStatus
+  ) => {
+    await renderPanel({ t: createTranslator(language, translation) });
+
+    expect(container.querySelector('h3').textContent).toBe(`04. ${heading}`);
+    expect(container.querySelector('.standing-wardrobe-storage-note').textContent).toBe(
+      storageNote
+    );
+    expect(
+      container.querySelector('.standing-wardrobe-variant-label').textContent.trim()
+    ).toBe(activeLabel);
+    const link = container.querySelector('.standing-wardrobe-url');
+    expect(link.textContent).toBe('https://example.com/alice-casual.png');
+    expect(link.getAttribute('aria-label')).toBe(linkLabel);
+    expect(link.getAttribute('title')).toBe(linkLabel);
+
+    const firstCard = container.querySelector('details');
+    await updateInput(firstCard.querySelector('input[type="text"]'), 'Formal');
+    await updateInput(
+      firstCard.querySelector('input[type="url"]'),
+      'https://example.com/alice-formal-locale.png'
+    );
+    await act(async () => {
+      firstCard
+        .querySelector('form')
+        .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    });
+
+    expect(firstCard.querySelector('[role="status"]').textContent).toBe(
+      addStatus
+    );
+    const localizedUi = [heading, storageNote, linkLabel, addStatus].join(' ');
+    if (language === 'en') {
+      expect(localizedUi).not.toMatch(/새 창|이미지를 추가|임시 저장/);
+    } else {
+      expect(localizedUi).not.toMatch(
+        /opens in a new window|Added the|이미지를 추가|임시 저장/
+      );
+    }
+  }
+);
 
 test('uses a guaranteed unique fallback id after repeated random UUID collisions', async () => {
   const onChange = jest.fn();

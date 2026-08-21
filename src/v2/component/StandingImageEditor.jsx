@@ -113,7 +113,9 @@ export default function StandingImageEditor({
           {variants.map((variant) => (
             <option key={variant.id} value={variant.id}>
               @{variant.label}
-              {variant.id === activeVariantId ? ' [기본]' : ''}
+              {variant.id === activeVariantId
+                ? ` [${label('standing_editor.active', '기본')}]`
+                : ''}
             </option>
           ))}
         </select>
@@ -192,6 +194,11 @@ export default function StandingImageEditor({
           onChange={(event) => {
             setUrlDraft(event.target.value);
             setUrlError('');
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            applyUrl();
           }}
         />
         {urlError && (
