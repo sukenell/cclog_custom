@@ -128,6 +128,28 @@ const ALICE_WARDROBE = {
   },
 };
 
+const ALICE_TWO_VARIANT_WARDROBE = {
+  version: 1,
+  characters: {
+    '앨리스': {
+      displayName: '앨리스',
+      activeVariantId: 'casual',
+      variants: [
+        {
+          id: 'casual',
+          label: '평상복',
+          url: 'https://example.com/alice-casual.png',
+        },
+        {
+          id: 'battle',
+          label: '전투',
+          url: 'https://example.com/alice-battle.png',
+        },
+      ],
+    },
+  },
+};
+
 const seedAliceWardrobe = () => {
   sessionStorage.setItem(
     WARDROBE_STORAGE_KEY,
@@ -159,6 +181,24 @@ const editMessageImage = async (container, text, url) => {
 
   await act(async () => {
     imageInput.parentElement.querySelector('button').click();
+  });
+};
+
+const editMessageText = async (container, text, nextText) => {
+  const row = getMessageRowByText(container, text);
+  const editButton = Array.from(row.querySelectorAll('button')).find(
+    (button) => !button.hasAttribute('title')
+  );
+
+  await act(async () => {
+    editButton.click();
+  });
+
+  const textInput = row.querySelector('input');
+  await updateTextInput(textInput, nextText);
+
+  await act(async () => {
+    textInput.parentElement.querySelector('button').click();
   });
 };
 
@@ -244,6 +284,91 @@ describe('AppV2 session standing wardrobe integration', () => {
       expect(getProfileImageUrl(container, '밥의 대사')).toBe(
         'https://ccfolia.com/blank.gif'
       );
+    } finally {
+      await act(async () => {
+        rootApi.unmount();
+      });
+      container.remove();
+    }
+  });
+
+  test('changes every matching default through the panel while preserving text edits and other characters', async () => {
+    sessionStorage.setItem(
+      WARDROBE_STORAGE_KEY,
+      JSON.stringify(ALICE_TWO_VARIANT_WARDROBE)
+    );
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => {
+        rootApi.render(<AppV2 />);
+      });
+
+      await uploadLogFile(
+        container,
+        `
+          <div>
+            <p><span>[main]</span> <span>앨리스</span> : <span>첫 번째 대사</span></p>
+            <p><span>[main]</span> <span>밥</span> : <span>밥의 대사</span></p>
+            <p><span>[main]</span> <span>앨리스</span> : <span>두 번째 대사</span></p>
+          </div>
+        `
+      );
+
+      const wardrobePanel = container.querySelector('.standing-wardrobe-panel');
+      expect(wardrobePanel).not.toBeNull();
+      expect(wardrobePanel.querySelector('h4').textContent).toBe(
+        '04. 캐릭터 스탠딩 이미지 변경'
+      );
+      expect(container.querySelector('.setting_container > .standing-wardrobe-panel')).toBe(
+        wardrobePanel
+      );
+      expect(container.querySelector('#preview-scroll-box .standing-wardrobe-panel')).toBeNull();
+      expect(container.querySelector('.title_input').previousElementSibling.textContent).toContain(
+        '05.'
+      );
+      expect(container.querySelector('.end_input').previousElementSibling.textContent).toContain(
+        '06.'
+      );
+      expect(container.querySelector('.system_input').previousElementSibling.textContent).toContain(
+        '07.'
+      );
+
+      await editMessageText(container, '첫 번째 대사', '수정된 첫 번째 대사');
+      await editMessageImage(
+        container,
+        '수정된 첫 번째 대사',
+        'https://example.com/alice-exception.png'
+      );
+      expect(getProfileImageUrl(container, '수정된 첫 번째 대사')).toBe(
+        'https://example.com/alice-exception.png'
+      );
+
+      const setBattleDefault = Array.from(
+        wardrobePanel.querySelectorAll('button')
+      ).find((button) => button.textContent.includes('전투 기본으로 설정'));
+      await act(async () => {
+        setBattleDefault.click();
+      });
+
+      expect(getProfileImageUrl(container, '수정된 첫 번째 대사')).toBe(
+        'https://example.com/alice-battle.png'
+      );
+      expect(getProfileImageUrl(container, '두 번째 대사')).toBe(
+        'https://example.com/alice-battle.png'
+      );
+      expect(getProfileImageUrl(container, '밥의 대사')).toBe(
+        'https://ccfolia.com/blank.gif'
+      );
+      expect(container.textContent).toContain('수정된 첫 번째 대사');
+      expect(wardrobePanel.textContent).not.toContain('개 대사');
+
+      const stored = JSON.parse(sessionStorage.getItem(WARDROBE_STORAGE_KEY));
+      expect(Object.keys(stored).sort()).toEqual(['characters', 'version']);
+      expect(stored.characters['앨리스'].activeVariantId).toBe('battle');
     } finally {
       await act(async () => {
         rootApi.unmount();
@@ -430,6 +555,10 @@ describe('AppV2 session standing wardrobe integration', () => {
         WARDROBE_STORAGE_KEY,
         expect.any(String)
       );
+      expect(container.querySelector('[role="status"]')).not.toBeNull();
+      expect(container.querySelector('[role="status"]').textContent).toContain(
+        '저장'
+      );
 
       await uploadLogFile(
         container,
@@ -448,6 +577,7 @@ describe('AppV2 session standing wardrobe integration', () => {
       expect(getProfileImageUrl(container, '차단 상태 대사')).toBe(
         'https://example.com/still-editable.png'
       );
+      expect(container.querySelector('[role="status"]')).not.toBeNull();
     } finally {
       setItemSpy.mockRestore();
       await act(async () => {

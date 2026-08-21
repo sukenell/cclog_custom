@@ -2,13 +2,16 @@
 import React, { useState, useEffect } from "react";
 import UploadSection from "./component/UploadSection.jsx";
 import SettingsPanel from "./component/SettingsPanel.jsx";
+import StandingWardrobePanel from "./component/StandingWardrobePanel.jsx";
 import PreviewPanel from "./component/PreviewPanel.jsx";
 import { parseLogContent } from "./utils/parseFirebase.js";
 import { buildEbookJson } from "./utils/exportEbookJson.js";
 import {
+  clearCharacterImageOverrides,
   loadWardrobe,
   resolveStandingUrl,
   saveWardrobe,
+  setActiveVariant,
 } from "./utils/standingWardrobe.js";
 import { useTranslation } from "react-i18next";
 import "./AppV2.css";
@@ -299,7 +302,8 @@ function App() {
   const [messageOverrides, setMessageOverrides] = useState({});
   const [deletedMessageIds, setDeletedMessageIds] = useState(() => new Set());
   const [globalFontPercent, setGlobalFontPercent] = useState(100);
-  const [wardrobe] = useState(() => loadWardrobe());
+  const [wardrobe, setWardrobe] = useState(() => loadWardrobe());
+  const [wardrobeStorageError, setWardrobeStorageError] = useState(null);
 
   const handleFileContentChange = (content) => {
     setMessageOverrides({});
@@ -348,6 +352,15 @@ function App() {
       return next;
     });
     setMessages(prev => removeMessageById(prev, id));
+  };
+
+  const applyCharacterDefault = (charName, variantId) => {
+    setWardrobe((currentWardrobe) =>
+      setActiveVariant(currentWardrobe, charName, variantId)
+    );
+    setMessageOverrides((currentOverrides) =>
+      clearCharacterImageOverrides(currentOverrides, messages, charName)
+    );
   };
 
   const handleExportHTML = () => {
@@ -478,7 +491,8 @@ ${buildMinimalExportCSS(globalFontPercent)}
   }, []);
 
   useEffect(() => {
-    saveWardrobe(undefined, wardrobe);
+    const result = saveWardrobe(undefined, wardrobe);
+    setWardrobeStorageError(result.ok ? null : result.error);
   }, [wardrobe]);
 
   useEffect(() => {
@@ -574,13 +588,22 @@ ${buildMinimalExportCSS(globalFontPercent)}
           setGlobalFontPercent={setGlobalFontPercent}
         />
 
-        <h4>04. {t("setting.title_img")}</h4>
+        <StandingWardrobePanel
+          messages={messages}
+          wardrobe={wardrobe}
+          onChange={setWardrobe}
+          onApplyDefault={applyCharacterDefault}
+          storageError={wardrobeStorageError}
+          t={t}
+        />
+
+        <h4>05. {t("setting.title_img")}</h4>
         <input className="title_input" onChange={handleTitleImageChange} />
 
-        <h4>05. {t("setting.end_img")}</h4>
+        <h4>06. {t("setting.end_img")}</h4>
         <input className="end_input" onChange={handleEndImageChange} />
 
-        <h4>06. {t("setting.system_cha")}</h4>
+        <h4>07. {t("setting.system_cha")}</h4>
         <input className="system_input" onChange={DescChange} />
       </div>
 

@@ -112,9 +112,224 @@ b {
 
 .setting_container {
   width: 40%;
+  height: 100%;
   padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
   color: white;
   background: #222;
+}
+
+.standing-wardrobe-panel {
+  margin-top: 18px;
+  color: #f7f7f7;
+}
+
+.standing-wardrobe-storage-note {
+  margin: 8px 0 12px;
+  color: #dddddd;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.standing-wardrobe-storage-warning {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #d2a854;
+  border-radius: 6px;
+  background: #493819;
+  color: #fff5dc;
+  line-height: 1.5;
+}
+
+.standing-wardrobe-cards {
+  display: grid;
+  gap: 10px;
+}
+
+.standing-wardrobe-card {
+  border: 1px solid #747474;
+  border-radius: 8px;
+  background: #2d2d2d;
+}
+
+.standing-wardrobe-card > summary {
+  padding: 12px;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+.standing-wardrobe-summary-content {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.standing-wardrobe-character-name {
+  min-width: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.standing-wardrobe-default-summary {
+  flex: 0 1 auto;
+  color: #e2e2e2;
+  font-size: 0.9rem;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.standing-wardrobe-card-body {
+  padding: 0 12px 12px;
+}
+
+.standing-wardrobe-variant-list {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.standing-wardrobe-variant {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 12px;
+  padding: 10px;
+  border: 1px solid #606060;
+  border-radius: 6px;
+  background: #1d1d1d;
+}
+
+.standing-wardrobe-variant-label {
+  grid-column: 1 / -1;
+  color: #ffffff;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.standing-wardrobe-active-label {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.standing-wardrobe-url {
+  display: block;
+  min-width: 0;
+  color: #9dd3ff;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.standing-wardrobe-thumbnail {
+  grid-row: span 2;
+  width: 64px;
+  height: 64px;
+  border: 1px solid #777777;
+  border-radius: 6px;
+  background: #111111;
+  object-fit: cover;
+  object-position: top;
+}
+
+.standing-wardrobe-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.standing-wardrobe-actions button,
+.standing-wardrobe-add-button {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid #858585;
+  border-radius: 5px;
+  background: #424242;
+  color: #ffffff;
+  font: inherit;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.standing-wardrobe-delete-button {
+  border-color: #d28b8b !important;
+  background: #5d2929 !important;
+}
+
+.standing-wardrobe-form {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #606060;
+}
+
+.standing-wardrobe-field {
+  display: grid;
+  gap: 5px;
+}
+
+.standing-wardrobe-field label {
+  color: #f4f4f4;
+  font-weight: 600;
+}
+
+.standing-wardrobe-field input {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 9px 10px;
+  box-sizing: border-box;
+  border: 1px solid #8d8d8d;
+  border-radius: 5px;
+  background: #171717;
+  color: #ffffff;
+  font: inherit;
+}
+
+.standing-wardrobe-field input[aria-invalid="true"] {
+  border-color: #ff9c9c;
+}
+
+.standing-wardrobe-validation {
+  margin: 0;
+  color: #ffb4b4;
+  line-height: 1.45;
+}
+
+.standing-wardrobe-add-button {
+  justify-self: start;
+  background: #28547c;
+  border-color: #75a9d7;
+}
+
+.standing-wardrobe-panel summary:focus-visible,
+.standing-wardrobe-panel button:focus-visible,
+.standing-wardrobe-panel input:focus-visible,
+.standing-wardrobe-panel a:focus-visible {
+  outline: 3px solid #ffd36a;
+  outline-offset: 3px;
+}
+
+@media (max-width: 800px) {
+  .standing-wardrobe-summary-content {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .standing-wardrobe-default-summary {
+    text-align: left;
+  }
+
+  .standing-wardrobe-variant {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .standing-wardrobe-thumbnail {
+    grid-row: auto;
+  }
 }
 
 .title_input,
