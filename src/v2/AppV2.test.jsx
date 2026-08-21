@@ -252,7 +252,7 @@ describe('AppV2 session standing wardrobe integration', () => {
     }
   });
 
-  test('keeps explicit line image exceptions through a visible settings reparse', async () => {
+  test('keeps explicit line image exceptions when title settings reparse the log', async () => {
     seedAliceWardrobe();
     const downloads = captureDownloads();
 
@@ -271,7 +271,6 @@ describe('AppV2 session standing wardrobe integration', () => {
           <div>
             <p><span>[main]</span> <span>앨리스</span> : <span>예외 대사</span></p>
             <p><span>[main]</span> <span>앨리스</span> : <span>빈 이미지 대사</span></p>
-            <p><span>[main]</span> <span>SYS</span> : <span>시스템 전환 대사</span></p>
           </div>
         `
       );
@@ -289,18 +288,19 @@ describe('AppV2 session standing wardrobe integration', () => {
       expect(getProfileImageUrl(container, '빈 이미지 대사')).toBe(
         'https://ccfolia.com/blank.gif'
       );
-      expect(
-        getMessageRowByText(container, '시스템 전환 대사').classList
-      ).toContain('cat-main');
 
-      await updateTextInput(container.querySelector('.system_input'), 'SYS');
-
-      const reparsedSystemRow = getMessageRowByText(
-        container,
-        '시스템 전환 대사'
+      await updateTextInput(
+        container.querySelector('.title_input'),
+        'https://example.com/reparse-title.png'
       );
-      expect(reparsedSystemRow.classList).toContain('cat-desc');
-      expect(reparsedSystemRow.querySelector('.msg_container')).toBeNull();
+
+      const titlePseudoImages = container.querySelectorAll(
+        '.message-container.image img'
+      );
+      expect(titlePseudoImages).toHaveLength(1);
+      expect(titlePseudoImages[0].getAttribute('src')).toBe(
+        'https://example.com/reparse-title.png'
+      );
       expect(getProfileImageUrl(container, '예외 대사')).toBe(
         'https://example.com/alice-exception.png'
       );
@@ -323,7 +323,11 @@ describe('AppV2 session standing wardrobe integration', () => {
       const emptyLine = json.lines.find(
         ({ text }) => text === '빈 이미지 대사'
       );
+      const titleLine = json.lines.find(
+        ({ imageUrl }) => imageUrl === 'https://example.com/reparse-title.png'
+      );
 
+      expect(titleLine).toBeDefined();
       expect(exceptionLine.input.speakerImages.standing.url).toBe(
         'https://example.com/alice-exception.png'
       );
