@@ -454,6 +454,25 @@ describe('standing wardrobe session model', () => {
     ).toEqual({ version: 1, characters: {} });
   });
 
+  test('loads and saves through browser sessionStorage when storage is omitted', () => {
+    window.sessionStorage.removeItem(WARDROBE_STORAGE_KEY);
+
+    try {
+      const wardrobe = makeWardrobe();
+
+      expect(saveWardrobe(undefined, wardrobe)).toEqual({
+        ok: true,
+        error: null,
+      });
+      expect(
+        JSON.parse(window.sessionStorage.getItem(WARDROBE_STORAGE_KEY))
+      ).toEqual(wardrobe);
+      expect(loadWardrobe()).toEqual(wardrobe);
+    } finally {
+      window.sessionStorage.removeItem(WARDROBE_STORAGE_KEY);
+    }
+  });
+
   test('saves only the sanitized URL metadata and reports storage failures', () => {
     const setItem = jest.fn();
     const storage = { setItem };

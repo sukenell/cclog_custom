@@ -219,8 +219,8 @@ export const sanitizeWardrobe = (value) => {
 
 const resolveStorage = (storage) => {
   if (storage !== undefined) return storage;
-  if (typeof globalThis === 'undefined') return null;
-  return globalThis.sessionStorage;
+  if (typeof window === 'undefined') return null;
+  return window.sessionStorage;
 };
 
 export const loadWardrobe = (storage) => {
