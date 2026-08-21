@@ -338,6 +338,125 @@ b {
   outline-offset: 3px;
 }
 
+.standing-image-editor {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  box-sizing: border-box;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #858585;
+  border-radius: 8px;
+  background: #242424;
+  color: #ffffff;
+}
+
+.standing-image-editor-field {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+
+.standing-image-editor label,
+.standing-image-editor legend {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.standing-image-editor fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid #858585;
+  border-radius: 6px;
+}
+
+.standing-image-editor select,
+.standing-image-editor input[type="url"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 9px 10px;
+  box-sizing: border-box;
+  border: 1px solid #9a9a9a;
+  border-radius: 5px;
+  background: #171717;
+  color: #ffffff;
+  font: inherit;
+}
+
+.standing-image-editor input[aria-invalid="true"] {
+  border-color: #ff9c9c;
+}
+
+.standing-image-editor-scopes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.standing-image-editor-scopes label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.standing-image-editor-scopes input[type="radio"] {
+  width: auto;
+  margin: 0;
+}
+
+.standing-image-editor button {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid #75a9d7;
+  border-radius: 5px;
+  background: #28547c;
+  color: #ffffff;
+  font: inherit;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.standing-image-editor button:disabled {
+  border-color: #777777;
+  background: #4a4a4a;
+  color: #d0d0d0;
+  cursor: not-allowed;
+}
+
+.standing-image-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.standing-image-editor-error {
+  margin: 0;
+  color: #ffb4b4;
+  line-height: 1.45;
+}
+
+.standing-image-editor-status {
+  margin: 8px 0 0;
+  color: #d7f4dc;
+  line-height: 1.45;
+}
+
+.standing-image-editor button:focus-visible,
+.standing-image-editor input:focus-visible,
+.standing-image-editor select:focus-visible {
+  outline: 3px solid #ffd36a;
+  outline-offset: 3px;
+}
+
 .title_input,
 .end_input,
 .system_input {
@@ -807,5 +926,11 @@ input {
     max-width: 100%;
     white-space: normal;
     overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 400px) {
+  .standing-image-editor button {
+    width: 100%;
   }
 }

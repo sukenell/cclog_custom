@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useId, useRef } from "react";
 import { Pencil, Check, Image as ImageIcon, Trash2 } from "lucide-react";
 import { COCdice, getDiceTypes } from "./dice";
+import StandingImageEditor from "./StandingImageEditor";
 
 const toCategoryClass = (value) =>
   String(value || "unknown")
@@ -17,11 +18,20 @@ export default function LogItem({
   diceEnabled,
   inputTexts = [],
   tabColorEnabled,
+  characterWardrobe,
+  onApplyStandingVariant,
+  onApplyStandingUrl,
+  standingScopes = ["single", "all"],
 }) {
   const [isEditing, setEditing] = useState(false);
   const [isImgEditing, setImgEditing] = useState(false);
   const [text, setText] = useState(message.text);
   const [imgUrl, setImgUrl] = useState(message.imgUrl);
+  const [standingStatus, setStandingStatus] = useState("");
+  const generatedEditorId = useId().replace(/:/g, "");
+  const standingEditorId = `standing-image-editor-${generatedEditorId}`;
+  const standingTriggerRef = useRef(null);
+  const wasImgEditing = useRef(false);
 
   useEffect(() => {
     setText(message.text);
@@ -30,6 +40,17 @@ export default function LogItem({
   useEffect(() => {
     setImgUrl(message.imgUrl);
   }, [message.imgUrl]);
+
+  useEffect(() => {
+    if (
+      wasImgEditing.current &&
+      !isImgEditing &&
+      standingTriggerRef.current
+    ) {
+      standingTriggerRef.current.focus();
+    }
+    wasImgEditing.current = isImgEditing;
+  }, [isImgEditing]);
 
   const toggleEdit = () => {
     if (isImgEditing) setImgEditing(false); // 이미지 수정 중이면 종료
@@ -42,11 +63,37 @@ export default function LogItem({
 
   const toggleImgEdit = () => {
     if (isEditing) setEditing(false); // 텍스트 수정 중이면 종료
+    setStandingStatus("");
+    setImgEditing((current) => !current);
+  };
 
-    if (isImgEditing) {
-      updateMessage(message.id, { imgUrl });
+  const closeStandingEditor = () => {
+    setStandingStatus("");
+    setImgEditing(false);
+  };
+
+  const applyStandingVariant = ({ variantId, url, scope }) => {
+    if (typeof onApplyStandingVariant === "function") {
+      onApplyStandingVariant(message.id, variantId, url, scope);
     }
-    setImgEditing(!isImgEditing);
+    setStandingStatus("이미지를 적용했습니다.");
+    setImgEditing(false);
+  };
+
+  const applyStandingUrl = ({ url, scope }) => {
+    if (typeof onApplyStandingUrl === "function") {
+      onApplyStandingUrl(message.id, url, scope);
+    }
+    setStandingStatus("이미지를 적용했습니다.");
+    setImgEditing(false);
+  };
+
+  const clearStandingImage = ({ scope }) => {
+    if (typeof onApplyStandingUrl === "function") {
+      onApplyStandingUrl(message.id, "", scope);
+    }
+    setStandingStatus("이미지를 비웠습니다.");
+    setImgEditing(false);
   };
 
   const handleDelete = () => {
@@ -57,6 +104,7 @@ export default function LogItem({
 
   const renderDeleteButton = () => (
     <button
+      type="button"
       onClick={handleDelete}
       title="Delete Message"
       aria-label="Delete Message"
@@ -153,12 +201,17 @@ export default function LogItem({
               value={text}
               onChange={(e) => setText(e.target.value)}
               style={{ width: "60%" }}
+              aria-label="Edit message text"
             />
           ) : (
             <span>{text}</span>
           )}
 
-          <button onClick={toggleEdit}>
+          <button
+            type="button"
+            onClick={toggleEdit}
+            aria-label={isEditing ? "Save Message" : "Edit Message"}
+          >
             {isEditing ? <Check size={18} /> : <Pencil size={18} />}
           </button>
           {!isEditing && renderDeleteButton()}
@@ -210,15 +263,20 @@ export default function LogItem({
                       value={text}
                       onChange={(e) => setText(e.target.value)}
                       style={{ width: "60%" }}
+                      aria-label="Edit message text"
                     />
-                    <button onClick={toggleEdit}>
+                    <button
+                      type="button"
+                      onClick={toggleEdit}
+                      aria-label="Save Message"
+                    >
                       <Check size={18} />
                     </button>
                   </div>
                 ) : (
                   <>
                     <span style={diceStyle || undefined}> {text}</span>
-                    <button onClick={toggleEdit} title="Edit Message" aria-label="Edit Message">
+                    <button type="button" onClick={toggleEdit} title="Edit Message" aria-label="Edit Message">
                       <Pencil size={18} />
                     </button>
                     {renderDeleteButton()}
@@ -228,29 +286,20 @@ export default function LogItem({
             ) : (
               <>
                 {/* ================= 일반 텍스트 (수정 모드 분기) ================= */}
-                {isImgEditing ? (
-                  /* --- 이미지 URL 수정 UI --- */
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "12px", color: "#ccc", whiteSpace: "nowrap" }}>IMG :</span>
-                    <input
-                      value={imgUrl}
-                      onChange={(e) => setImgUrl(e.target.value)}
-                      style={{ width: "95%" }}
-                      placeholder="Image URL..."
-                    />
-                    <button onClick={toggleImgEdit}>
-                      <Check size={18} />
-                    </button>
-                  </div>
-                ) : isEditing ? (
+                {isEditing ? (
                   /* --- 텍스트 수정 UI --- */
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <input
                       value={text}
                       onChange={(e) => setText(e.target.value)}
                       style={{ width: "95%" }}
+                      aria-label="Edit message text"
                     />
-                    <button onClick={toggleEdit}>
+                    <button
+                      type="button"
+                      onClick={toggleEdit}
+                      aria-label="Save Message"
+                    >
                       <Check size={18} />
                     </button>
                   </div>
@@ -282,7 +331,11 @@ export default function LogItem({
                         >
                           <span style={{ paddingLeft: "16px", whiteSpace: "pre-line", }}>{text}</span>
                           {/* Info는 이미지 수정 X */}
-                          <button onClick={toggleEdit}>
+                          <button
+                            type="button"
+                            onClick={toggleEdit}
+                            aria-label="Edit Message"
+                          >
                             <Pencil size={18} />
                           </button>
                           {renderDeleteButton()}
@@ -299,7 +352,11 @@ export default function LogItem({
                           {message.charName} : {text}
                         </div>
                         {/* Other는 이미지 수정 X */}
-                        <button onClick={toggleEdit}>
+                        <button
+                          type="button"
+                          onClick={toggleEdit}
+                          aria-label="Edit Message"
+                        >
                           <Pencil size={18} />
                         </button>
                         {renderDeleteButton()}
@@ -307,22 +364,60 @@ export default function LogItem({
                     )}
 
                     {renderType !== "info" && renderType !== "other" && (
-                      <div
-                        className="msg-normal-text"
-                        style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                      >
-                        <span>{text}</span>
+                      <>
+                        <div
+                          className="msg-normal-text"
+                          style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                        >
+                          <span>{text}</span>
 
-                        {showGalleryAction && (
-                          <button onClick={toggleImgEdit} title="Change Image">
-                            <ImageIcon size={18} />
+                          {showGalleryAction && (
+                            <button
+                              ref={standingTriggerRef}
+                              type="button"
+                              onClick={toggleImgEdit}
+                              title="Change Image"
+                              aria-label="Change Image"
+                              aria-expanded={isImgEditing}
+                              aria-controls={standingEditorId}
+                            >
+                              <ImageIcon size={18} />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={toggleEdit}
+                            aria-label="Edit Message"
+                          >
+                            <Pencil size={18} />
                           </button>
+                          {renderDeleteButton()}
+                        </div>
+                        {isImgEditing && showGalleryAction && (
+                          <StandingImageEditor
+                            id={standingEditorId}
+                            variants={characterWardrobe?.variants || []}
+                            activeVariantId={characterWardrobe?.activeVariantId || null}
+                            currentUrl={imgUrl || ""}
+                            characterName={message.charName}
+                            allowedScopes={standingScopes}
+                            onApplyVariant={applyStandingVariant}
+                            onApplyUrl={applyStandingUrl}
+                            onClear={clearStandingImage}
+                            onCancel={closeStandingEditor}
+                            t={t}
+                          />
                         )}
-                        <button onClick={toggleEdit}>
-                          <Pencil size={18} />
-                        </button>
-                        {renderDeleteButton()}
-                      </div>
+                        {standingStatus && (
+                          <p
+                            className="standing-image-editor-status"
+                            role="status"
+                            aria-live="polite"
+                          >
+                            {standingStatus}
+                          </p>
+                        )}
+                      </>
                     )}
                   </>
                 )}

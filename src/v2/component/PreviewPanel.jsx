@@ -1,5 +1,6 @@
 import React from "react";
 import LogItem from "./LogItem";
+import { getCharacterWardrobe } from "../utils/standingWardrobe";
 
 export default function PreviewPanel({
   messages,
@@ -17,6 +18,11 @@ export default function PreviewPanel({
   onExportJSON,
   tabColorEnabled,
   globalFontPercent,
+  wardrobe,
+  onApplyStandingVariant,
+  onApplyStandingUrl,
+  standingScopes = ["single", "all"],
+  t,
 }) {
 
   const filtered = messages.filter(msg => {
@@ -66,6 +72,11 @@ const buttonStyle = {
             secretEnabled={secretEnabled}
             inputTexts={inputTexts}
             tabColorEnabled={tabColorEnabled}
+            characterWardrobe={getCharacterWardrobe(wardrobe, msg.charName)}
+            onApplyStandingVariant={onApplyStandingVariant}
+            onApplyStandingUrl={onApplyStandingUrl}
+            standingScopes={standingScopes}
+            t={t}
           />
 
           {idx < filtered.length - 1 && (

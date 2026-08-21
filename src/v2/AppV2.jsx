@@ -7,11 +7,14 @@ import PreviewPanel from "./component/PreviewPanel.jsx";
 import { parseLogContent } from "./utils/parseFirebase.js";
 import { buildEbookJson } from "./utils/exportEbookJson.js";
 import {
+  applyImageUrlToTargets,
   clearCharacterImageOverrides,
+  collectScopeTargetIds,
   loadWardrobe,
   resolveStandingUrl,
   saveWardrobe,
   setActiveVariant,
+  STANDING_SCOPE,
 } from "./utils/standingWardrobe.js";
 import { useTranslation } from "react-i18next";
 import "./AppV2.css";
@@ -363,6 +366,54 @@ function App() {
     );
   };
 
+  const applyStandingUrl = (messageId, url, scope) => {
+    const targetIds = collectScopeTargetIds(messages, messageId, scope);
+    const targetIdSet = new Set(targetIds);
+
+    setMessageOverrides((currentOverrides) =>
+      applyImageUrlToTargets(currentOverrides, targetIds, url)
+    );
+    setMessages((currentMessages) =>
+      currentMessages.map((message) =>
+        targetIdSet.has(message.id) ? { ...message, imgUrl: url } : message
+      )
+    );
+  };
+
+  const applyStandingVariant = (messageId, variantId, url, scope) => {
+    if (scope === STANDING_SCOPE.SINGLE) {
+      applyStandingUrl(messageId, url, STANDING_SCOPE.SINGLE);
+      return;
+    }
+    if (scope !== STANDING_SCOPE.ALL) return;
+
+    const anchor = messages.find((message) => message.id === messageId);
+    if (!anchor || anchor.category === "image") return;
+
+    const targetIds = collectScopeTargetIds(
+      messages,
+      messageId,
+      STANDING_SCOPE.ALL
+    );
+    const targetIdSet = new Set(targetIds);
+
+    setWardrobe((currentWardrobe) =>
+      setActiveVariant(currentWardrobe, anchor.charName, variantId)
+    );
+    setMessageOverrides((currentOverrides) =>
+      clearCharacterImageOverrides(
+        currentOverrides,
+        messages,
+        anchor.charName
+      )
+    );
+    setMessages((currentMessages) =>
+      currentMessages.map((message) =>
+        targetIdSet.has(message.id) ? { ...message, imgUrl: url } : message
+      )
+    );
+  };
+
   const handleExportHTML = () => {
     const preview = document.getElementById("preview-scroll-box");
     if (!preview) return;
@@ -623,6 +674,10 @@ ${buildMinimalExportCSS(globalFontPercent)}
         onExportSplitHTML={handleExportSplitHTML}
         onExportJSON={handleExportJSON}
         globalFontPercent={globalFontPercent}
+        wardrobe={wardrobe}
+        onApplyStandingVariant={applyStandingVariant}
+        onApplyStandingUrl={applyStandingUrl}
+        standingScopes={[STANDING_SCOPE.SINGLE, STANDING_SCOPE.ALL]}
       />
     </div>
   );
