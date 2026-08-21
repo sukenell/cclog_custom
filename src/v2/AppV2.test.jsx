@@ -12,6 +12,7 @@ import AppV2, {
   clonePreviewForExport,
   removeMessageById,
 } from './AppV2';
+import translationKO from '../core/locales/ko/translation.json';
 import { WARDROBE_STORAGE_KEY } from './utils/standingWardrobe';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -234,11 +235,34 @@ const getProfileImageUrl = (container, text) =>
     ?.querySelector('.msg_container img')
     ?.getAttribute('src');
 
+const KOREAN_ACTIONS = {
+  changeImage:
+    translationKO.standing_editor?.change_image || 'Change Image',
+  deleteMessage:
+    translationKO.preview?.delete_message || 'Delete Message',
+  editMessage:
+    translationKO.preview?.edit_message || 'Edit Message',
+};
+
+const getButtonByAccessibleName = (container, accessibleName) =>
+  Array.from(container.querySelectorAll('button')).find(
+    (button) =>
+      button.getAttribute('aria-label') === accessibleName ||
+      button.getAttribute('title') === accessibleName
+  );
+
+const getButtonsByAccessibleName = (container, accessibleName) =>
+  Array.from(container.querySelectorAll('button')).filter(
+    (button) =>
+      button.getAttribute('aria-label') === accessibleName ||
+      button.getAttribute('title') === accessibleName
+  );
+
 const editMessageImage = async (container, text, url) => {
   const row = getMessageRowByText(container, text);
 
   await act(async () => {
-    row.querySelector('button[title="Change Image"]').click();
+    getButtonByAccessibleName(row, KOREAN_ACTIONS.changeImage).click();
   });
 
   const editor = row.querySelector('.standing-image-editor');
@@ -274,7 +298,7 @@ const setSelectValue = async (select, value) => {
 const openStandingEditor = async (container, text) => {
   const row = getMessageRowByText(container, text);
   await act(async () => {
-    row.querySelector('button[title="Change Image"]').click();
+    getButtonByAccessibleName(row, KOREAN_ACTIONS.changeImage).click();
   });
   return row.querySelector('.standing-image-editor');
 };
@@ -322,8 +346,9 @@ const clearMessageImage = async (container, text, scope = 'single') => {
 
 const editMessageText = async (container, text, nextText) => {
   const row = getMessageRowByText(container, text);
-  const editButton = Array.from(row.querySelectorAll('button')).find(
-    (button) => !button.hasAttribute('title')
+  const editButton = getButtonByAccessibleName(
+    row,
+    KOREAN_ACTIONS.editMessage
   );
 
   await act(async () => {
@@ -421,6 +446,41 @@ describe('AppV2 localization', () => {
   });
 });
 
+describe('AppV2 editor shell accessibility', () => {
+  test('programmatically labels the three URL/name settings with unique ids and h3 headings', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => {
+        rootApi.render(<AppV2 />);
+      });
+
+      const expectedFields = [
+        ['title-image-urls', '05.'],
+        ['end-image-urls', '06.'],
+        ['system-character-names', '07.'],
+      ];
+
+      expectedFields.forEach(([id, number]) => {
+        const input = container.querySelector(`#${id}`);
+        const label = container.querySelector(`label[for="${id}"]`);
+
+        expect(input).not.toBeNull();
+        expect(label).not.toBeNull();
+        expect(label.textContent).toContain(number);
+        expect(label.closest('h3')).not.toBeNull();
+      });
+      expect(new Set(expectedFields.map(([id]) => id)).size).toBe(3);
+      expect(container.querySelector('.setting_container > h4')).toBeNull();
+    } finally {
+      await act(async () => rootApi.unmount());
+      container.remove();
+    }
+  });
+});
+
 describe('AppV2 session standing wardrobe integration', () => {
   test('applies the active same-tab default to every matching character row', async () => {
     seedAliceWardrobe();
@@ -490,7 +550,7 @@ describe('AppV2 session standing wardrobe integration', () => {
 
       const wardrobePanel = container.querySelector('.standing-wardrobe-panel');
       expect(wardrobePanel).not.toBeNull();
-      expect(wardrobePanel.querySelector('h4').textContent).toBe(
+      expect(wardrobePanel.querySelector('h3, h4').textContent).toBe(
         '04. 캐릭터 스탠딩 이미지 변경'
       );
       expect(container.querySelector('.setting_container > .standing-wardrobe-panel')).toBe(
@@ -719,9 +779,10 @@ describe('AppV2 session standing wardrobe integration', () => {
       );
 
       await act(async () => {
-        getMessageRowByText(container, '삭제할 대사')
-          .querySelector('button[title="Delete Message"]')
-          .click();
+        getButtonByAccessibleName(
+          getMessageRowByText(container, '삭제할 대사'),
+          KOREAN_ACTIONS.deleteMessage
+        ).click();
       });
       expect(container.textContent).not.toContain('삭제할 대사');
 
@@ -1461,7 +1522,10 @@ describe('AppV2 uploaded-file settings', () => {
     );
 
     await act(async () => {
-      container.querySelector('button[title="Delete Message"]').click();
+      getButtonByAccessibleName(
+        container,
+        KOREAN_ACTIONS.deleteMessage
+      ).click();
     });
 
     expect(container.textContent).not.toContain('이미지 수정 대상');
@@ -1805,10 +1869,12 @@ describe('AppV2 uploaded-file settings', () => {
       );
 
       const editedImageMessage = container.querySelector('.msg-normal-text');
-      const editedImageMessageButtons = editedImageMessage.querySelectorAll('button');
 
       await act(async () => {
-        editedImageMessageButtons[1].click();
+        getButtonByAccessibleName(
+          editedImageMessage,
+          KOREAN_ACTIONS.editMessage
+        ).click();
       });
 
       const messageTextInput = container.querySelector('.message-body input');
@@ -1819,7 +1885,10 @@ describe('AppV2 uploaded-file settings', () => {
       });
 
       await act(async () => {
-        Array.from(container.querySelectorAll('button[title="Delete Message"]'))[1].click();
+        getButtonsByAccessibleName(
+          container,
+          KOREAN_ACTIONS.deleteMessage
+        )[1].click();
       });
 
       await updateTextInput(container.querySelector('.system_input'), 'SYS');
@@ -2121,5 +2190,38 @@ describe('AppV2 narrow-screen accessibility CSS', () => {
     expect(css).toMatch(
       /@media \(max-width:\s*400px\)[\s\S]*\.standing-image-editor button\s*\{[^}]*width:\s*100%/
     );
+  });
+
+  test('keeps settings content shrinkable and focused controls away from scroll edges', () => {
+    const css = readFileSync(
+      path.join(process.cwd(), 'src/v2/AppV2.css'),
+      'utf8'
+    );
+
+    expect(css).toMatch(
+      /\.font-size-row\s*\{[^}]*min-width:\s*0/
+    );
+    expect(css).toMatch(
+      /\.font-size-slider\s*\{[^}]*min-width:\s*0/
+    );
+    expect(css).toMatch(
+      /\.setting_container\s*\{[^}]*scroll-padding-block:\s*16px/
+    );
+    expect(css).toMatch(
+      /\.setting_container\s+:is\([^)]*\):focus-visible\s*\{[^}]*scroll-margin-block:\s*16px/
+    );
+  });
+
+  test('uses contrast-safe checked tabs and preview metadata colors', () => {
+    const css = readFileSync(
+      path.join(process.cwd(), 'src/v2/AppV2.css'),
+      'utf8'
+    );
+
+    expect(css).toMatch(
+      /\.skinTypeCheck input\[type="checkbox"\]:checked\s*\+\s*label\s*\{[^}]*color:\s*#fff(?:fff)?[^}]*background:\s*#4e5355/i
+    );
+    expect(css).toMatch(/\.msg-timestamp\s*\{[^}]*color:\s*#c7c7c7/i);
+    expect(css).toMatch(/\.msg-category-tag\s*\{[^}]*color:\s*#c7c7c7/i);
   });
 });

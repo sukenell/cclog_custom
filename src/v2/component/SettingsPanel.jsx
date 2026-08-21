@@ -4,6 +4,15 @@ import "../../core/styles/base.css";
 
 const FIXED_CATEGORIES = ["main", "info", "other"];
 
+const translate = (t, key, fallback) => {
+  if (typeof t !== "function") return fallback;
+
+  const translated = t(key, { defaultValue: fallback });
+  return typeof translated === "string" && translated.trim() && translated !== key
+    ? translated
+    : fallback;
+};
+
 const SettingsPanel = ({
   t,
 
@@ -31,9 +40,9 @@ const SettingsPanel = ({
   ========================= */
   const categoryLabels = useMemo(
     () => ({
-      main: t("setting.main"),
-      info: t("setting.info"),
-      other: t("setting.other"),
+      main: translate(t, "setting.main", "메인"),
+      info: translate(t, "setting.info", "정보"),
+      other: translate(t, "setting.other", "잡담"),
     }),
     [t]
   );
@@ -112,83 +121,88 @@ const SettingsPanel = ({
       {/* =========================
           02. 출력 탭 선택
       ========================= */}
-      <div className="skinTypeCheck">
-        <h4>
-          02-1. {t("setting.tab_select")}
-          <b>(*{t("setting.multiple")})</b>
-        </h4>
+      <section className="skinTypeCheck">
+        <h3 id="category-settings-heading">
+          02-1. {translate(t, "setting.tab_select", "출력 탭 선택")}
+          <b>
+            (*{translate(t, "setting.multiple", "중복 선택 가능")})
+          </b>
+        </h3>
 
-        <ul>
-          {detectedCategories.map((category) => (
-            <li key={category}>
-              <input
-                type="checkbox"
-                id={`cat-${category}`}
-                checked={!!selectedCategories[category]}
-                onChange={() => handleCategoryChange(category)}
-              />
-              <label htmlFor={`cat-${category}`}>
-                {categoryLabels[category] || category}
-              </label>
+        <div role="group" aria-labelledby="category-settings-heading">
+          <ul>
+            {detectedCategories.map((category) => {
+              const categoryLabel = categoryLabels[category] || category;
 
-              {!FIXED_CATEGORIES.includes(category) && tabColorEnabled && (
-                <input
-                  type="color"
-                  value={tabColors?.[category] || "#525569"}
-                  onChange={(e) =>
-                    setTabColor((prev) => ({
-                      ...prev,
-                      [category]: e.target.value,
-                    }))
-                  }
-                  style={{
-                    display: "block",
-                    width: "60px",
-                    height: "20px",
-                    border: "none",
-                    cursor: "pointer",
-                  }}
-                />
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
+              return (
+                <li key={category}>
+                  <input
+                    type="checkbox"
+                    id={`cat-${category}`}
+                    checked={!!selectedCategories[category]}
+                    onChange={() => handleCategoryChange(category)}
+                  />
+                  <label htmlFor={`cat-${category}`}>{categoryLabel}</label>
+
+                  {!FIXED_CATEGORIES.includes(category) && tabColorEnabled && (
+                    <input
+                      type="color"
+                      aria-label={translate(
+                        t,
+                        "setting.tab_color",
+                        `${categoryLabel} 색상`
+                      )}
+                      value={tabColors?.[category] || "#525569"}
+                      onChange={(e) =>
+                        setTabColor((prev) => ({
+                          ...prev,
+                          [category]: e.target.value,
+                        }))
+                      }
+                      style={{
+                        display: "block",
+                        width: "60px",
+                        height: "20px",
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                    />
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </section>
 
       {/* =========================
           03. 기타 스타일링
       ========================= */}
-      <div className="skinTypeCheck">
-        <h4>02-2. 기타 스타일링 적용 여부</h4>
-        <ul>
-          {toggles.map(({ id, state, setState, label }) => (
-            <li key={id}>
-              <input
-                type="checkbox"
-                id={id}
-                checked={state}
-                onChange={() => setState((v) => !v)}
-              />
-              <label htmlFor={id}>{label}</label>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <section className="skinTypeCheck">
+        <h3 id="style-settings-heading">02-2. 기타 스타일링 적용 여부</h3>
+        <div role="group" aria-labelledby="style-settings-heading">
+          <ul>
+            {toggles.map(({ id, state, setState, label }) => (
+              <li key={id}>
+                <input
+                  type="checkbox"
+                  id={id}
+                  checked={state}
+                  onChange={() => setState((v) => !v)}
+                />
+                <label htmlFor={id}>{label}</label>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
 
       <div className="skinTypeCheck">
-        <h4>03. 텍스트 크기</h4>
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "10px",
-            marginTop: "8px",
-          }}
-        >
-          <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0 }}>A</span>
+        <h3>03. 텍스트 크기</h3>
+        <div className="font-size-row">
+          <span aria-hidden="true" className="font-size-sample-small">A</span>
           <input
+            className="font-size-slider"
             type="range"
             min="80"
             max="160"
@@ -197,24 +211,10 @@ const SettingsPanel = ({
             onInput={(e) => setGlobalFontPercent(Number(e.currentTarget.value))}
             onChange={(e) => setGlobalFontPercent(Number(e.currentTarget.value))}
             aria-label="텍스트 크기 조절"
-            style={{
-              flex: "1 1 auto",
-              width: "100%",
-              minWidth: "240px",
-              margin: "0 6px",
-              display: "block",
-              visibility: "visible",
-              opacity: 1,
-              appearance: "auto",
-              WebkitAppearance: "slider-horizontal",
-              accentColor: "#cfd8ff",
-              height: "24px",
-              cursor: "pointer",
-              background: "transparent",
-            }}
+            aria-valuetext={`${globalFontPercent}%`}
           />
-          <span style={{ fontSize: "34px", lineHeight: 1, flexShrink: 0 }}>A</span>
-          <strong style={{ minWidth: "64px", textAlign: "right", flexShrink: 0 }}>
+          <span aria-hidden="true" className="font-size-sample-large">A</span>
+          <strong className="font-size-value">
             {globalFontPercent}%
           </strong>
         </div>

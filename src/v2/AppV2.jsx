@@ -663,14 +663,34 @@ ${buildMinimalExportCSS(globalFontPercent)}
           t={t}
         />
 
-        <h4>05. {t("setting.title_img")}</h4>
-        <input className="title_input" onChange={handleTitleImageChange} />
+        <h3>
+          <label htmlFor="title-image-urls">05. {t("setting.title_img")}</label>
+        </h3>
+        <input
+          id="title-image-urls"
+          className="title_input"
+          onChange={handleTitleImageChange}
+        />
 
-        <h4>06. {t("setting.end_img")}</h4>
-        <input className="end_input" onChange={handleEndImageChange} />
+        <h3>
+          <label htmlFor="end-image-urls">06. {t("setting.end_img")}</label>
+        </h3>
+        <input
+          id="end-image-urls"
+          className="end_input"
+          onChange={handleEndImageChange}
+        />
 
-        <h4>07. {t("setting.system_cha")}</h4>
-        <input className="system_input" onChange={DescChange} />
+        <h3>
+          <label htmlFor="system-character-names">
+            07. {t("setting.system_cha")}
+          </label>
+        </h3>
+        <input
+          id="system-character-names"
+          className="system_input"
+          onChange={DescChange}
+        />
       </div>
 
       <PreviewPanel

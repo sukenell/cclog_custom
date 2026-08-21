@@ -1,5 +1,7 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
+import { readFileSync } from 'fs';
+import path from 'path';
 import UploadSection from './UploadSection';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -44,9 +46,32 @@ test('shows the v2 room log heading without the room URL prompt', async () => {
   expect(container.textContent).not.toContain('(*룸 주소를 입력하세요)');
   expect(container.textContent).not.toContain('언어 선택');
   expect(container.querySelector('#language-select')).toBeNull();
+  expect(container.querySelector('h2')?.textContent).toBe(
+    'CCFolia 채팅 로그 커스텀'
+  );
+  expect(container.querySelector('h3')?.textContent).toBe(
+    '01. 룸로그 불러오기'
+  );
+  expect(container.querySelector('h4')).toBeNull();
 
   await act(async () => {
     rootApi.unmount();
   });
   container.remove();
+});
+
+test('declares Korean language and responsive UTF-8 document metadata', () => {
+  const source = readFileSync(
+    path.join(process.cwd(), 'public/index.html'),
+    'utf8'
+  );
+  const documentNode = new DOMParser().parseFromString(source, 'text/html');
+
+  expect(documentNode.documentElement.lang).toBe('ko');
+  expect(
+    documentNode.querySelector('meta[charset]')?.getAttribute('charset')?.toLowerCase()
+  ).toBe('utf-8');
+  expect(
+    documentNode.querySelector('meta[name="viewport"]')?.getAttribute('content')
+  ).toBe('width=device-width, initial-scale=1');
 });
