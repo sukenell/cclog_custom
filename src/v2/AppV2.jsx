@@ -5,6 +5,11 @@ import SettingsPanel from "./component/SettingsPanel.jsx";
 import PreviewPanel from "./component/PreviewPanel.jsx";
 import { parseLogContent } from "./utils/parseFirebase.js";
 import { buildEbookJson } from "./utils/exportEbookJson.js";
+import {
+  loadWardrobe,
+  resolveStandingUrl,
+  saveWardrobe,
+} from "./utils/standingWardrobe.js";
 import { useTranslation } from "react-i18next";
 import "./AppV2.css";
 import "../core/styles/base.css";
@@ -294,6 +299,7 @@ function App() {
   const [messageOverrides, setMessageOverrides] = useState({});
   const [deletedMessageIds, setDeletedMessageIds] = useState(() => new Set());
   const [globalFontPercent, setGlobalFontPercent] = useState(100);
+  const [wardrobe] = useState(() => loadWardrobe());
 
   const handleFileContentChange = (content) => {
     setMessageOverrides({});
@@ -472,6 +478,10 @@ ${buildMinimalExportCSS(globalFontPercent)}
   }, []);
 
   useEffect(() => {
+    saveWardrobe(undefined, wardrobe);
+  }, [wardrobe]);
+
+  useEffect(() => {
     if (!fileContent.length) return;
 
     const parsed = parseLogContent(fileContent, {
@@ -499,10 +509,27 @@ ${buildMinimalExportCSS(globalFontPercent)}
 
     const nextMessages = [...topImages, ...parsed, ...bottomImages]
       .filter((message) => !deletedMessageIds.has(message.id))
-      .map((message) => ({
-        ...message,
-        ...(messageOverrides[message.id] || {}),
-      }));
+      .map((message) => {
+        const override = messageOverrides[message.id];
+
+        if (message.category === "image") {
+          return {
+            ...message,
+            ...(override || {}),
+          };
+        }
+
+        return {
+          ...message,
+          ...(override || {}),
+          imgUrl: resolveStandingUrl({
+            message,
+            override,
+            wardrobe,
+            fallbackUrl: "https://ccfolia.com/blank.gif",
+          }),
+        };
+      });
 
     setMessages(nextMessages);
   }, [
@@ -517,6 +544,7 @@ ${buildMinimalExportCSS(globalFontPercent)}
     t,
     messageOverrides,
     deletedMessageIds,
+    wardrobe,
   ]);
 
   /* =========================

@@ -6,6 +6,7 @@ jest.mock('jspdf', () => ({
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import AppV2, { buildMinimalExportCSS, removeMessageById } from './AppV2';
+import { WARDROBE_STORAGE_KEY } from './utils/standingWardrobe';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -41,6 +42,7 @@ const uploadLogFile = async (container, html) => {
   });
   Object.defineProperty(fileInput, 'files', {
     value: [file],
+    configurable: true,
   });
 
   await act(async () => {
@@ -109,13 +111,67 @@ const expectClassTokens = (element, expectedTokens) => {
   expect(Array.from(element.classList).sort()).toEqual([...expectedTokens].sort());
 };
 
+const ALICE_WARDROBE = {
+  version: 1,
+  characters: {
+    '앨리스': {
+      displayName: '앨리스',
+      activeVariantId: 'casual',
+      variants: [
+        {
+          id: 'casual',
+          label: '평상복',
+          url: 'https://example.com/alice-casual.png',
+        },
+      ],
+    },
+  },
+};
+
+const seedAliceWardrobe = () => {
+  sessionStorage.setItem(
+    WARDROBE_STORAGE_KEY,
+    JSON.stringify(ALICE_WARDROBE)
+  );
+};
+
+const getMessageRowByText = (container, text) =>
+  Array.from(container.querySelectorAll('.message-row')).find((row) =>
+    row.textContent.includes(text)
+  );
+
+const getProfileImageUrl = (container, text) =>
+  getMessageRowByText(container, text)
+    ?.querySelector('.msg_container img')
+    ?.getAttribute('src');
+
+const editMessageImage = async (container, text, url) => {
+  const row = getMessageRowByText(container, text);
+
+  await act(async () => {
+    row.querySelector('button[title="Change Image"]').click();
+  });
+
+  const imageInput = container.querySelector(
+    'input[placeholder="Image URL..."]'
+  );
+  await updateTextInput(imageInput, url);
+
+  await act(async () => {
+    imageInput.parentElement.querySelector('button').click();
+  });
+};
+
 beforeEach(() => {
+  sessionStorage.clear();
   global.FileReader = MockFileReader;
 });
 
 afterEach(() => {
   global.FileReader = NativeFileReader;
   restoreDownloadCapture();
+  jest.restoreAllMocks();
+  sessionStorage.clear();
 });
 
 describe('AppV2 message deletion', () => {
@@ -152,6 +208,262 @@ describe('AppV2 localization', () => {
       rootApi.unmount();
     });
     container.remove();
+  });
+});
+
+describe('AppV2 session standing wardrobe integration', () => {
+  test('applies the active same-tab default to every matching character row', async () => {
+    seedAliceWardrobe();
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => {
+        rootApi.render(<AppV2 />);
+      });
+
+      await uploadLogFile(
+        container,
+        `
+          <div>
+            <p><span>[main]</span> <span>앨리스</span> : <span>첫 번째 대사</span></p>
+            <p><span>[main]</span> <span>밥</span> : <span>밥의 대사</span></p>
+            <p><span>[main]</span> <span>앨리스</span> : <span>두 번째 대사</span></p>
+          </div>
+        `
+      );
+
+      expect(getProfileImageUrl(container, '첫 번째 대사')).toBe(
+        'https://example.com/alice-casual.png'
+      );
+      expect(getProfileImageUrl(container, '두 번째 대사')).toBe(
+        'https://example.com/alice-casual.png'
+      );
+      expect(getProfileImageUrl(container, '밥의 대사')).toBe(
+        'https://ccfolia.com/blank.gif'
+      );
+    } finally {
+      await act(async () => {
+        rootApi.unmount();
+      });
+      container.remove();
+    }
+  });
+
+  test('keeps a line-specific image exception when unrelated settings reparse the log', async () => {
+    seedAliceWardrobe();
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => {
+        rootApi.render(<AppV2 />);
+      });
+
+      await uploadLogFile(
+        container,
+        `
+          <div>
+            <p><span>[main]</span> <span>앨리스</span> : <span>예외 대사</span></p>
+            <p><span>[main]</span> <span>앨리스</span> : <span>기본 대사</span></p>
+          </div>
+        `
+      );
+
+      await editMessageImage(
+        container,
+        '예외 대사',
+        'https://example.com/alice-exception.png'
+      );
+
+      expect(getProfileImageUrl(container, '예외 대사')).toBe(
+        'https://example.com/alice-exception.png'
+      );
+      expect(getProfileImageUrl(container, '기본 대사')).toBe(
+        'https://example.com/alice-casual.png'
+      );
+
+      await updateTextInput(container.querySelector('.system_input'), 'SYS');
+
+      expect(getProfileImageUrl(container, '예외 대사')).toBe(
+        'https://example.com/alice-exception.png'
+      );
+      expect(getProfileImageUrl(container, '기본 대사')).toBe(
+        'https://example.com/alice-casual.png'
+      );
+    } finally {
+      await act(async () => {
+        rootApi.unmount();
+      });
+      container.remove();
+    }
+  });
+
+  test('clears a line exception for a newly confirmed log but keeps the same-tab default', async () => {
+    seedAliceWardrobe();
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => {
+        rootApi.render(<AppV2 />);
+      });
+
+      await uploadLogFile(
+        container,
+        `
+          <div>
+            <p><span>[main]</span> <span>앨리스</span> : <span>기존 로그 대사</span></p>
+            <p><span>[main]</span> <span>앨리스</span> : <span>삭제할 대사</span></p>
+          </div>
+        `
+      );
+      await editMessageImage(
+        container,
+        '기존 로그 대사',
+        'https://example.com/alice-exception.png'
+      );
+
+      expect(getProfileImageUrl(container, '기존 로그 대사')).toBe(
+        'https://example.com/alice-exception.png'
+      );
+
+      await act(async () => {
+        getMessageRowByText(container, '삭제할 대사')
+          .querySelector('button[title="Delete Message"]')
+          .click();
+      });
+      expect(container.textContent).not.toContain('삭제할 대사');
+
+      await uploadLogFile(
+        container,
+        `
+          <div>
+            <p><span>[main]</span> <span>앨리스</span> : <span>새 로그 대사</span></p>
+            <p><span>[main]</span> <span>앨리스</span> : <span>새 로그 두 번째 대사</span></p>
+          </div>
+        `
+      );
+
+      expect(container.textContent).not.toContain('기존 로그 대사');
+      expect(getProfileImageUrl(container, '새 로그 대사')).toBe(
+        'https://example.com/alice-casual.png'
+      );
+      expect(getProfileImageUrl(container, '새 로그 두 번째 대사')).toBe(
+        'https://example.com/alice-casual.png'
+      );
+      expect(
+        JSON.parse(sessionStorage.getItem(WARDROBE_STORAGE_KEY))
+      ).toEqual(ALICE_WARDROBE);
+    } finally {
+      await act(async () => {
+        rootApi.unmount();
+      });
+      container.remove();
+    }
+  });
+
+  test('continues rendering and editing when session wardrobe writes are blocked', async () => {
+    seedAliceWardrobe();
+    const storagePrototype = Object.getPrototypeOf(sessionStorage);
+    const setItemSpy = jest
+      .spyOn(storagePrototype, 'setItem')
+      .mockImplementation(() => {
+        throw new DOMException('Storage blocked', 'SecurityError');
+      });
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => {
+        rootApi.render(<AppV2 />);
+      });
+
+      expect(setItemSpy).toHaveBeenCalledWith(
+        WARDROBE_STORAGE_KEY,
+        expect.any(String)
+      );
+
+      await uploadLogFile(
+        container,
+        `
+          <div>
+            <p><span>[main]</span> <span>앨리스</span> : <span>차단 상태 대사</span></p>
+          </div>
+        `
+      );
+      await editMessageImage(
+        container,
+        '차단 상태 대사',
+        'https://example.com/still-editable.png'
+      );
+
+      expect(getProfileImageUrl(container, '차단 상태 대사')).toBe(
+        'https://example.com/still-editable.png'
+      );
+    } finally {
+      setItemSpy.mockRestore();
+      await act(async () => {
+        rootApi.unmount();
+      });
+      container.remove();
+    }
+  });
+
+  test('leaves title and ending image pseudo messages on their configured URLs', async () => {
+    seedAliceWardrobe();
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => {
+        rootApi.render(<AppV2 />);
+      });
+
+      await uploadLogFile(
+        container,
+        `
+          <div>
+            <p><span>[main]</span> <span>앨리스</span> : <span>일반 대사</span></p>
+          </div>
+        `
+      );
+      await updateTextInput(
+        container.querySelector('.title_input'),
+        'https://example.com/title.png'
+      );
+      await updateTextInput(
+        container.querySelector('.end_input'),
+        'https://example.com/end.png'
+      );
+
+      const pseudoImageUrls = Array.from(
+        container.querySelectorAll('.message-container.image img')
+      ).map((image) => image.getAttribute('src'));
+
+      expect(pseudoImageUrls).toEqual([
+        'https://example.com/title.png',
+        'https://example.com/end.png',
+      ]);
+      expect(getProfileImageUrl(container, '일반 대사')).toBe(
+        'https://example.com/alice-casual.png'
+      );
+    } finally {
+      await act(async () => {
+        rootApi.unmount();
+      });
+      container.remove();
+    }
   });
 });
 
