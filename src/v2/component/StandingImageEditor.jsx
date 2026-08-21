@@ -4,7 +4,11 @@ import {
   STANDING_SCOPE,
 } from '../utils/standingWardrobe';
 
-const DEFAULT_SCOPES = [STANDING_SCOPE.SINGLE, STANDING_SCOPE.ALL];
+const DEFAULT_SCOPES = [
+  STANDING_SCOPE.SINGLE,
+  STANDING_SCOPE.FROM_HERE,
+  STANDING_SCOPE.ALL,
+];
 
 export default function StandingImageEditor({
   id,
@@ -128,6 +132,7 @@ export default function StandingImageEditor({
           {supportedScopes.includes(STANDING_SCOPE.SINGLE) && (
             <label>
               <input
+                id={`${editorId}-scope-${STANDING_SCOPE.SINGLE}`}
                 type="radio"
                 name={scopeName}
                 value={STANDING_SCOPE.SINGLE}
@@ -137,9 +142,26 @@ export default function StandingImageEditor({
               {label('standing_editor.scope_single', '이 대사만')}
             </label>
           )}
+          {supportedScopes.includes(STANDING_SCOPE.FROM_HERE) && (
+            <label>
+              <input
+                id={`${editorId}-scope-${STANDING_SCOPE.FROM_HERE}`}
+                type="radio"
+                name={scopeName}
+                value={STANDING_SCOPE.FROM_HERE}
+                checked={scope === STANDING_SCOPE.FROM_HERE}
+                onChange={(event) => setScope(event.target.value)}
+              />
+              {label(
+                'standing_editor.scope_from_here',
+                '이 대사부터 이후'
+              )}
+            </label>
+          )}
           {supportedScopes.includes(STANDING_SCOPE.ALL) && (
             <label>
               <input
+                id={`${editorId}-scope-${STANDING_SCOPE.ALL}`}
                 type="radio"
                 name={scopeName}
                 value={STANDING_SCOPE.ALL}

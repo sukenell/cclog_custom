@@ -37,7 +37,7 @@ const renderEditor = (overrides = {}) => {
     activeVariantId: 'casual',
     currentUrl: 'https://example.com/current.png',
     characterName: '앨리스',
-    allowedScopes: ['single', 'all'],
+    allowedScopes: ['single', 'fromHere', 'all'],
     onApplyVariant: jest.fn(),
     onApplyUrl: jest.fn(),
     onClear: jest.fn(),
@@ -66,7 +66,7 @@ const buttonByText = (container, text) =>
   );
 
 describe('StandingImageEditor', () => {
-  test('uses labeled native controls, only single/all scopes, and focuses the first control', () => {
+  test('uses labeled native controls, all three scopes, and focuses the first control', () => {
     const { container, cleanup } = renderEditor();
 
     try {
@@ -86,9 +86,18 @@ describe('StandingImageEditor', () => {
         '@전투',
       ]);
       expect(fieldset.querySelector('legend').textContent).toContain('적용 범위');
-      expect(radios.map((radio) => radio.value)).toEqual(['single', 'all']);
+      expect(radios.map((radio) => radio.value)).toEqual([
+        'single',
+        'fromHere',
+        'all',
+      ]);
+      expect(new Set(radios.map((radio) => radio.id)).size).toBe(3);
+      expect(radios.every((radio) => radio.id !== '')).toBe(true);
+      expect(new Set(radios.map((radio) => radio.name)).size).toBe(1);
+      expect(radios.every((radio) => radio.closest('label'))).toBe(true);
       expect(radios[0].checked).toBe(true);
       expect(editor.textContent).toContain('이 대사만');
+      expect(editor.textContent).toContain('이 대사부터 이후');
       expect(editor.textContent).toContain('앨리스 전체');
       expect(urlLabel).not.toBeNull();
       expect(urlInput.getAttribute('inputmode')).toBe('url');
@@ -138,6 +147,34 @@ describe('StandingImageEditor', () => {
         scope: 'all',
       });
       expect(props.onClear).toHaveBeenCalledWith({ scope: 'all' });
+    } finally {
+      cleanup();
+    }
+  });
+
+  test('uses the same from-here scope for variant, direct URL, and clear actions', () => {
+    const { container, props, cleanup } = renderEditor();
+
+    try {
+      const fromHereRadio = container.querySelector('input[value="fromHere"]');
+      const urlInput = container.querySelector('input[type="url"]');
+
+      act(() => fromHereRadio.click());
+      act(() => buttonByText(container, '선택 이미지 적용').click());
+      act(() => setNativeValue(urlInput, 'https://example.com/from-here.png'));
+      act(() => buttonByText(container, 'URL 적용').click());
+      act(() => buttonByText(container, '이미지 비우기').click());
+
+      expect(props.onApplyVariant).toHaveBeenCalledWith({
+        variantId: 'casual',
+        url: 'https://example.com/alice-casual.png',
+        scope: 'fromHere',
+      });
+      expect(props.onApplyUrl).toHaveBeenCalledWith({
+        url: 'https://example.com/from-here.png',
+        scope: 'fromHere',
+      });
+      expect(props.onClear).toHaveBeenCalledWith({ scope: 'fromHere' });
     } finally {
       cleanup();
     }

@@ -621,10 +621,13 @@ describe('standing wardrobe session model', () => {
 });
 
 describe('standing image resolution and apply scopes', () => {
-  test('exposes only single and all scopes', () => {
-    expect(STANDING_SCOPE).toEqual({ SINGLE: 'single', ALL: 'all' });
-    expectExactKeys(STANDING_SCOPE, ['SINGLE', 'ALL']);
-    expect(Object.values(STANDING_SCOPE)).not.toContain('fromHere');
+  test('exposes single, from-here, and all scopes', () => {
+    expect(STANDING_SCOPE).toEqual({
+      SINGLE: 'single',
+      FROM_HERE: 'fromHere',
+      ALL: 'all',
+    });
+    expectExactKeys(STANDING_SCOPE, ['SINGLE', 'FROM_HERE', 'ALL']);
   });
 
   test('gets a normalized own character entry without reading inherited data', () => {
@@ -813,6 +816,32 @@ describe('standing image resolution and apply scopes', () => {
     ).toEqual(['a1', 'a-secret', 'a-other', 'a2']);
   });
 
+  test('collects matching non-image targets from the anchor onward in full source order', () => {
+    const messages = [
+      { id: 'a-before', category: 'main', charName: ' Ålice ' },
+      { id: 'bob-before', category: 'main', charName: 'Bob' },
+      { id: 'a-anchor', category: 'main', charName: 'A\u030Alice' },
+      {
+        id: 'a-hidden',
+        category: 'secret(kp,alice)',
+        charName: 'Ålice',
+        hidden: true,
+      },
+      { id: 'a-image', category: 'image', charName: 'Ålice' },
+      { id: 'bob-after', category: 'main', charName: 'Bob' },
+      { id: 'a-lower', category: 'other', charName: 'ålice' },
+      { id: 'a-after', category: 'other', charName: '  Ålice  ' },
+    ];
+
+    expect(
+      collectScopeTargetIds(
+        messages,
+        'a-anchor',
+        STANDING_SCOPE.FROM_HERE
+      )
+    ).toEqual(['a-anchor', 'a-hidden', 'a-after']);
+  });
+
   test('matches character names by trim and NFC while remaining case-sensitive', () => {
     const messages = [
       { id: 'nfc-anchor', category: 'main', charName: '  Ålice ' },
@@ -827,10 +856,12 @@ describe('standing image resolution and apply scopes', () => {
 
   test.each([
     ['missing', STANDING_SCOPE.SINGLE],
+    ['missing', STANDING_SCOPE.FROM_HERE],
     ['missing', STANDING_SCOPE.ALL],
-    ['a1', 'fromHere'],
+    ['a1', 'unsupported'],
     ['a1', undefined],
     ['image', STANDING_SCOPE.SINGLE],
+    ['image', STANDING_SCOPE.FROM_HERE],
     ['image', STANDING_SCOPE.ALL],
   ])('returns no targets for anchor %p and scope %p', (anchorId, scope) => {
     const messages = [

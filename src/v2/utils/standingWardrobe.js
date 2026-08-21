@@ -344,6 +344,7 @@ export const setActiveVariant = (wardrobe, charName, variantId) => {
 
 export const STANDING_SCOPE = Object.freeze({
   SINGLE: 'single',
+  FROM_HERE: 'fromHere',
   ALL: 'all',
 });
 
@@ -434,16 +435,19 @@ const normalizedMessageCharacter = (message) => {
 export const collectScopeTargetIds = (messages, anchorId, scope) => {
   if (
     !isArrayValue(messages) ||
-    (scope !== STANDING_SCOPE.SINGLE && scope !== STANDING_SCOPE.ALL)
+    (scope !== STANDING_SCOPE.SINGLE &&
+      scope !== STANDING_SCOPE.FROM_HERE &&
+      scope !== STANDING_SCOPE.ALL)
   ) {
     return [];
   }
 
   const safeMessages = ownArrayValues(messages);
-  const anchor = safeMessages.find((message) => {
+  const anchorIndex = safeMessages.findIndex((message) => {
     const id = readMessageProperty(message, 'id');
     return id.found && id.value === anchorId;
   });
+  const anchor = safeMessages[anchorIndex];
   if (!anchor || isImageMessage(anchor)) return [];
 
   const anchorIdProperty = readMessageProperty(anchor, 'id');
@@ -452,7 +456,12 @@ export const collectScopeTargetIds = (messages, anchorId, scope) => {
   const characterKey = normalizedMessageCharacter(anchor);
   if (!characterKey) return [];
 
-  return safeMessages.reduce((targetIds, message) => {
+  const candidates =
+    scope === STANDING_SCOPE.FROM_HERE
+      ? safeMessages.slice(anchorIndex)
+      : safeMessages;
+
+  return candidates.reduce((targetIds, message) => {
     if (
       isImageMessage(message) ||
       normalizedMessageCharacter(message) !== characterKey

@@ -395,8 +395,11 @@ function App() {
   };
 
   const applyStandingVariant = (messageId, variantId, url, scope) => {
-    if (scope === STANDING_SCOPE.SINGLE) {
-      applyStandingUrl(messageId, url, STANDING_SCOPE.SINGLE);
+    if (
+      scope === STANDING_SCOPE.SINGLE ||
+      scope === STANDING_SCOPE.FROM_HERE
+    ) {
+      applyStandingUrl(messageId, url, scope);
       return;
     }
     if (scope !== STANDING_SCOPE.ALL) return;
@@ -689,7 +692,11 @@ ${buildMinimalExportCSS(globalFontPercent)}
         wardrobe={wardrobe}
         onApplyStandingVariant={applyStandingVariant}
         onApplyStandingUrl={applyStandingUrl}
-        standingScopes={[STANDING_SCOPE.SINGLE, STANDING_SCOPE.ALL]}
+        standingScopes={[
+          STANDING_SCOPE.SINGLE,
+          STANDING_SCOPE.FROM_HERE,
+          STANDING_SCOPE.ALL,
+        ]}
       />
     </div>
   );

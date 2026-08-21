@@ -214,7 +214,6 @@ describe('PreviewPanel divider markup', () => {
           wardrobe={wardrobe}
           onApplyStandingVariant={onApplyStandingVariant}
           onApplyStandingUrl={() => {}}
-          standingScopes={['single', 'all']}
           t={(value) => value}
         />
       );
@@ -229,6 +228,9 @@ describe('PreviewPanel divider markup', () => {
       });
 
       const editor = aliceRow.querySelector('.standing-image-editor');
+      expect(Array.from(editor.querySelectorAll('input[type="radio"]')).map(
+        (radio) => radio.value
+      )).toEqual(['single', 'fromHere', 'all']);
       expect(Array.from(editor.querySelectorAll('option')).map(
         (option) => option.textContent
       )).toEqual(['@평상복 [기본]', '@전투']);

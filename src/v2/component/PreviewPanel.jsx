@@ -21,7 +21,7 @@ export default function PreviewPanel({
   wardrobe,
   onApplyStandingVariant,
   onApplyStandingUrl,
-  standingScopes = ["single", "all"],
+  standingScopes = ["single", "fromHere", "all"],
   t,
 }) {
 

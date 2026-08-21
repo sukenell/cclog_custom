@@ -938,6 +938,258 @@ describe('AppV2 session standing wardrobe integration', () => {
     }
   });
 
+  test('applies a variant from the anchor through hidden later categories without changing the default', async () => {
+    sessionStorage.setItem(
+      WARDROBE_STORAGE_KEY,
+      JSON.stringify(ALICE_TWO_VARIANT_WARDROBE)
+    );
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => rootApi.render(<AppV2 />));
+      await uploadLogFile(
+        container,
+        `
+          <div>
+            <p><span>[main]</span> <span>앨리스</span> : <span>범위 이전 대사</span></p>
+            <p><span>[main]</span> <span>앨리스</span> : <span>범위 시작 대사</span></p>
+            <p><span>[main]</span> <span>밥</span> : <span>범위 중간 밥 대사</span></p>
+            <p><span>[room-hidden]</span> <span>앨리스</span> : <span>숨겨진 이후 대사</span></p>
+            <p><span>[main]</span> <span>앨리스</span> : <span>표시된 이후 대사</span></p>
+          </div>
+        `
+      );
+
+      await act(async () => {
+        container.querySelector('label[for="cat-room-hidden"]').click();
+      });
+      expect(getMessageRowByText(container, '숨겨진 이후 대사')).toBeUndefined();
+
+      const editor = await openStandingEditor(container, '범위 시작 대사');
+      expect(Array.from(editor.querySelectorAll('input[type="radio"]')).map(
+        (radio) => radio.value
+      )).toEqual(['single', 'fromHere', 'all']);
+      expect(editor.textContent).toContain('이 대사부터 이후');
+      expect(editor.textContent).not.toMatch(/\d+\s*개 대사|대사에 적용/);
+      await chooseStandingScope(editor, 'fromHere');
+      await setSelectValue(editor.querySelector('select'), 'battle');
+      const applyButton = Array.from(editor.querySelectorAll('button')).find(
+        (button) => button.textContent === '선택 이미지 적용'
+      );
+      await act(async () => applyButton.click());
+
+      expect(getProfileImageUrl(container, '범위 이전 대사')).toBe(
+        'https://example.com/alice-casual.png'
+      );
+      expect(getProfileImageUrl(container, '범위 시작 대사')).toBe(
+        'https://example.com/alice-battle.png'
+      );
+      expect(getProfileImageUrl(container, '표시된 이후 대사')).toBe(
+        'https://example.com/alice-battle.png'
+      );
+      expect(getProfileImageUrl(container, '범위 중간 밥 대사')).toBe(
+        'https://ccfolia.com/blank.gif'
+      );
+
+      await updateTextInput(
+        container.querySelector('.title_input'),
+        'https://example.com/from-here-reparse.png'
+      );
+      await act(async () => {
+        container.querySelector('label[for="cat-room-hidden"]').click();
+      });
+
+      expect(getProfileImageUrl(container, '숨겨진 이후 대사')).toBe(
+        'https://example.com/alice-battle.png'
+      );
+      expect(getProfileImageUrl(container, '범위 이전 대사')).toBe(
+        'https://example.com/alice-casual.png'
+      );
+      expect(
+        JSON.parse(sessionStorage.getItem(WARDROBE_STORAGE_KEY))
+      ).toEqual(ALICE_TWO_VARIANT_WARDROBE);
+    } finally {
+      await act(async () => rootApi.unmount());
+      container.remove();
+    }
+  });
+
+  test('keeps direct and cleared from-here overrides through reparsing', async () => {
+    sessionStorage.setItem(
+      WARDROBE_STORAGE_KEY,
+      JSON.stringify(ALICE_TWO_VARIANT_WARDROBE)
+    );
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => rootApi.render(<AppV2 />));
+      await uploadLogFile(
+        container,
+        `
+          <div>
+            <p><span>[main]</span> <span>앨리스</span> : <span>직접 범위 이전</span></p>
+            <p><span>[main]</span> <span>앨리스</span> : <span>직접 범위 시작</span></p>
+            <p><span>[main]</span> <span>밥</span> : <span>직접 범위 밥</span></p>
+            <p><span>[main]</span> <span>앨리스</span> : <span>직접 범위 마지막</span></p>
+          </div>
+        `
+      );
+
+      await applyMessageUrl(
+        container,
+        '직접 범위 시작',
+        'https://example.com/alice-from-here.png',
+        'fromHere'
+      );
+      await updateTextInput(
+        container.querySelector('.title_input'),
+        'https://example.com/direct-from-here-reparse.png'
+      );
+
+      expect(getProfileImageUrl(container, '직접 범위 이전')).toBe(
+        'https://example.com/alice-casual.png'
+      );
+      expect(getProfileImageUrl(container, '직접 범위 시작')).toBe(
+        'https://example.com/alice-from-here.png'
+      );
+      expect(getProfileImageUrl(container, '직접 범위 마지막')).toBe(
+        'https://example.com/alice-from-here.png'
+      );
+      expect(getProfileImageUrl(container, '직접 범위 밥')).toBe(
+        'https://ccfolia.com/blank.gif'
+      );
+
+      await clearMessageImage(
+        container,
+        '직접 범위 마지막',
+        'fromHere'
+      );
+      await updateTextInput(
+        container.querySelector('.end_input'),
+        'https://example.com/clear-from-here-reparse.png'
+      );
+
+      expect(getProfileImageUrl(container, '직접 범위 이전')).toBe(
+        'https://example.com/alice-casual.png'
+      );
+      expect(getProfileImageUrl(container, '직접 범위 시작')).toBe(
+        'https://example.com/alice-from-here.png'
+      );
+      expect(getProfileImageUrl(container, '직접 범위 마지막')).toBe(
+        'https://ccfolia.com/blank.gif'
+      );
+      expect(
+        JSON.parse(sessionStorage.getItem(WARDROBE_STORAGE_KEY))
+      ).toEqual(ALICE_TWO_VARIANT_WARDROBE);
+    } finally {
+      await act(async () => rootApi.unmount());
+      container.remove();
+    }
+  });
+
+  test('exports from-here results as final URLs without scope metadata or shape changes', async () => {
+    sessionStorage.setItem(
+      WARDROBE_STORAGE_KEY,
+      JSON.stringify(ALICE_TWO_VARIANT_WARDROBE)
+    );
+    const downloads = captureDownloads();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => rootApi.render(<AppV2 />));
+      await uploadLogFile(
+        container,
+        `
+          <div>
+            <p><span>[main]</span> <span>앨리스</span> : <span>내보내기 범위 이전</span></p>
+            <p><span>[main]</span> <span>앨리스</span> : <span>내보내기 범위 시작</span></p>
+            <p><span>[main]</span> <span>앨리스</span> : <span>내보내기 범위 이후</span></p>
+          </div>
+        `
+      );
+      await applyMessageUrl(
+        container,
+        '내보내기 범위 시작',
+        'https://example.com/export-from-here.png',
+        'fromHere'
+      );
+
+      const downloadButtons = Array.from(container.querySelectorAll('button')).filter(
+        (button) => button.textContent.startsWith('다운로드')
+      );
+      await act(async () => downloadButtons[0].click());
+      await act(async () => downloadButtons[1].click());
+      await act(async () => downloadButtons[2].click());
+
+      const html = await readBlobText(downloads[0].blob);
+      const splitHtml = await readBlobText(downloads[1].blob);
+      const jsonText = await readBlobText(downloads[2].blob);
+      const expectedUrls = [
+        'https://example.com/alice-casual.png',
+        'https://example.com/export-from-here.png',
+        'https://example.com/export-from-here.png',
+      ];
+
+      [html, splitHtml].forEach((content) => {
+        const exportedDocument = new DOMParser().parseFromString(
+          content,
+          'text/html'
+        );
+        const rows = Array.from(exportedDocument.querySelectorAll('.message-row'));
+        expect(rows).toHaveLength(3);
+        expect(rows.map((row) =>
+          row.querySelector('.msg_container > img').getAttribute('src')
+        )).toEqual(expectedUrls);
+        rows.forEach((row) => {
+          expect(row.children).toHaveLength(2);
+          expect(row.firstElementChild.matches('.msg_container')).toBe(true);
+          expect(row.lastElementChild.matches('.message-body')).toBe(true);
+        });
+        expect(exportedDocument.querySelector(
+          '[data-export-ignore], [data-apply-scope], form, button, input, select'
+        )).toBeNull();
+        expect(content).not.toContain('fromHere');
+      });
+
+      const json = JSON.parse(jsonText);
+      expect(Object.keys(json).sort()).toEqual(
+        ['schemaVersion', 'ebookView', 'lines'].sort()
+      );
+      expect(json.schemaVersion).toBe(1);
+      expect(json.lines).toHaveLength(3);
+      expect(json.lines.map(
+        (line) => line.input.speakerImages.standing.url
+      )).toEqual(expectedUrls);
+      json.lines.forEach((line) => {
+        expect(Object.keys(line).sort()).toEqual(
+          ['id', 'speaker', 'role', 'timestamp', 'text', 'safetext', 'input'].sort()
+        );
+        expect(line.input).toEqual({
+          speakerImages: {
+            standing: { url: expect.any(String) },
+          },
+        });
+      });
+      expect(jsonText).not.toContain('fromHere');
+      const jsonKeys = collectObjectKeys(json);
+      ['wardrobe', 'variantId', 'applyScope', 'scope', 'messageOverrides'].forEach(
+        (forbiddenKey) => expect(jsonKeys).not.toContain(forbiddenKey)
+      );
+      expect(
+        JSON.parse(sessionStorage.getItem(WARDROBE_STORAGE_KEY))
+      ).toEqual(ALICE_TWO_VARIANT_WARDROBE);
+    } finally {
+      await act(async () => rootApi.unmount());
+      container.remove();
+    }
+  });
+
   test('keeps direct single/all URLs in the current log and never changes the wardrobe default', async () => {
     sessionStorage.setItem(
       WARDROBE_STORAGE_KEY,
