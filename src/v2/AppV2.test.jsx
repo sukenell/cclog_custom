@@ -7,7 +7,11 @@ import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { readFileSync } from 'fs';
 import path from 'path';
-import AppV2, { buildMinimalExportCSS, removeMessageById } from './AppV2';
+import AppV2, {
+  buildMinimalExportCSS,
+  clonePreviewForExport,
+  removeMessageById,
+} from './AppV2';
 import { WARDROBE_STORAGE_KEY } from './utils/standingWardrobe';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -305,6 +309,40 @@ describe('AppV2 message deletion', () => {
       { id: 'keep-1', text: '첫 번째' },
       { id: 'keep-2', text: '두 번째' },
     ]);
+  });
+});
+
+describe('AppV2 preview export clone', () => {
+  test('removes ignored subtrees and every interactive form control from a clone', () => {
+    const preview = document.createElement('div');
+    preview.innerHTML = `
+      <div class="dialogue">보존할 대사</div>
+      <img class="final-image" src="https://example.com/final.png" alt="" />
+      <form data-export-ignore="true">
+        <label>편집기 <select><option>의상</option></select></label>
+        <input value="draft" />
+        <textarea>draft</textarea>
+        <button type="button">적용</button>
+      </form>
+      <button type="button">행 버튼</button>
+      <input value="행 입력" />
+      <select><option>행 선택</option></select>
+      <textarea>행 텍스트</textarea>
+    `;
+
+    const cloned = clonePreviewForExport(preview);
+
+    expect(cloned).not.toBe(preview);
+    expect(cloned.querySelector('.dialogue').textContent).toBe('보존할 대사');
+    expect(cloned.querySelector('.final-image').getAttribute('src')).toBe(
+      'https://example.com/final.png'
+    );
+    expect(
+      cloned.querySelectorAll(
+        '[data-export-ignore="true"], button, input, select, textarea'
+      )
+    ).toHaveLength(0);
+    expect(preview.querySelector('[data-export-ignore="true"]')).not.toBeNull();
   });
 });
 
@@ -1502,6 +1540,106 @@ describe('AppV2 uploaded-file settings', () => {
       await act(async () => {
         rootApi.unmount();
       });
+      container.remove();
+    }
+  });
+});
+
+describe('AppV2 open standing editor export contract', () => {
+  test('exports one final dialogue image without editor drafts or schema metadata', async () => {
+    sessionStorage.setItem(
+      WARDROBE_STORAGE_KEY,
+      JSON.stringify(ALICE_TWO_VARIANT_WARDROBE)
+    );
+    const downloads = captureDownloads();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const rootApi = createRoot(container);
+
+    try {
+      await act(async () => rootApi.render(<AppV2 />));
+      await uploadLogFile(
+        container,
+        '<p><span>[main]</span> <span>앨리스</span> : <span>열린 편집기 대사</span></p>'
+      );
+      await applyMessageUrl(
+        container,
+        '열린 편집기 대사',
+        'https://example.com/applied-final.png'
+      );
+
+      const editor = await openStandingEditor(container, '열린 편집기 대사');
+      await updateTextInput(
+        editor.querySelector('input[type="url"]'),
+        'https://example.com/unapplied-draft.png'
+      );
+      expect(container.querySelector('.standing-image-editor')).not.toBeNull();
+
+      const downloadButtons = Array.from(container.querySelectorAll('button')).filter(
+        (button) => button.textContent.startsWith('다운로드')
+      );
+      await act(async () => downloadButtons[0].click());
+      await act(async () => downloadButtons[1].click());
+      await act(async () => downloadButtons[2].click());
+
+      const html = await readBlobText(downloads[0].blob);
+      const splitHtml = await readBlobText(downloads[1].blob);
+      const jsonText = await readBlobText(downloads[2].blob);
+      const forbiddenSelector = [
+        '[data-export-ignore]',
+        '[data-wardrobe-id]',
+        '[data-apply-scope]',
+        '[aria-controls]',
+        '[aria-expanded]',
+        '[aria-invalid]',
+        'form',
+        'button',
+        'input',
+        'select',
+        'textarea',
+      ].join(', ');
+
+      [html, splitHtml].forEach((content) => {
+        expect(content.split('열린 편집기 대사')).toHaveLength(2);
+        expect(content).toContain('https://example.com/applied-final.png');
+        expect(content).not.toContain('https://example.com/unapplied-draft.png');
+        expect(content).not.toContain('URL 적용');
+
+        const exportedDocument = new DOMParser().parseFromString(
+          content,
+          'text/html'
+        );
+        const row = exportedDocument.querySelector('.message-row');
+        expect(row.querySelector('.msg-normal-text > span').textContent).toBe(
+          '열린 편집기 대사'
+        );
+        expect(row.querySelector('.msg_container > img').getAttribute('src')).toBe(
+          'https://example.com/applied-final.png'
+        );
+        expect(exportedDocument.querySelectorAll(forbiddenSelector)).toHaveLength(0);
+      });
+
+      const json = JSON.parse(jsonText);
+      expect(Object.keys(json).sort()).toEqual(
+        ['schemaVersion', 'ebookView', 'lines'].sort()
+      );
+      expect(json.schemaVersion).toBe(1);
+      expect(json.lines).toHaveLength(1);
+      expect(Object.keys(json.lines[0]).sort()).toEqual(
+        ['id', 'speaker', 'role', 'timestamp', 'text', 'safetext', 'input'].sort()
+      );
+      expect(json.lines[0].text).toBe('열린 편집기 대사');
+      expect(json.lines[0].input).toEqual({
+        speakerImages: {
+          standing: { url: 'https://example.com/applied-final.png' },
+        },
+      });
+      expect(jsonText).not.toContain('https://example.com/unapplied-draft.png');
+      expect(jsonText).not.toMatch(
+        /wardrobe|variantId|applyScope|messageOverrides|standing-image-editor/
+      );
+    } finally {
+      await act(async () => rootApi.unmount());
       container.remove();
     }
   });

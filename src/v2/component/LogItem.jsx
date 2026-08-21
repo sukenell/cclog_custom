@@ -413,6 +413,7 @@ export default function LogItem({
                             className="standing-image-editor-status"
                             role="status"
                             aria-live="polite"
+                            data-export-ignore="true"
                           >
                             {standingStatus}
                           </p>

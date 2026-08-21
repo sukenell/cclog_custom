@@ -371,9 +371,9 @@ describe('LogItem standing image editor', () => {
       );
       expect(container.querySelector('.standing-image-editor')).toBeNull();
       expect(document.activeElement).toBe(trigger);
-      expect(container.querySelector('[role="status"]').textContent).toBe(
-        '이미지를 적용했습니다.'
-      );
+      const status = container.querySelector('[role="status"]');
+      expect(status.textContent).toBe('이미지를 적용했습니다.');
+      expect(status.getAttribute('data-export-ignore')).toBe('true');
       expect(container.textContent).not.toMatch(/\d+\s*개 대사|대사에 적용/);
     } finally {
       cleanup();

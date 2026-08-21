@@ -49,6 +49,16 @@ const splitByMessageBlocks = (container, maxChars) => {
   return chunks;
 };
 
+export const clonePreviewForExport = (preview) => {
+  const cloned = preview.cloneNode(true);
+  cloned
+    .querySelectorAll(
+      '[data-export-ignore="true"], button, input, select, textarea'
+    )
+    .forEach((element) => element.remove());
+  return cloned;
+};
+
 /* =========================
    EXPORT CSS
 ========================= */
@@ -418,8 +428,7 @@ function App() {
     const preview = document.getElementById("preview-scroll-box");
     if (!preview) return;
 
-    const cloned = preview.cloneNode(true);
-    cloned.querySelectorAll("button, input").forEach(el => el.remove());
+    const cloned = clonePreviewForExport(preview);
 
     // 1. innerHTML 가져오기
     let rawHtml = cloned.innerHTML;
@@ -466,8 +475,7 @@ ${rawHtml}
     const preview = document.getElementById("preview-scroll-box");
     if (!preview) return;
 
-    const cloned = preview.cloneNode(true);
-    cloned.querySelectorAll("button, input").forEach(el => el.remove());
+    const cloned = clonePreviewForExport(preview);
 
     const MAX_CHARS = 7000000;
 
