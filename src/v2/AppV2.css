@@ -105,7 +105,7 @@ p {
 }
 
 b {
-  color: gray;
+  color: #b5b5b5;
   font-size: 9pt;
   font-weight: 200;
 }
@@ -421,6 +421,11 @@ b {
   background: #171717;
   color: #ffffff;
   font: inherit;
+}
+
+.standing-image-editor input::placeholder {
+  color: #b3b3b3;
+  opacity: 1;
 }
 
 .standing-image-editor input[aria-invalid="true"] {
@@ -842,11 +847,11 @@ input {
 }
 
 .msg-timestamp {
-  color: #c7c7c7;
+  color: #d5d5d5;
 }
 
 .msg-category-tag {
-  color: #c7c7c7;
+  color: #d5d5d5;
 }
 
 .setting_container :is(button, input, select, textarea, summary, a):focus-visible {

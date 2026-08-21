@@ -118,6 +118,38 @@ const expectClassTokens = (element, expectedTokens) => {
   expect(Array.from(element.classList).sort()).toEqual([...expectedTokens].sort());
 };
 
+const contrastRatio = (foreground, background) => {
+  const namedColors = { gray: '#808080' };
+  const normalizeHex = (color) => {
+    const value = namedColors[color.toLowerCase()] || color;
+    if (value.length === 4) {
+      return `#${value.slice(1).split('').map((digit) => digit + digit).join('')}`;
+    }
+    return value;
+  };
+  const luminance = (color) => {
+    const hex = normalizeHex(color).slice(1);
+    const channels = [0, 2, 4].map((offset) => {
+      const normalized = parseInt(hex.slice(offset, offset + 2), 16) / 255;
+      return normalized <= 0.04045
+        ? normalized / 12.92
+        : ((normalized + 0.055) / 1.055) ** 2.4;
+    });
+    return (
+      channels[0] * 0.2126 +
+      channels[1] * 0.7152 +
+      channels[2] * 0.0722
+    );
+  };
+  const foregroundLuminance = luminance(foreground);
+  const backgroundLuminance = luminance(background);
+
+  return (
+    (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) /
+    (Math.min(foregroundLuminance, backgroundLuminance) + 0.05)
+  );
+};
+
 const collectObjectKeys = (value, keys = []) => {
   if (Array.isArray(value)) {
     value.forEach((item) => collectObjectKeys(item, keys));
@@ -2187,6 +2219,39 @@ describe('AppV2 export CSS', () => {
 });
 
 describe('AppV2 narrow-screen accessibility CSS', () => {
+  test('keeps settings helper text at 4.5:1 contrast or better', () => {
+    const css = readFileSync(
+      path.join(process.cwd(), 'src/v2/AppV2.css'),
+      'utf8'
+    );
+    const helperRule = css.match(/\nb\s*\{([^}]*)\}/);
+    const helperColor = helperRule?.[1].match(
+      /color:\s*(#[0-9a-f]{3,6}|gray)/i
+    )?.[1];
+
+    expect(helperRule).not.toBeNull();
+    expect(helperColor).toBeDefined();
+    expect(contrastRatio(helperColor, '#222222')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('sets an opaque standing URL placeholder with 4.5:1 contrast or better', () => {
+    const css = readFileSync(
+      path.join(process.cwd(), 'src/v2/AppV2.css'),
+      'utf8'
+    );
+    const placeholderRule = css.match(
+      /\.standing-image-editor input::placeholder\s*\{([^}]*)\}/
+    );
+    const placeholderColor = placeholderRule?.[1].match(
+      /color:\s*(#[0-9a-f]{3,6})/i
+    )?.[1];
+
+    expect(placeholderRule).not.toBeNull();
+    expect(placeholderColor).toBeDefined();
+    expect(placeholderRule[1]).toMatch(/opacity:\s*1/);
+    expect(contrastRatio(placeholderColor, '#171717')).toBeGreaterThanOrEqual(4.5);
+  });
+
   test('preserves 28px preview button targets after mobile cascade overrides', () => {
     const css = readFileSync(
       path.join(process.cwd(), 'src/v2/AppV2.css'),
@@ -2341,11 +2406,19 @@ describe('AppV2 narrow-screen accessibility CSS', () => {
       path.join(process.cwd(), 'src/v2/AppV2.css'),
       'utf8'
     );
+    const timestampColor = css.match(
+      /\.msg-timestamp\s*\{[^}]*color:\s*(#[0-9a-f]{3,6})/i
+    )?.[1];
+    const categoryColor = css.match(
+      /\.msg-category-tag\s*\{[^}]*color:\s*(#[0-9a-f]{3,6})/i
+    )?.[1];
 
     expect(css).toMatch(
       /\.skinTypeCheck input\[type="checkbox"\]:checked\s*\+\s*label\s*\{[^}]*color:\s*#fff(?:fff)?[^}]*background:\s*#4e5355/i
     );
-    expect(css).toMatch(/\.msg-timestamp\s*\{[^}]*color:\s*#c7c7c7/i);
-    expect(css).toMatch(/\.msg-category-tag\s*\{[^}]*color:\s*#c7c7c7/i);
+    expect(timestampColor).toBeDefined();
+    expect(categoryColor).toBeDefined();
+    expect(contrastRatio(timestampColor, '#525569')).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(categoryColor, '#525569')).toBeGreaterThanOrEqual(4.5);
   });
 });
